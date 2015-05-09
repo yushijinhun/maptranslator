@@ -1,12 +1,26 @@
-*.class
+.cache
+build.xml
+lib/
+libs/
+libs_sources/
+natives/
+.DS_Store
+._*
+.gradle/
+build/
+out/
+output/
+run/
+*.sublime*
+.classpath
+.metadata/
+.project
+.settings/
+bin/
+eclipse/
+.idea/
+nbbuild/
+nbproject/
+*~
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.ear
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+/target/
