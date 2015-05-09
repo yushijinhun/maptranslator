@@ -9,6 +9,8 @@ public class FileConverters {
 	public static FileConverter getCoverterByFileName(String filename) {
 		if (filename.endsWith(".mca")) {
 			return CONVERTER_REGION;
+		} else if (filename.endsWith(".json")) {
+			return null;
 		}
 		return CONVERTER_NBT;
 	}

@@ -48,7 +48,8 @@ public class MCZHConverter {
 		@Override
 		public void run() {
 			System.err.printf("[INFO] Coverting %s\n", file.getPath());
-			FileConverters.getCoverterByFileName(file.getPath()).convert(file);
+			FileConverter converter = FileConverters.getCoverterByFileName(file.getPath());
+			converter.convert(file);
 		}
 	}
 
