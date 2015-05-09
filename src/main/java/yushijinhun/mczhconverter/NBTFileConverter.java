@@ -24,9 +24,7 @@ public class NBTFileConverter implements FileConverter {
 				nbt = CompressedStreamTools.readCompressed(in);
 				compressed = true;
 			} catch (Exception e1) {
-				System.err.printf("[ERROR] Failed to read %s\n", file);
-				e.printStackTrace();
-				e1.printStackTrace();
+				System.err.printf("[WARNING] Failed to read %s\n, skipped", file);
 				return;
 			}
 		}
@@ -34,8 +32,7 @@ public class NBTFileConverter implements FileConverter {
 		try {
 			nbt = (NBTTagCompound) convetor.convert(nbt);
 		} catch (Exception e) {
-			System.err.printf("[ERROR] Failed to convert %s\n", file);
-			e.printStackTrace();
+			System.err.printf("[WARNING] Failed to convert %s\n, skipped", file);
 			return;
 		}
 
