@@ -53,8 +53,8 @@ public class ZHConverter {
 	private static final String[] propertyFiles = new String[2];
 
 	static {
-		propertyFiles[TRADITIONAL] = "zh2Hant.properties";
-		propertyFiles[SIMPLIFIED] = "zh2Hans.properties";
+		propertyFiles[TRADITIONAL] = "/zh2Hant.properties";
+		propertyFiles[SIMPLIFIED] = "/zh2Hans.properties";
 	}
 
 	private ZHConverter(String propertyFile) {
@@ -63,7 +63,6 @@ public class ZHConverter {
 
 		is = getClass().getResourceAsStream(propertyFile);
 
-		// File propertyFile = new File("C:/Temp/testMDB/TestTranslator/abc.txt");
 		if (is != null) {
 			BufferedReader reader = null;
 			try {

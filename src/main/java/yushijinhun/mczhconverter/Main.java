@@ -1,7 +1,6 @@
-package yushijinhun.mczhconverter.nbt;
+package yushijinhun.mczhconverter;
 
 import java.io.File;
-import yushijinhun.mczhconverter.MCZHConverter;
 
 public class Main {
 
