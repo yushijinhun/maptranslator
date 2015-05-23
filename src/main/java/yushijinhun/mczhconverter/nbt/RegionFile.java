@@ -30,20 +30,35 @@ public class RegionFile implements Closeable {
 		public void close() throws IOException {
 			RegionFile.this.write(chunkX, chunkZ, buf, count);
 		}
+
+		@Override
+		protected void finalize() throws Throwable {
+			close();
+			super.finalize();
+		}
 	}
 
 	private static final byte[] emptySector = new byte[4096];
 	private RandomAccessFile dataFile;
-	private final int[] offsets = new int[1024];
-	private final int[] chunkTimestamps = new int[1024];
-
+	private int[] offsets;
+	private int[] chunkTimestamps;
 	private List<Boolean> sectorFree;
+	private File file;
+	private Object lock = new Object();
 
-	public RegionFile(File file) {
-		try {
+	public RegionFile(File file) throws IOException {
+		this.file = file;
+		open();
+	}
+
+	protected void open() throws IOException {
+		synchronized (lock) {
 			if (file.exists()) {
 				file.lastModified();
 			}
+
+			chunkTimestamps = new int[1024];
+			offsets = new int[1024];
 
 			dataFile = new RandomAccessFile(file, "rw");
 			int var2;
@@ -92,29 +107,23 @@ public class RegionFile implements Closeable {
 				var4 = dataFile.readInt();
 				chunkTimestamps[var3] = var4;
 			}
-		} catch (IOException var6) {
-			var6.printStackTrace();
 		}
 	}
 
-	/**
-	 * close this RegionFile and prevent further writes
-	 */
 	@Override
 	public void close() throws IOException {
-		if (dataFile != null) {
-			dataFile.close();
+		synchronized (lock) {
+			if (dataFile != null) {
+				dataFile.close();
+			}
 		}
 	}
 
-	/**
-	 * args: x, y - get uncompressed chunk stream from the region file
-	 */
-	public synchronized DataInputStream getChunkDataInputStream(int x, int y) {
-		if (outOfBounds(x, y)) {
-			return null;
-		}
-		try {
+	public DataInputStream getChunkDataInputStream(int x, int y) throws IOException {
+		synchronized (lock) {
+			if (outOfBounds(x, y)) {
+				return null;
+			}
 			int var3 = getOffset(x, y);
 
 			if (var3 == 0) {
@@ -149,63 +158,44 @@ public class RegionFile implements Closeable {
 					return null;
 				}
 			}
-		} catch (IOException var9) {
-			return null;
 		}
 	}
 
-	/**
-	 * args: x, z - get an output stream used to write chunk data, data is on disk when the returned stream is closed
-	 */
 	public DataOutputStream getChunkDataOutputStream(int x, int z) {
 		return outOfBounds(x, z) ? null : new DataOutputStream(new DeflaterOutputStream(new RegionFile.ChunkBuffer(x, z)));
 	}
 
-	/**
-	 * args: x, y - get chunk's offset in region file
-	 */
 	private int getOffset(int x, int y) {
 		return offsets[x + (y * 32)];
 	}
 
-	/**
-	 * args: x, z, - true if chunk has been saved / converted
-	 */
 	public boolean isChunkSaved(int x, int z) {
 		return getOffset(x, z) != 0;
 	}
 
-	/**
-	 * args: x, z - check region bounds
-	 */
 	private boolean outOfBounds(int x, int z) {
 		return (x < 0) || (x >= 32) || (z < 0) || (z >= 32);
 	}
 
-	/**
-	 * args: x, z, offset - sets the chunk's offset in the region file
-	 */
 	private void setOffset(int x, int z, int offset) throws IOException {
-		offsets[x + (z * 32)] = offset;
-		dataFile.seek((x + (z * 32)) * 4);
-		dataFile.writeInt(offset);
+		synchronized (lock) {
+			offsets[x + (z * 32)] = offset;
+			dataFile.seek((x + (z * 32)) * 4);
+			dataFile.writeInt(offset);
+		}
 	}
 
-	/**
-	 * args: sectorNumber, data, length - write the chunk data to this RegionFile
-	 */
 	private void write(int sectorNumber, byte[] data, int length) throws IOException {
-		dataFile.seek(sectorNumber * 4096);
-		dataFile.writeInt(length + 1);
-		dataFile.writeByte(2);
-		dataFile.write(data, 0, length);
+		synchronized (lock) {
+			dataFile.seek(sectorNumber * 4096);
+			dataFile.writeInt(length + 1);
+			dataFile.writeByte(2);
+			dataFile.write(data, 0, length);
+		}
 	}
 
-	/**
-	 * args: x, z, data, length - write chunk data at (x, z) to disk
-	 */
-	protected synchronized void write(int x, int z, byte[] data, int length) {
-		try {
+	protected void write(int x, int z, byte[] data, int length) throws IOException {
+		synchronized (lock) {
 			int var5 = getOffset(x, z);
 			int var6 = var5 >> 8;
 			int var7 = var5 & 255;
@@ -216,7 +206,7 @@ public class RegionFile implements Closeable {
 			}
 
 			if ((var6 != 0) && (var7 == var8)) {
-				this.write(var6, data, length);
+				write(var6, data, length);
 			} else {
 				int var9;
 
@@ -255,7 +245,7 @@ public class RegionFile implements Closeable {
 						sectorFree.set(var6 + var11, Boolean.valueOf(false));
 					}
 
-					this.write(var6, data, length);
+					write(var6, data, length);
 				} else {
 					dataFile.seek(dataFile.length());
 					var6 = sectorFree.size();
@@ -265,13 +255,20 @@ public class RegionFile implements Closeable {
 						sectorFree.add(Boolean.valueOf(false));
 					}
 
-					this.write(var6, data, length);
+					write(var6, data, length);
 					setOffset(x, z, (var6 << 8) | var8);
 				}
 			}
-
-		} catch (IOException var12) {
-			var12.printStackTrace();
 		}
+	}
+
+	public File getFile() {
+		return file;
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		close();
+		super.finalize();
 	}
 }
