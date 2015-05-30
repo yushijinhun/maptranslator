@@ -6,6 +6,11 @@
 	<version>${env.VERSION_PREFIX}${env.TRAVIS_BUILD_NUMBER}</version>
 	<name>MCZHConverter</name>
 	<description>将minecraft地图中的繁体转换为简体</description>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<jar.source>1.7</jar.source>
+		<jar.target>1.7</jar.target>
+	</properties>
 	<build>
 		<plugins>
 			<plugin>
@@ -28,6 +33,23 @@
 						</manifest>
 					</archive>
 				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
