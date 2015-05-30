@@ -40,6 +40,13 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>
+								yushijinhun.mczhconverter.Main
+							</mainClass>
+						</manifest>
+					</archive>
 				</configuration>
 				<executions>
 					<execution>
