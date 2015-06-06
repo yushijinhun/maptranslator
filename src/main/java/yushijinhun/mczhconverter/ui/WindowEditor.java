@@ -74,7 +74,7 @@ public class WindowEditor extends JFrame {
 
 		@Override
 		public boolean isCellEditable(int rowIndex, int columnIndex) {
-			return rows != null;
+			return (columnIndex != 0) && (rows != null);
 		}
 
 		@Override
