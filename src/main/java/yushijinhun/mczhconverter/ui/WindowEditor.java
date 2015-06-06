@@ -4,8 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -25,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -126,6 +130,8 @@ public class WindowEditor extends JFrame {
 	private Map<Integer, String> rows;
 	private Object editlock = new Object();
 	private ExecutorService pool = Executors.newSingleThreadExecutor();
+	private String regex = null;
+	private String replace = null;
 
 	public WindowEditor(NBTDescriptorSet descriptorSet) {
 		this.descriptorSet = descriptorSet;
@@ -286,6 +292,75 @@ public class WindowEditor extends JFrame {
 						doAutoConvert();
 					}
 				});
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_F9) {
+					findPerv();
+				}
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_F8) {
+					findNext();
+				}
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.isControlDown() && (e.getKeyCode() == KeyEvent.VK_F)) {
+					inputFind();
+					findNext();
+				}
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.isControlDown() && (e.getKeyCode() == KeyEvent.VK_R)) {
+					if ((regex == null) || regex.isEmpty()) {
+						inputFind();
+					}
+					inputReplace();
+					replaceAndFind();
+				}
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_F10) {
+					replace();
+				}
+			}
+		});
+
+		table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_F11) {
+					replaceAndFind();
+				}
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_F12) {
+					replaceAll();
+				}
 			}
 		});
 		setSize(640, 480);
@@ -465,5 +540,70 @@ public class WindowEditor extends JFrame {
 		} finally {
 			setProgress("");
 		}
+	}
+
+	public void findNext() {
+		if ((regex == null) || regex.isEmpty()||(table.getSelectedRow()==(rows.size()-1))) {
+			return;
+		}
+		for (int i = table.getSelectedRow()+1;i < rows.size(); i++) {
+			String str = patch.get(rows.get(i));
+			if (Pattern.compile(regex).matcher(str).find()) {
+				scrollToRow(i);
+				break;
+			}
+		}
+	}
+
+	public void findPerv() {
+		if ((regex == null) || regex.isEmpty()||(table.getSelectedRow()==0)) {
+			return;
+		}
+		for (int i = table.getSelectedRow()-1; i > -1; i--) {
+			String str = patch.get(rows.get(i));
+			if (Pattern.compile(regex).matcher(str).find()) {
+				scrollToRow(i);
+				break;
+			}
+		}
+	}
+
+	public void scrollToRow(int i) {
+		table.setRowSelectionInterval(i, i);
+		Rectangle rect = table.getCellRect(i, 1, true);
+		table.updateUI();
+		table.scrollRectToVisible(rect);
+	}
+
+	public void replace() {
+		if ((regex == null) || regex.isEmpty() || (replace == null)) {
+			return;
+		}
+		int i = table.getSelectedRow();
+		patch.put(rows.get(i), patch.get(rows.get(i)).replaceAll(regex, replace));
+		table.updateUI();
+	}
+
+	public void replaceAll() {
+		if ((regex == null) || regex.isEmpty() || (replace == null)) {
+			return;
+		}
+		for (int i = 0; i < rows.size(); i++) {
+			patch.put(rows.get(i), patch.get(rows.get(i)).replaceAll(regex, replace));
+		}
+		table.updateUI();
+	}
+
+	public void replaceAndFind() {
+		replace();
+		findNext();
+	}
+
+	private void inputFind() {
+		regex = (String) JOptionPane.showInputDialog(this, "<F8> to find next. <F9> to find perv. Support regex. Case sensitive.", "Find", JOptionPane.QUESTION_MESSAGE, null, null, regex);
+	}
+
+	private void inputReplace() {
+		replace = (String) JOptionPane.showInputDialog(this, "<F8> to find next. <F9> to find perv. <F10> to replace. <F11> to replace/find. <F12> to replace all. Support regex. Case sensitive.", "Replace", JOptionPane.QUESTION_MESSAGE, null, null, replace);
 	}
 }
