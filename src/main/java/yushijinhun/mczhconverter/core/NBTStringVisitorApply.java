@@ -12,11 +12,7 @@ public class NBTStringVisitorApply implements NBTStringVisitor {
 
 	@Override
 	public String visit(String str) {
-		String result = patch.get(str);
-		if (result != null) {
-			System.out.println();
-		}
-		return result;
+		return patch.get(str);
 	}
 
 }
