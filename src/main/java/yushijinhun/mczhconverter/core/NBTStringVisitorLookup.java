@@ -20,7 +20,7 @@ public class NBTStringVisitorLookup implements NBTStringVisitor {
 	public String visit(String str, Stack<NodeTrace> trace) {
 		if (TraceFiltering.shouldIgnore(str, trace))
 			return null;
-		if (!paths.containsKey(str)) paths.put(str, new LinkedHashSet<>());
+		if (!paths.containsKey(str)) paths.put(str, new LinkedHashSet<String>());
 		String p = TraceFiltering.toStringTrace(trace);
 		paths.get(str).add(p);
 		path2node.put(p, addtotree(str, trace));
