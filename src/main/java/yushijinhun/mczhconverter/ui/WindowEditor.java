@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -21,11 +23,15 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -37,16 +43,22 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import yushijinhun.mczhconverter.core.NBTDescriptorSet;
 import yushijinhun.mczhconverter.core.NBTStringVisitorApply;
 import yushijinhun.mczhconverter.core.NBTStringVisitorLookup;
-import yushijinhun.mczhconverter.core.NBTStringVisitorLookupUnicodeChar;
+import yushijinhun.mczhconverter.filter.TraceFiltering;
+import yushijinhun.mczhconverter.nbt.NBTTagString;
+import yushijinhun.mczhconverter.trace.NodeTrace;
 import yushijinhun.mczhconverter.util.ParallelUtil;
-import com.spreada.utils.chinese.ZHConverter;
 
 public class WindowEditor extends JFrame {
 
@@ -113,12 +125,10 @@ public class WindowEditor extends JFrame {
 		}
 
 		@Override
-		public void addTableModelListener(TableModelListener l) {
-		}
+		public void addTableModelListener(TableModelListener l) {}
 
 		@Override
-		public void removeTableModelListener(TableModelListener l) {
-		}
+		public void removeTableModelListener(TableModelListener l) {}
 	}
 
 	protected Logger logger = Logger.getLogger(getClass().getCanonicalName());
@@ -132,6 +142,11 @@ public class WindowEditor extends JFrame {
 	private ExecutorService pool = Executors.newSingleThreadExecutor();
 	private String regex = null;
 	private String replace = null;
+	private Map<String, Set<String>> pathinf;
+	private PathShowingWindow pathsWindow = new PathShowingWindow();
+	private TreeShowingWindow treeWindow = new TreeShowingWindow();
+	private AtomicReference<String> pendingSelectedPath = new AtomicReference<>();
+	private Map<String, DefaultMutableTreeNode> path2node;
 
 	public WindowEditor(NBTDescriptorSet descriptorSet) {
 		this.descriptorSet = descriptorSet;
@@ -178,12 +193,6 @@ public class WindowEditor extends JFrame {
 		gbc_buttonExport.gridx = 3;
 		gbc_buttonExport.gridy = 0;
 		contorlpane.add(buttonExport, gbc_buttonExport);
-
-		JButton buttonAutoConvert = new JButton("Auto Convert");
-		GridBagConstraints gbc_buttonAutoConvert = new GridBagConstraints();
-		gbc_buttonAutoConvert.gridx = 4;
-		gbc_buttonAutoConvert.gridy = 0;
-		contorlpane.add(buttonAutoConvert, gbc_buttonAutoConvert);
 
 		JPanel progresspanel = new JPanel();
 		bottompanel.add(progresspanel, BorderLayout.EAST);
@@ -281,19 +290,6 @@ public class WindowEditor extends JFrame {
 				});
 			}
 		});
-		buttonAutoConvert.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				pool.submit(new Runnable() {
-
-					@Override
-					public void run() {
-						doAutoConvert();
-					}
-				});
-			}
-		});
 		table.addKeyListener(new KeyAdapter() {
 
 			@Override
@@ -363,6 +359,91 @@ public class WindowEditor extends JFrame {
 				}
 			}
 		});
+		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				List<String> info = pathsWindow.data;
+				info.clear();
+				String key = rows.get(table.getSelectedRow());
+				if (pathinf != null) {
+					Set<String> paths = pathinf.get(key);
+					if (paths != null) {
+						info.addAll(paths);
+					}
+				}
+				if (!pathsWindow.isVisible()) pathsWindow.setVisible(true);
+				String toSelected = pendingSelectedPath.getAndSet(null);
+				if (toSelected != null) {
+					for (int i = 0; i < info.size(); i++) {
+						if (toSelected.equals(info.get(i))) {
+							pathsWindow.scrollToRow(i);
+							break;
+						}
+					}
+				}
+				pathsWindow.table.updateUI();
+			}
+		});
+		treeWindow.tree.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					TreePath tp = treeWindow.tree.getSelectionModel().getSelectionPath();
+					Object comp = tp.getLastPathComponent();
+					if (comp instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) comp).getUserObject() instanceof NodeTrace) {
+						NodeTrace node = (NodeTrace) ((DefaultMutableTreeNode) comp).getUserObject();
+						if (node.tag instanceof NBTTagString) {
+							String str = ((NBTTagString) node.tag).getString();
+							List<NodeTrace> trace = new LinkedList<>();
+							for (;;) {
+								trace.add(0, node);
+								comp = ((DefaultMutableTreeNode) comp).getParent();
+								if (comp instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) comp).getUserObject() instanceof NodeTrace) {
+									node = (NodeTrace) ((DefaultMutableTreeNode) comp).getUserObject();
+								} else {
+									break;
+								}
+							}
+							String path = TraceFiltering.toStringTrace(trace);
+							pendingSelectedPath.set(path);
+							for (Entry<Integer, String> ety : rows.entrySet()) {
+								if (str.equals(ety.getValue())) {
+									scrollToRow(ety.getKey());
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+
+		});
+		pathsWindow.table.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					if (path2node != null) {
+						String selectedPath = pathsWindow.table.getSelectedValue();
+						DefaultMutableTreeNode node = path2node.get(selectedPath);
+						if (node != null) {
+							List<DefaultMutableTreeNode> path = new LinkedList<>();
+							while (node != null) {
+								path.add(0, node);
+								node = (DefaultMutableTreeNode) node.getParent();
+							}
+							TreePath tp = new TreePath(path.toArray());
+							treeWindow.tree.setExpandsSelectedPaths(true);
+							treeWindow.tree.expandPath(tp);
+							treeWindow.tree.getSelectionModel().setSelectionPath(tp);
+							treeWindow.tree.scrollPathToVisible(tp);
+						}
+					}
+				}
+			}
+		});
 		setSize(640, 480);
 		pool.submit(new Runnable() {
 
@@ -380,7 +461,7 @@ public class WindowEditor extends JFrame {
 	public void doLoad() {
 		synchronized (descriptorSet) {
 			setProgress("Loading...");
-			NBTStringVisitorLookup visitor = new NBTStringVisitorLookupUnicodeChar();
+			NBTStringVisitorLookup visitor = new NBTStringVisitorLookup();
 			try {
 				ParallelUtil.waitTasks(descriptorSet.accpetVisitor(visitor, false));
 			} catch (InterruptedException e) {
@@ -389,7 +470,7 @@ public class WindowEditor extends JFrame {
 			setProgress("Converting...");
 			Map<String, String> patch = new TreeMap<>();
 			Map<Integer, String> rows = new LinkedHashMap<>();
-			for (String str : visitor.getStrings()) {
+			for (String str : visitor.paths.keySet()) {
 				patch.put(str, str);
 			}
 			int count = 0;
@@ -401,6 +482,11 @@ public class WindowEditor extends JFrame {
 				this.patch = patch;
 				this.rows = rows;
 			}
+			pathinf = visitor.paths;
+			path2node = visitor.path2node;
+			treeWindow.tree.setModel(new DefaultTreeModel(visitor.root));
+			treeWindow.setVisible(true);
+			treeWindow.tree.updateUI();
 			table.updateUI();
 			setProgress("");
 		}
@@ -469,29 +555,29 @@ public class WindowEditor extends JFrame {
 			Map<Integer, String> rows = new LinkedHashMap<>();
 
 			switch (mode) {
-			case WindowImportModeSelector.MERGE_KEEP:
-				for (String key : json.keySet()) {
-					patch.put(key, json.getString(key));
-				}
-				synchronized (editlock) {
-					patch.putAll(this.patch);
-				}
-				break;
+				case WindowImportModeSelector.MERGE_KEEP:
+					for (String key : json.keySet()) {
+						patch.put(key, json.getString(key));
+					}
+					synchronized (editlock) {
+						patch.putAll(this.patch);
+					}
+					break;
 
-			case WindowImportModeSelector.MERGE_REPLACE:
-				synchronized (editlock) {
-					patch.putAll(this.patch);
-				}
-				for (String key : json.keySet()) {
-					patch.put(key, json.getString(key));
-				}
-				break;
+				case WindowImportModeSelector.MERGE_REPLACE:
+					synchronized (editlock) {
+						patch.putAll(this.patch);
+					}
+					for (String key : json.keySet()) {
+						patch.put(key, json.getString(key));
+					}
+					break;
 
-			case WindowImportModeSelector.NOMERGE_REPLACE:
-				for (String key : json.keySet()) {
-					patch.put(key, json.getString(key));
-				}
-				break;
+				case WindowImportModeSelector.NOMERGE_REPLACE:
+					for (String key : json.keySet()) {
+						patch.put(key, json.getString(key));
+					}
+					break;
 			}
 
 			int count = 0;
@@ -527,26 +613,11 @@ public class WindowEditor extends JFrame {
 		}
 	}
 
-	public void doAutoConvert() {
-		setProgress("Converting...");
-		try {
-			ZHConverter zhconverter = ZHConverter.getInstance(ZHConverter.SIMPLIFIED);
-			synchronized (editlock) {
-				for (String key : patch.keySet()) {
-					patch.put(key, zhconverter.convert(patch.get(key)));
-				}
-			}
-			table.updateUI();
-		} finally {
-			setProgress("");
-		}
-	}
-
 	public void findNext() {
-		if ((regex == null) || regex.isEmpty()||(table.getSelectedRow()==(rows.size()-1))) {
+		if ((regex == null) || regex.isEmpty() || (table.getSelectedRow() == (rows.size() - 1))) {
 			return;
 		}
-		for (int i = table.getSelectedRow()+1;i < rows.size(); i++) {
+		for (int i = table.getSelectedRow() + 1; i < rows.size(); i++) {
 			String str = patch.get(rows.get(i));
 			if (Pattern.compile(regex).matcher(str).find()) {
 				scrollToRow(i);
@@ -556,10 +627,10 @@ public class WindowEditor extends JFrame {
 	}
 
 	public void findPerv() {
-		if ((regex == null) || regex.isEmpty()||(table.getSelectedRow()==0)) {
+		if ((regex == null) || regex.isEmpty() || (table.getSelectedRow() == 0)) {
 			return;
 		}
-		for (int i = table.getSelectedRow()-1; i > -1; i--) {
+		for (int i = table.getSelectedRow() - 1; i > -1; i--) {
 			String str = patch.get(rows.get(i));
 			if (Pattern.compile(regex).matcher(str).find()) {
 				scrollToRow(i);

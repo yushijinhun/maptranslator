@@ -31,7 +31,7 @@ public class NBTDescriptorGzipFile implements NBTDescriptor {
 
 	@Override
 	public String toString() {
-		return "GzipNBT[" + file.getPath() + "]";
+		return file.getPath();
 	}
 
 }

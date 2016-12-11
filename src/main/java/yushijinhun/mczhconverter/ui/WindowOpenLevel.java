@@ -44,7 +44,7 @@ public class WindowOpenLevel extends JFrame {
 		gbc_labelThreads.gridy = 0;
 		getContentPane().add(labelThreads, gbc_labelThreads);
 
-		textThreads = new JTextField(Runtime.getRuntime().availableProcessors());
+		textThreads = new JTextField("32");
 		GridBagConstraints gbc_textThreads = new GridBagConstraints();
 		gbc_textThreads.insets = new Insets(5, 5, 5, 5);
 		gbc_textThreads.fill = GridBagConstraints.HORIZONTAL;
@@ -84,8 +84,6 @@ public class WindowOpenLevel extends JFrame {
 		gbc_buttonOpenLevel.gridx = 1;
 		gbc_buttonOpenLevel.gridy = 2;
 		getContentPane().add(buttonOpenLevel, gbc_buttonOpenLevel);
-
-		textThreads.setText(String.valueOf(Runtime.getRuntime().availableProcessors()));
 
 		setTitle("Open Level");
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);

@@ -25,6 +25,6 @@ public class NBTDescriptorFile implements NBTDescriptor {
 
 	@Override
 	public String toString() {
-		return "NBT[" + file.getPath() + "]";
+		return file.getPath();
 	}
 }

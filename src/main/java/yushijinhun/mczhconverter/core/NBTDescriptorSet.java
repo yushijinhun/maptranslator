@@ -30,7 +30,9 @@ public class NBTDescriptorSet implements Closeable {
 			logger.info(String.format("%s accpet %s with %s", descriptor, visitor, write ? "rw" : "r"));
 			try {
 				NBTTagCompound nbt = descriptor.read();
-				NBTStringIterator.accept(nbt, visitor);
+				synchronized (visitor) {
+					NBTStringIterator.accept(descriptor.toString(), nbt, visitor);
+				}
 				if (write) {
 					descriptor.write(nbt);
 				}
@@ -62,6 +64,7 @@ public class NBTDescriptorSet implements Closeable {
 
 	@Override
 	public void close() {
+		pool.shutdownNow();
 		for (Closeable closeable : closeables) {
 			logger.info(String.format("Closing %s", closeable));
 			try {
@@ -71,13 +74,5 @@ public class NBTDescriptorSet implements Closeable {
 				continue;
 			}
 		}
-	}
-
-
-	@Override
-	protected void finalize() throws Throwable {
-		pool.shutdownNow();
-		close();
-		super.finalize();
 	}
 }

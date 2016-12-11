@@ -35,6 +35,6 @@ public class NBTDescriptorChunk implements NBTDescriptor {
 
 	@Override
 	public String toString() {
-		return "Chunk[" + x + "," + y + "][" + file.getFile().getPath() + "]";
+		return file.getFile().getPath() + "/chunk[" + x + "," + y + "]";
 	}
 }
