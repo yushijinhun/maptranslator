@@ -5,6 +5,9 @@ import java.util.concurrent.Executor;
 import javax.swing.SwingUtilities;
 import yushijinhun.maptranslator.core.NBTDescriptor;
 import yushijinhun.maptranslator.nbt.NBTCompound;
+import yushijinhun.maptranslator.tree.NBTRootNode;
+import yushijinhun.maptranslator.tree.NBTTreeConstructor;
+import yushijinhun.maptranslator.tree.Node;
 
 public class NBTStoreNode extends Node {
 
