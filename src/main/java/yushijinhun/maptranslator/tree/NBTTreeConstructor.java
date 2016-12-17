@@ -1,31 +1,31 @@
 package yushijinhun.maptranslator.tree;
 
-import yushijinhun.maptranslator.nbt.NBTBase;
-import yushijinhun.maptranslator.nbt.NBTTagCompound;
-import yushijinhun.maptranslator.nbt.NBTTagList;
+import yushijinhun.maptranslator.nbt.NBT;
+import yushijinhun.maptranslator.nbt.NBTCompound;
+import yushijinhun.maptranslator.nbt.NBTList;
 
 public final class NBTTreeConstructor {
 
 	private NBTTreeConstructor() {}
 
-	public static NBTRootNode construct(NBTBase nbt) {
+	public static NBTRootNode construct(NBT nbt) {
 		NBTRootNode root = new NBTRootNode(nbt);
 		constructSubtree(root);
 		return root;
 	}
 
 	private static void constructSubtree(NBTNode node) {
-		NBTBase nbt = node.nbt;
-		if (nbt instanceof NBTTagCompound) {
-			NBTTagCompound casted = ((NBTTagCompound) nbt);
-			for (String key : casted.getKeySet()) {
-				NBTMapNode child = new NBTMapNode(casted.getTag(key), key);
+		NBT nbt = node.nbt;
+		if (nbt instanceof NBTCompound) {
+			NBTCompound casted = ((NBTCompound) nbt);
+			casted.tags().forEach((key, childnbt) -> {
+				NBTMapNode child = new NBTMapNode(childnbt, key);
 				constructSubtree(child);
 				node.addChild(child);
-			}
-		} else if (nbt instanceof NBTTagList) {
-			NBTTagList casted = (NBTTagList) nbt;
-			for (int i = 0; i < casted.tagCount(); i++) {
+			});
+		} else if (nbt instanceof NBTList) {
+			NBTList casted = (NBTList) nbt;
+			for (int i = 0; i < casted.size(); i++) {
 				NBTListNode child = new NBTListNode(casted.get(i), i);
 				constructSubtree(child);
 				node.addChild(child);

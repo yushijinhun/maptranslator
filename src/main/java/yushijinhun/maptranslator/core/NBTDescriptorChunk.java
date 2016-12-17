@@ -3,8 +3,8 @@ package yushijinhun.maptranslator.core;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import yushijinhun.maptranslator.nbt.CompressedStreamTools;
-import yushijinhun.maptranslator.nbt.NBTTagCompound;
+import yushijinhun.maptranslator.nbt.NBTIO;
+import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.nbt.RegionFile;
 
 public class NBTDescriptorChunk implements NBTDescriptor {
@@ -20,16 +20,16 @@ public class NBTDescriptorChunk implements NBTDescriptor {
 	}
 
 	@Override
-	public NBTTagCompound read() throws IOException {
+	public NBTCompound read() throws IOException {
 		try (DataInputStream in = file.getChunkDataInputStream(x, y)) {
-			return CompressedStreamTools.read(in);
+			return NBTIO.read(in);
 		}
 	}
 
 	@Override
-	public void write(NBTTagCompound nbt) throws IOException {
+	public void write(NBTCompound nbt) throws IOException {
 		try (DataOutputStream out = file.getChunkDataOutputStream(x, y)) {
-			CompressedStreamTools.write(nbt, out);
+			NBTIO.write(nbt, out);
 		}
 	}
 

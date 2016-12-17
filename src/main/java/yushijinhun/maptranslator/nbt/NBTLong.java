@@ -4,30 +4,26 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class NBTTagLong extends NBTBase.NBTPrimitive {
-	/** The long value for the tag. */
+public class NBTLong extends NBT.NBTPrimitive {
+
 	private long data;
 
-	NBTTagLong() {
-	}
+	NBTLong() {}
 
-	public NBTTagLong(long data) {
+	public NBTLong(long data) {
 		this.data = data;
 	}
 
-	/**
-	 * Creates a clone of the tag.
-	 */
 	@Override
-	public NBTBase copy() {
-		return new NBTTagLong(data);
+	public NBT clone() {
+		return new NBTLong(data);
 	}
 
 	@Override
-	public boolean equals(Object p_equals_1_) {
-		if (super.equals(p_equals_1_)) {
-			NBTTagLong var2 = (NBTTagLong) p_equals_1_;
-			return data == var2.data;
+	public boolean equals(Object another) {
+		if (super.equals(another)) {
+			NBTLong casted = (NBTLong) another;
+			return data == casted.data;
 		}
 		return false;
 	}
@@ -47,9 +43,6 @@ public class NBTTagLong extends NBTBase.NBTPrimitive {
 		return data;
 	}
 
-	/**
-	 * Gets the type byte for the tag.
-	 */
 	@Override
 	public byte getId() {
 		return (byte) 4;
@@ -76,8 +69,7 @@ public class NBTTagLong extends NBTBase.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input, int depth, NBTSizeTracker sizeTracker) throws IOException {
-		sizeTracker.read(64L);
+	void read(DataInput input) throws IOException {
 		data = input.readLong();
 	}
 
@@ -86,9 +78,6 @@ public class NBTTagLong extends NBTBase.NBTPrimitive {
 		return "" + data + "L";
 	}
 
-	/**
-	 * Write the actual data contents of the tag, implemented in NBT extension classes
-	 */
 	@Override
 	void write(DataOutput output) throws IOException {
 		output.writeLong(data);

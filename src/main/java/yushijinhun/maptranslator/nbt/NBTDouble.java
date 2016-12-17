@@ -4,30 +4,26 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class NBTTagDouble extends NBTBase.NBTPrimitive {
-	/** The double value for the tag. */
+public class NBTDouble extends NBT.NBTPrimitive {
+
 	private double data;
 
-	NBTTagDouble() {
-	}
+	NBTDouble() {}
 
-	public NBTTagDouble(double data) {
+	public NBTDouble(double data) {
 		this.data = data;
 	}
 
-	/**
-	 * Creates a clone of the tag.
-	 */
 	@Override
-	public NBTBase copy() {
-		return new NBTTagDouble(data);
+	public NBT clone() {
+		return new NBTDouble(data);
 	}
 
 	@Override
-	public boolean equals(Object p_equals_1_) {
-		if (super.equals(p_equals_1_)) {
-			NBTTagDouble var2 = (NBTTagDouble) p_equals_1_;
-			return data == var2.data;
+	public boolean equals(Object another) {
+		if (super.equals(another)) {
+			NBTDouble casted = (NBTDouble) another;
+			return data == casted.data;
 		}
 		return false;
 	}
@@ -47,9 +43,6 @@ public class NBTTagDouble extends NBTBase.NBTPrimitive {
 		return (float) data;
 	}
 
-	/**
-	 * Gets the type byte for the tag.
-	 */
 	@Override
 	public byte getId() {
 		return (byte) 6;
@@ -77,8 +70,7 @@ public class NBTTagDouble extends NBTBase.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input, int depth, NBTSizeTracker sizeTracker) throws IOException {
-		sizeTracker.read(64L);
+	void read(DataInput input) throws IOException {
 		data = input.readDouble();
 	}
 
@@ -87,9 +79,6 @@ public class NBTTagDouble extends NBTBase.NBTPrimitive {
 		return "" + data + "d";
 	}
 
-	/**
-	 * Write the actual data contents of the tag, implemented in NBT extension classes
-	 */
 	@Override
 	void write(DataOutput output) throws IOException {
 		output.writeDouble(data);

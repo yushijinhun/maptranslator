@@ -1,11 +1,11 @@
 package yushijinhun.maptranslator.core;
 
 import java.io.IOException;
-import yushijinhun.maptranslator.nbt.NBTTagCompound;
+import yushijinhun.maptranslator.nbt.NBTCompound;
 
 public interface NBTDescriptor {
 
-	NBTTagCompound read() throws IOException;
+	NBTCompound read() throws IOException;
 
-	void write(NBTTagCompound nbt) throws IOException;
+	void write(NBTCompound nbt) throws IOException;
 }

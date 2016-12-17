@@ -1,12 +1,12 @@
 package yushijinhun.maptranslator.tree;
 
-import yushijinhun.maptranslator.nbt.NBTBase;
+import yushijinhun.maptranslator.nbt.NBT;
 
 public class NBTMapNode extends NBTNode {
 
 	public final String key;
 
-	public NBTMapNode(NBTBase nbt, String key) {
+	public NBTMapNode(NBT nbt, String key) {
 		super(nbt);
 		this.key = key;
 	}

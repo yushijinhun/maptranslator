@@ -10,17 +10,17 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import yushijinhun.maptranslator.nbt.NBTTagCompound;
+import yushijinhun.maptranslator.nbt.NBTCompound;
 
 public class NBTDescriptorSet implements Closeable {
 
 	protected class VisitTask implements Runnable {
 
 		public final NBTDescriptor descriptor;
-		public final Consumer<NBTTagCompound> visitor;
+		public final Consumer<NBTCompound> visitor;
 		public final boolean write;
 
-		public VisitTask(NBTDescriptor descriptor, Consumer<NBTTagCompound> visitor, boolean write) {
+		public VisitTask(NBTDescriptor descriptor, Consumer<NBTCompound> visitor, boolean write) {
 			this.descriptor = descriptor;
 			this.visitor = visitor;
 			this.write = write;
@@ -30,7 +30,7 @@ public class NBTDescriptorSet implements Closeable {
 		public void run() {
 			logger.info(String.format("%s accpet %s with %s", descriptor, visitor, write ? "rw" : "r"));
 			try {
-				NBTTagCompound nbt = descriptor.read();
+				NBTCompound nbt = descriptor.read();
 				synchronized (visitor) {
 					visitor.accept(nbt);
 				}
@@ -55,7 +55,7 @@ public class NBTDescriptorSet implements Closeable {
 		this.pool = pool;
 	}
 
-	public Set<Future<?>> accpetVisitor(Consumer<NBTTagCompound> visitor, boolean write) {
+	public Set<Future<?>> accpetVisitor(Consumer<NBTCompound> visitor, boolean write) {
 		Set<Future<?>> tasks = Collections.synchronizedSet(new LinkedHashSet<Future<?>>());
 		for (NBTDescriptor descriptor : descriptors) {
 			tasks.add(pool.submit(new VisitTask(descriptor, visitor, write)));

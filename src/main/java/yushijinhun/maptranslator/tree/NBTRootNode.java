@@ -1,10 +1,10 @@
 package yushijinhun.maptranslator.tree;
 
-import yushijinhun.maptranslator.nbt.NBTBase;
+import yushijinhun.maptranslator.nbt.NBT;
 
 public class NBTRootNode extends NBTNode {
 
-	public NBTRootNode(NBTBase nbt) {
+	public NBTRootNode(NBT nbt) {
 		super(nbt);
 	}
 

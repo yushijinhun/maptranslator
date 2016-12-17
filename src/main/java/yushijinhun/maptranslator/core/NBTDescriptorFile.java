@@ -2,8 +2,8 @@ package yushijinhun.maptranslator.core;
 
 import java.io.File;
 import java.io.IOException;
-import yushijinhun.maptranslator.nbt.CompressedStreamTools;
-import yushijinhun.maptranslator.nbt.NBTTagCompound;
+import yushijinhun.maptranslator.nbt.NBTIO;
+import yushijinhun.maptranslator.nbt.NBTCompound;
 
 public class NBTDescriptorFile implements NBTDescriptor {
 
@@ -14,13 +14,13 @@ public class NBTDescriptorFile implements NBTDescriptor {
 	}
 
 	@Override
-	public NBTTagCompound read() throws IOException {
-		return CompressedStreamTools.read(file);
+	public NBTCompound read() throws IOException {
+		return NBTIO.read(file);
 	}
 
 	@Override
-	public void write(NBTTagCompound nbt) throws IOException {
-		CompressedStreamTools.write(nbt, file);
+	public void write(NBTCompound nbt) throws IOException {
+		NBTIO.write(nbt, file);
 	}
 
 	@Override

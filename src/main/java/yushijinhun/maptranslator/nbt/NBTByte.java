@@ -4,29 +4,25 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class NBTTagByte extends NBTBase.NBTPrimitive {
-	/** The byte value for the tag. */
+public class NBTByte extends NBT.NBTPrimitive {
+
 	private byte data;
 
-	NBTTagByte() {
-	}
+	NBTByte() {}
 
-	public NBTTagByte(byte data) {
+	public NBTByte(byte data) {
 		this.data = data;
 	}
 
-	/**
-	 * Creates a clone of the tag.
-	 */
 	@Override
-	public NBTBase copy() {
-		return new NBTTagByte(data);
+	public NBT clone() {
+		return new NBTByte(data);
 	}
 
 	@Override
 	public boolean equals(Object p_equals_1_) {
 		if (super.equals(p_equals_1_)) {
-			NBTTagByte var2 = (NBTTagByte) p_equals_1_;
+			NBTByte var2 = (NBTByte) p_equals_1_;
 			return data == var2.data;
 		}
 		return false;
@@ -47,9 +43,6 @@ public class NBTTagByte extends NBTBase.NBTPrimitive {
 		return data;
 	}
 
-	/**
-	 * Gets the type byte for the tag.
-	 */
 	@Override
 	public byte getId() {
 		return (byte) 1;
@@ -76,8 +69,7 @@ public class NBTTagByte extends NBTBase.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input, int depth, NBTSizeTracker sizeTracker) throws IOException {
-		sizeTracker.read(8L);
+	void read(DataInput input) throws IOException {
 		data = input.readByte();
 	}
 
@@ -86,9 +78,6 @@ public class NBTTagByte extends NBTBase.NBTPrimitive {
 		return "" + data + "b";
 	}
 
-	/**
-	 * Write the actual data contents of the tag, implemented in NBT extension classes
-	 */
 	@Override
 	void write(DataOutput output) throws IOException {
 		output.writeByte(data);
