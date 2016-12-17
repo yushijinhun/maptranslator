@@ -12,21 +12,21 @@ public class NBTCompound extends NBT {
 
 	private static final int T_PRIMITIVE = 99;
 
-	private static String readKey(DataInput input) throws IOException {
+	protected static String readKey(DataInput input) throws IOException {
 		return input.readUTF();
 	}
 
-	static NBT readNBT(byte id, String key, DataInput input) throws IOException {
+	protected static NBT readNBT(byte id, String key, DataInput input) throws IOException {
 		NBT nbt = NBT.createNewByType(id);
 		nbt.read(input);
 		return nbt;
 	}
 
-	private static byte readType(DataInput input) throws IOException {
+	protected static byte readType(DataInput input) throws IOException {
 		return input.readByte();
 	}
 
-	private static void writeEntry(String name, NBT data, DataOutput output) throws IOException {
+	protected static void writeEntry(String name, NBT data, DataOutput output) throws IOException {
 		output.writeByte(data.getId());
 
 		if (data.getId() != 0) {
@@ -179,7 +179,7 @@ public class NBTCompound extends NBT {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		tagMap.clear();
 		byte type;
 
@@ -251,7 +251,7 @@ public class NBTCompound extends NBT {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		for (Entry<String, NBT> entry : tagMap.entrySet()) {
 			writeEntry(entry.getKey(), entry.getValue(), output);
 		}

@@ -8,7 +8,7 @@ public class NBTDouble extends NBT.NBTPrimitive {
 
 	private double data;
 
-	NBTDouble() {}
+	protected NBTDouble() {}
 
 	public NBTDouble(double data) {
 		this.data = data;
@@ -70,7 +70,7 @@ public class NBTDouble extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		data = input.readDouble();
 	}
 
@@ -80,7 +80,7 @@ public class NBTDouble extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		output.writeDouble(data);
 	}
 }

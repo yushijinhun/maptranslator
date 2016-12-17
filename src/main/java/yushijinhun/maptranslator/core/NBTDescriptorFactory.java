@@ -17,7 +17,7 @@ public final class NBTDescriptorFactory {
 
 	private static Logger logger = Logger.getLogger(NBTDescriptorFactory.class.getCanonicalName());
 
-	public static NBTDescriptorSet createDescriptorSet(File file, int threads) {
+	public static NBTDescriptorSet getDescriptors(File file, int threads) {
 		Set<NBTDescriptor> descriptors = new LinkedHashSet<>();
 		Set<Closeable> closeables = new LinkedHashSet<>();
 		getDescriptors(file, descriptors, closeables);

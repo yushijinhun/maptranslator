@@ -7,7 +7,7 @@ import java.io.IOException;
 public class NBTShort extends NBT.NBTPrimitive {
 	private short data;
 
-	NBTShort() {
+	protected NBTShort() {
 	}
 
 	public NBTShort(short data) {
@@ -69,7 +69,7 @@ public class NBTShort extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		data = input.readShort();
 	}
 
@@ -79,7 +79,7 @@ public class NBTShort extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		output.writeShort(data);
 	}
 }

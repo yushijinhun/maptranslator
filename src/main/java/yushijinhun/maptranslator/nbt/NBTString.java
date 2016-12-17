@@ -9,7 +9,7 @@ public class NBTString extends NBT {
 
 	private String data;
 
-	NBTString() {}
+	protected NBTString() {}
 
 	public NBTString(String data) {
 		this.data = Objects.requireNonNull(data);
@@ -44,7 +44,7 @@ public class NBTString extends NBT {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		data = input.readUTF();
 	}
 
@@ -54,7 +54,7 @@ public class NBTString extends NBT {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		output.writeUTF(data);
 	}
 }

@@ -9,7 +9,7 @@ public class NBTIntArray extends NBT {
 
 	private int[] data;
 
-	NBTIntArray() {}
+	protected NBTIntArray() {}
 
 	public NBTIntArray(int[] data) {
 		this.data = data;
@@ -42,7 +42,7 @@ public class NBTIntArray extends NBT {
 	}
 
 	@Override
-	void read(DataInput in) throws IOException {
+	protected void read(DataInput in) throws IOException {
 		int len = in.readInt();
 		data = new int[len];
 
@@ -62,7 +62,7 @@ public class NBTIntArray extends NBT {
 	}
 
 	@Override
-	void write(DataOutput out) throws IOException {
+	protected void write(DataOutput out) throws IOException {
 		out.writeInt(data.length);
 
 		for (int element : data) {

@@ -14,7 +14,7 @@ public class NBTList extends NBT {
 	 * The type byte for the tags in the list - they must all be of the same
 	 * type.
 	 */
-	private byte tagType = 0;
+	protected byte tagType = 0;
 
 	public void add(NBT nbt) {
 		if (tagType == 0) {
@@ -83,7 +83,7 @@ public class NBTList extends NBT {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		tagType = input.readByte();
 		int len = input.readInt();
 
@@ -123,7 +123,7 @@ public class NBTList extends NBT {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		if (!tagList.isEmpty()) {
 			tagType = tagList.get(0).getId();
 		} else {

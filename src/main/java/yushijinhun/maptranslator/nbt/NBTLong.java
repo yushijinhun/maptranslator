@@ -8,7 +8,7 @@ public class NBTLong extends NBT.NBTPrimitive {
 
 	private long data;
 
-	NBTLong() {}
+	protected NBTLong() {}
 
 	public NBTLong(long data) {
 		this.data = data;
@@ -69,7 +69,7 @@ public class NBTLong extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		data = input.readLong();
 	}
 
@@ -79,7 +79,7 @@ public class NBTLong extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		output.writeLong(data);
 	}
 }

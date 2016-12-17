@@ -2,65 +2,50 @@ package yushijinhun.maptranslator.core;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import yushijinhun.maptranslator.nbt.NBTCompound;
+import yushijinhun.maptranslator.tree.NBTStoreNode;
+import yushijinhun.maptranslator.tree.RootNode;
 
 public class NBTDescriptorSet implements Closeable {
 
-	protected class VisitTask implements Runnable {
-
-		public final NBTDescriptor descriptor;
-		public final Consumer<NBTCompound> visitor;
-		public final boolean write;
-
-		public VisitTask(NBTDescriptor descriptor, Consumer<NBTCompound> visitor, boolean write) {
-			this.descriptor = descriptor;
-			this.visitor = visitor;
-			this.write = write;
-		}
-
-		@Override
-		public void run() {
-			logger.info(String.format("%s accpet %s with %s", descriptor, visitor, write ? "rw" : "r"));
-			try {
-				NBTCompound nbt = descriptor.read();
-				synchronized (visitor) {
-					visitor.accept(nbt);
-				}
-				if (write) {
-					descriptor.write(nbt);
-				}
-			} catch (Exception e) {
-				logger.log(Level.WARNING, String.format("%s failed to accpet %s", descriptor, visitor), e);
-			}
-		}
-	}
-
-	protected Logger logger = Logger.getLogger(getClass().getCanonicalName());
-	protected ExecutorService pool;
+	private Logger logger = Logger.getLogger(getClass().getCanonicalName());
+	private ExecutorService pool;
 
 	public final Set<NBTDescriptor> descriptors;
 	public final Set<Closeable> closeables;
+	public final RootNode tree;
 
 	public NBTDescriptorSet(ExecutorService pool, Set<NBTDescriptor> descriptors, Set<Closeable> closeables) {
 		this.descriptors = descriptors;
 		this.closeables = closeables;
 		this.pool = pool;
+		tree = new RootNode();
+		descriptors.forEach(descriptor -> tree.addChild(new NBTStoreNode(descriptor)));
 	}
 
-	public Set<Future<?>> accpetVisitor(Consumer<NBTCompound> visitor, boolean write) {
-		Set<Future<?>> tasks = Collections.synchronizedSet(new LinkedHashSet<Future<?>>());
-		for (NBTDescriptor descriptor : descriptors) {
-			tasks.add(pool.submit(new VisitTask(descriptor, visitor, write)));
-		}
-		return tasks;
+	public CompletableFuture<Void> read() {
+		return executeOnChildren(child -> child.asyncRead(pool));
+	}
+
+	public CompletableFuture<Void> write() {
+		return executeOnChildren(child -> child.asyncWrite(pool));
+	}
+
+	private CompletableFuture<Void> executeOnChildren(Function<NBTStoreNode, CompletableFuture<?>> action) {
+		List<CompletableFuture<?>> subtasks = new ArrayList<>();
+		tree.unmodifiableChildren().forEach(child -> {
+			if (child instanceof NBTStoreNode) {
+				subtasks.add(action.apply((NBTStoreNode) child));
+			}
+		});
+		return CompletableFuture.allOf(subtasks.toArray(new CompletableFuture[subtasks.size()]));
 	}
 
 	@Override

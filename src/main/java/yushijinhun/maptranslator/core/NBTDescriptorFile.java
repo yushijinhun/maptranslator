@@ -2,6 +2,7 @@ package yushijinhun.maptranslator.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 
@@ -14,13 +15,21 @@ public class NBTDescriptorFile implements NBTDescriptor {
 	}
 
 	@Override
-	public NBTCompound read() throws IOException {
-		return NBTIO.read(file);
+	public NBTCompound read() {
+		try {
+			return NBTIO.read(file);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 
 	@Override
-	public void write(NBTCompound nbt) throws IOException {
-		NBTIO.write(nbt, file);
+	public void write(NBTCompound nbt) {
+		try {
+			NBTIO.write(nbt, file);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 
 	@Override

@@ -8,7 +8,7 @@ public class NBTInt extends NBT.NBTPrimitive {
 
 	private int data;
 
-	NBTInt() {}
+	protected NBTInt() {}
 
 	public NBTInt(int data) {
 		this.data = data;
@@ -69,7 +69,7 @@ public class NBTInt extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		data = input.readInt();
 	}
 
@@ -79,7 +79,7 @@ public class NBTInt extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		output.writeInt(data);
 	}
 }

@@ -17,7 +17,7 @@ public class NBTEnd extends NBT {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {}
+	protected void read(DataInput input) throws IOException {}
 
 	@Override
 	public String toString() {
@@ -25,5 +25,5 @@ public class NBTEnd extends NBT {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {}
+	protected void write(DataOutput output) throws IOException {}
 }

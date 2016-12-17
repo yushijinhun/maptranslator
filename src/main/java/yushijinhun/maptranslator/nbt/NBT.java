@@ -89,10 +89,10 @@ public abstract class NBT {
 		return getId();
 	}
 
-	abstract void read(DataInput input) throws IOException;
-
 	@Override
 	public abstract String toString();
 
-	abstract void write(DataOutput output) throws IOException;
+	protected abstract void read(DataInput input) throws IOException;
+
+	protected abstract void write(DataOutput output) throws IOException;
 }

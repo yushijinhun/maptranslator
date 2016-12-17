@@ -8,7 +8,7 @@ public class NBTFloat extends NBT.NBTPrimitive {
 
 	private float data;
 
-	NBTFloat() {}
+	protected NBTFloat() {}
 
 	public NBTFloat(float data) {
 		this.data = data;
@@ -69,7 +69,7 @@ public class NBTFloat extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void read(DataInput input) throws IOException {
+	protected void read(DataInput input) throws IOException {
 		data = input.readFloat();
 	}
 
@@ -79,7 +79,7 @@ public class NBTFloat extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	void write(DataOutput output) throws IOException {
+	protected void write(DataOutput output) throws IOException {
 		output.writeFloat(data);
 	}
 }
