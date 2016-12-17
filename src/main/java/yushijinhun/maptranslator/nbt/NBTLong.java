@@ -6,6 +6,8 @@ import java.io.IOException;
 
 public class NBTLong extends NBT.NBTPrimitive {
 
+	public static final byte ID = 4;
+
 	private long data;
 
 	protected NBTLong() {}
@@ -81,5 +83,10 @@ public class NBTLong extends NBT.NBTPrimitive {
 	@Override
 	protected void write(DataOutput output) throws IOException {
 		output.writeLong(data);
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }

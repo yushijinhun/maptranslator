@@ -7,6 +7,8 @@ import java.util.Objects;
 
 public class NBTString extends NBT {
 
+	public static final byte ID = 8;
+
 	private String data;
 
 	protected NBTString() {}
@@ -56,5 +58,10 @@ public class NBTString extends NBT {
 	@Override
 	protected void write(DataOutput output) throws IOException {
 		output.writeUTF(data);
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }

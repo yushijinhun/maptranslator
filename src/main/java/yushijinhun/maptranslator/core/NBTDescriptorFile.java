@@ -1,39 +1,36 @@
 package yushijinhun.maptranslator.core;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import yushijinhun.maptranslator.nbt.NBTIO;
-import yushijinhun.maptranslator.nbt.NBTCompound;
+import java.util.Collections;
+import java.util.Set;
 
-public class NBTDescriptorFile implements NBTDescriptor {
+public abstract class NBTDescriptorFile implements NBTDescriptor {
 
-	private File file;
+	protected File file;
 
 	public NBTDescriptorFile(File file) {
 		this.file = file;
 	}
 
 	@Override
-	public NBTCompound read() {
-		try {
-			return NBTIO.read(file);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
-
-	@Override
-	public void write(NBTCompound nbt) {
-		try {
-			NBTIO.write(nbt, file);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
-
-	@Override
 	public String toString() {
 		return file.getPath();
 	}
+
+	@Override
+	public Set<String> getTags() {
+		String filename = file.getName();
+		String parentname = file.getParentFile().getName();
+		if ("level.dat".equals(filename)) {
+			return Collections.singleton("store.level");
+		} else if ("players".equals(parentname) || "playerdata".equals(parentname)) {
+			return Collections.singleton("store.player");
+		} else if ("data".equals(parentname)) {
+			if ("scoreboard.dat".equals(filename)) {
+				return Collections.singleton("store.scoreboard");
+			}
+		}
+		return Collections.emptySet();
+	}
+
 }

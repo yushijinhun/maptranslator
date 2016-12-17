@@ -64,7 +64,7 @@ public final class NBTDescriptorFactory {
 		if (isInGzip(file)) {
 			result.add(new NBTDescriptorGzipFile(file));
 		} else {
-			result.add(new NBTDescriptorFile(file));
+			result.add(new NBTDescriptorPlainFile(file));
 		}
 	}
 

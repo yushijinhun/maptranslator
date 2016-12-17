@@ -1,23 +1,21 @@
 package yushijinhun.maptranslator.core;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 
-public class NBTDescriptorGzipFile extends NBTDescriptorFile {
+public class NBTDescriptorPlainFile extends NBTDescriptorFile {
 
-	public NBTDescriptorGzipFile(File file) {
+	public NBTDescriptorPlainFile(File file) {
 		super(file);
 	}
 
 	@Override
 	public NBTCompound read() {
-		try (FileInputStream in = new FileInputStream(file)) {
-			return NBTIO.readCompressed(in);
+		try {
+			return NBTIO.read(file);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
@@ -25,8 +23,8 @@ public class NBTDescriptorGzipFile extends NBTDescriptorFile {
 
 	@Override
 	public void write(NBTCompound nbt) {
-		try (FileOutputStream out = new FileOutputStream(file)) {
-			NBTIO.writeCompressed(nbt, out);
+		try {
+			NBTIO.write(nbt, file);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}

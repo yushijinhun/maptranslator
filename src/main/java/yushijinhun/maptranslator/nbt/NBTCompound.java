@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 
 public class NBTCompound extends NBT {
 
+	public static final byte ID = 10;
+
 	private static final int T_PRIMITIVE = 99;
 
 	protected static String readKey(DataInput input) throws IOException {
@@ -132,7 +134,7 @@ public class NBTCompound extends NBT {
 		return (byte) 10;
 	}
 
-	public NBT getTag(String key) {
+	public NBT get(String key) {
 		return tagMap.get(key);
 	}
 
@@ -256,5 +258,10 @@ public class NBTCompound extends NBT {
 			writeEntry(entry.getKey(), entry.getValue(), output);
 		}
 		output.writeByte(0);
+	}
+
+	@Override
+	public Object getData() {
+		return null;
 	}
 }

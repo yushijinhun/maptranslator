@@ -6,6 +6,8 @@ import java.io.IOException;
 
 public class NBTDouble extends NBT.NBTPrimitive {
 
+	public static final byte ID = 6;
+
 	private double data;
 
 	protected NBTDouble() {}
@@ -82,5 +84,10 @@ public class NBTDouble extends NBT.NBTPrimitive {
 	@Override
 	protected void write(DataOutput output) throws IOException {
 		output.writeDouble(data);
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }

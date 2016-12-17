@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 public class NBTIntArray extends NBT {
 
+	public static final byte ID = 11;
+
 	private int[] data;
 
 	protected NBTIntArray() {}
@@ -68,5 +70,10 @@ public class NBTIntArray extends NBT {
 		for (int element : data) {
 			out.writeInt(element);
 		}
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }

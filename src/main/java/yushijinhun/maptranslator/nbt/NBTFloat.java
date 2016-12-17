@@ -6,6 +6,8 @@ import java.io.IOException;
 
 public class NBTFloat extends NBT.NBTPrimitive {
 
+	public static final byte ID = 5;
+
 	private float data;
 
 	protected NBTFloat() {}
@@ -81,5 +83,10 @@ public class NBTFloat extends NBT.NBTPrimitive {
 	@Override
 	protected void write(DataOutput output) throws IOException {
 		output.writeFloat(data);
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }

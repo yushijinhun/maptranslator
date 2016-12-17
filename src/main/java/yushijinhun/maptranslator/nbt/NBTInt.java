@@ -6,6 +6,8 @@ import java.io.IOException;
 
 public class NBTInt extends NBT.NBTPrimitive {
 
+	public static final byte ID = 3;
+
 	private int data;
 
 	protected NBTInt() {}
@@ -81,5 +83,10 @@ public class NBTInt extends NBT.NBTPrimitive {
 	@Override
 	protected void write(DataOutput output) throws IOException {
 		output.writeInt(data);
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }

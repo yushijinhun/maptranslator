@@ -8,6 +8,8 @@ import java.util.List;
 
 public class NBTList extends NBT {
 
+	public static final byte ID = 9;
+
 	private List<NBT> tagList = new ArrayList<>();
 
 	/**
@@ -136,5 +138,10 @@ public class NBTList extends NBT {
 		for (int var2 = 0; var2 < tagList.size(); ++var2) {
 			tagList.get(var2).write(output);
 		}
+	}
+
+	@Override
+	public Object getData() {
+		return null;
 	}
 }

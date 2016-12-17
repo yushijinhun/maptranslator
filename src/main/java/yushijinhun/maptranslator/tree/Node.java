@@ -39,7 +39,7 @@ public abstract class Node {
 	boolean runTagMarking(TagMarker marker) {
 		boolean changed = false;
 		if (marker.condition.test(this)) {
-			changed |= tags.addAll(marker.tags);
+			changed |= tags.addAll(marker.tags.apply(this));
 		}
 		for (Node child : children) {
 			changed |= child.runTagMarking(marker);

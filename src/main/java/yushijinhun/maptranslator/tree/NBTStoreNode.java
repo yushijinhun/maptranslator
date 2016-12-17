@@ -24,7 +24,9 @@ public class NBTStoreNode extends Node {
 		return CompletableFuture.supplyAsync(descriptor::read, executor)
 				.thenAcceptAsync(nbt -> {
 					unmodifiableChildren().forEach(this::removeChild);
-					addChild(NBTTreeConstructor.construct(nbt));
+					NBTRootNode node = NBTTreeConstructor.construct(nbt);
+					node.tags().addAll(descriptor.getTags());
+					addChild(node);
 				}, SwingUtilities::invokeLater);
 	}
 

@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 public class NBTByteArray extends NBT {
 
+	public static final byte ID = 7;
+
 	private byte[] data;
 
 	protected NBTByteArray() {}
@@ -57,5 +59,10 @@ public class NBTByteArray extends NBT {
 	protected void write(DataOutput output) throws IOException {
 		output.writeInt(data.length);
 		output.write(data);
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }

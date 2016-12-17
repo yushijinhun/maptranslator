@@ -4,6 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
+import java.util.Set;
 import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.nbt.RegionFile;
@@ -41,5 +43,10 @@ public class NBTDescriptorChunk implements NBTDescriptor {
 	@Override
 	public String toString() {
 		return file.getFile().getPath() + "/chunk[" + x + "," + y + "]";
+	}
+
+	@Override
+	public Set<String> getTags() {
+		return Collections.singleton("store.chunk");
 	}
 }

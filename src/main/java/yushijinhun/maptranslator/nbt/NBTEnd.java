@@ -6,6 +6,8 @@ import java.io.IOException;
 
 public class NBTEnd extends NBT {
 
+	public static final byte ID = 0;
+
 	@Override
 	public NBT clone() {
 		return new NBTEnd();
@@ -26,4 +28,9 @@ public class NBTEnd extends NBT {
 
 	@Override
 	protected void write(DataOutput output) throws IOException {}
+
+	@Override
+	public Object getData() {
+		return null;
+	}
 }

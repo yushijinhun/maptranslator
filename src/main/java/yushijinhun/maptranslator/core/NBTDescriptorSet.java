@@ -42,7 +42,14 @@ public class NBTDescriptorSet implements Closeable {
 		List<CompletableFuture<?>> subtasks = new ArrayList<>();
 		tree.unmodifiableChildren().forEach(child -> {
 			if (child instanceof NBTStoreNode) {
-				subtasks.add(action.apply((NBTStoreNode) child));
+				subtasks.add(action.apply((NBTStoreNode) child)
+						.handle((ret, e) -> {
+							if (e == null)
+								logger.info(String.format("Done: %s", child));
+							else
+								logger.log(Level.WARNING, String.format("Failed: %s", child), e);
+							return null;
+						}));
 			}
 		});
 		return CompletableFuture.allOf(subtasks.toArray(new CompletableFuture[subtasks.size()]));

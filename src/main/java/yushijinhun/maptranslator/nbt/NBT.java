@@ -95,4 +95,7 @@ public abstract class NBT {
 	protected abstract void read(DataInput input) throws IOException;
 
 	protected abstract void write(DataOutput output) throws IOException;
+
+	public abstract Object getData();
+
 }

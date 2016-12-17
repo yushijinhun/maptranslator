@@ -5,10 +5,12 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class NBTShort extends NBT.NBTPrimitive {
+
+	public static final byte ID = 2;
+
 	private short data;
 
-	protected NBTShort() {
-	}
+	protected NBTShort() {}
 
 	public NBTShort(short data) {
 		this.data = data;
@@ -81,5 +83,10 @@ public class NBTShort extends NBT.NBTPrimitive {
 	@Override
 	protected void write(DataOutput output) throws IOException {
 		output.writeShort(data);
+	}
+
+	@Override
+	public Object getData() {
+		return data;
 	}
 }
