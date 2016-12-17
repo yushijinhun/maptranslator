@@ -8,7 +8,6 @@ public class NodeMatcher implements Predicate<Node> {
 		return new NodeMatcher(exp);
 	}
 
-
 	private String[] paths;
 	private Integer[] ints;
 	private String[][] tags;
@@ -49,8 +48,8 @@ public class NodeMatcher implements Predicate<Node> {
 			if (node == null)
 				return false;
 			if (paths[i] != null)
-				if ((node instanceof NBTMapNode && !paths[i].equals(((NBTMapNode) node).key)) ||
-						(node instanceof NBTListNode && (ints[i] == null || ints[i] != ((NBTListNode) node).index)))
+				if ((node instanceof MapNode && !paths[i].equals(((MapNode) node).key())) ||
+						(node instanceof ListNode && (ints[i] == null || ints[i] != ((ListNode) node).index())))
 					return false;
 			if (tags[i] != null)
 				for (String tag : tags[i])

@@ -6,7 +6,7 @@ import yushijinhun.maptranslator.core.NBTDescriptorFactory;
 import yushijinhun.maptranslator.core.NBTDescriptorSet;
 import yushijinhun.maptranslator.nbt.NBT;
 import yushijinhun.maptranslator.nbt.NBTString;
-import yushijinhun.maptranslator.process.TagMarkers;
+import yushijinhun.maptranslator.tree.MinecraftRules;
 import yushijinhun.maptranslator.tree.NBTNode;
 import yushijinhun.maptranslator.tree.Node;
 import yushijinhun.maptranslator.tree.TreeIterator;
@@ -15,11 +15,12 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 		//test code
-		NBTDescriptorSet collection = NBTDescriptorFactory.getDescriptors(new File("/home/yushijinhun/.minecraft/saves"), 8);
+		NBTDescriptorSet collection = NBTDescriptorFactory.getDescriptors(new File("/home/yushijinhun/.minecraft/saves/Captive Minecraft III"), 8);
 		collection.read().get();
 
 		TreeIterator iterator = new TreeIterator();
-		iterator.markers.addAll(Arrays.asList(TagMarkers.MARKERS));
+		iterator.markers.addAll(Arrays.asList(MinecraftRules.MARKERS));
+		iterator.replacers.addAll(Arrays.asList(MinecraftRules.REPLACERS));
 		iterator.iterate(collection.tree);
 
 		printTree(collection.tree, 0);

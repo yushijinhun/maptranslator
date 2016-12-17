@@ -53,15 +53,17 @@ public abstract class Node {
 			if (replacer.condition.test(child)) {
 				changed = true;
 				Node newChild = replacer.replacer.apply(child);
-				child.parent = null;
-				newChild.parent = this;
+				if (newChild != child) {
+					child.parent = null;
+					newChild.parent = this;
 
-				// re-insert all nodes to ensure the order
-				Set<Node> copied = new LinkedHashSet<>(children);
-				children.clear();
-				for (Node ch : copied) {
-					if (ch == child) ch = newChild;
-					children.add(ch);
+					// re-insert all nodes to ensure the order
+					Set<Node> copied = new LinkedHashSet<>(children);
+					children.clear();
+					for (Node ch : copied) {
+						if (ch == child) ch = newChild;
+						children.add(ch);
+					}
 				}
 			} else {
 				changed |= child.runNodeReplacing(replacer);

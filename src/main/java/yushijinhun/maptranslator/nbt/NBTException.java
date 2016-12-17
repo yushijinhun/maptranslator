@@ -1,6 +1,8 @@
 package yushijinhun.maptranslator.nbt;
 
-public class NBTException extends Exception {
+import yushijinhun.maptranslator.tree.ArgumentParseException;
+
+public class NBTException extends ArgumentParseException {
 
 	private static final long serialVersionUID = 1L;
 

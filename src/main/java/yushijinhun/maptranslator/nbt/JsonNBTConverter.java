@@ -9,7 +9,7 @@ public class JsonNBTConverter {
 
 	private static final Pattern field_179273_b = Pattern.compile("\\[[-+\\d|,\\s]+\\]");
 
-	public static NBTCompound func_180713_a(String p_180713_0_) throws NBTException {
+	public static NBTCompound parse(String p_180713_0_) throws NBTException {
 		p_180713_0_ = p_180713_0_.trim();
 
 		if (!p_180713_0_.startsWith("{")) {

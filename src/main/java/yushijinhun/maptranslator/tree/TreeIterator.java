@@ -19,7 +19,6 @@ public class TreeIterator {
 		int count = 0;
 		do {
 			while (tag(node)) {
-				LOGGER.info("iterate #" + count);
 				count++;
 				if (maxIterations != -1 && count >= maxIterations) return false;
 			}
@@ -28,6 +27,7 @@ public class TreeIterator {
 	}
 
 	private boolean tag(Node node) {
+		LOGGER.info("tag marking");
 		boolean changed = false;
 		for (TagMarker marker : markers) {
 			changed |= node.runTagMarking(marker);
@@ -36,6 +36,7 @@ public class TreeIterator {
 	}
 
 	private boolean replace(Node node) {
+		LOGGER.info("node replacing");
 		boolean changed = false;
 		for (NodeReplacer replacer : replacers) {
 			changed |= node.runNodeReplacing(replacer);

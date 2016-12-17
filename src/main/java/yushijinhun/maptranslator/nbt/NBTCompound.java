@@ -3,8 +3,8 @@ package yushijinhun.maptranslator.nbt;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -37,7 +37,7 @@ public class NBTCompound extends NBT {
 		}
 	}
 
-	private Map<String, NBT> tagMap = new HashMap<>();
+	private Map<String, NBT> tagMap = new LinkedHashMap<>();
 
 	@Override
 	public NBT clone() {
@@ -247,7 +247,7 @@ public class NBTCompound extends NBT {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("{");
-		tagMap.forEach((k, v) -> sb.append(k).append(':').append(tagMap.get(v)).append(','));
+		tagMap.forEach((k, v) -> sb.append(k).append(':').append(v).append(','));
 		sb.append('}');
 		return sb.toString();
 	}

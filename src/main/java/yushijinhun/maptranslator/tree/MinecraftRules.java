@@ -1,8 +1,11 @@
-package yushijinhun.maptranslator.process;
+package yushijinhun.maptranslator.tree;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import yushijinhun.maptranslator.nbt.JsonNBTConverter;
 import yushijinhun.maptranslator.nbt.NBT;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.nbt.NBTString;
@@ -11,7 +14,7 @@ import yushijinhun.maptranslator.tree.Node;
 import yushijinhun.maptranslator.tree.NodeMatcher;
 import yushijinhun.maptranslator.tree.TagMarker;
 
-public final class TagMarkers {
+public final class MinecraftRules {
 
 	public static final String T_STR = "localizable_string";
 
@@ -24,15 +27,17 @@ public final class TagMarkers {
 			new TagMarker(NodeMatcher.of("(item)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "item." + nbt.getString("id").toLowerCase()).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(entity)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "entity." + nbt.getString("id").toLowerCase()).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(tileentity)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "tileentity." + nbt.getString("id").toLowerCase()).andThen(Collections::singleton)),
-			
-			new TagMarker(NodeMatcher.of("(item)/tag/display/Name"), "item._displayname", T_STR),
-			new TagMarker(NodeMatcher.of("(item)/tag/display/Lore/*"), "item._lore", T_STR),
+			new TagMarker(NodeMatcher.of("(item)/tag"), "item._.tag"),
+			new TagMarker(NodeMatcher.of("(item)/tag").and(node -> compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID)).test(node.parent())), node -> toCompound(nbt -> "item." + nbt.getString("id").toLowerCase() + ".tag").andThen(Collections::singleton).apply(node.parent())),
 
-			new TagMarker(NodeMatcher.of("(item.minecraft:written_book)"), "item._book"),
-			new TagMarker(NodeMatcher.of("(item.minecraft:writable_book)"), "item._book"),
-			new TagMarker(NodeMatcher.of("(item._book)/tag/pages/*"), "book.page", T_STR),
-			new TagMarker(NodeMatcher.of("(item.minecraft:written_book)/tag/author"), "book.author", T_STR),
-			new TagMarker(NodeMatcher.of("(item.minecraft:written_book)/tag/title"), "book.title", T_STR),
+			new TagMarker(NodeMatcher.of("(item._.tag)/display/Name"), "item._displayname", T_STR),
+			new TagMarker(NodeMatcher.of("(item._.tag)/display/Lore/*"), "item._lore", T_STR),
+
+			new TagMarker(NodeMatcher.of("(item.minecraft:written_book.tag)"), "item._book.tag"),
+			new TagMarker(NodeMatcher.of("(item.minecraft:writable_book.tag)"), "item._book.tag"),
+			new TagMarker(NodeMatcher.of("(item._book.tag)/pages/*"), "book.page", T_STR),
+			new TagMarker(NodeMatcher.of("(item.minecraft:written_book.tag)/author"), "book.author", T_STR),
+			new TagMarker(NodeMatcher.of("(item.minecraft:written_book.tag)/title"), "book.title", T_STR),
 
 			new TagMarker(NodeMatcher.of("(entity)/CustomName"), "entity._customname", T_STR),
 
@@ -95,8 +100,8 @@ public final class TagMarkers {
 			new TagMarker(NodeMatcher.of("(entity.commandblock_minecart)/Command"), "command"),
 			new TagMarker(NodeMatcher.of("(tileentity.command_block)/Command"), "command"),
 
-			new TagMarker(NodeMatcher.of("(item.minecraft:armor_stand)/tag/EntityTag"), "entity"),
-			new TagMarker(NodeMatcher.of("(item.minecraft:spawn_egg)/tag/EntityTag"), "entity"),
+			new TagMarker(NodeMatcher.of("(item.minecraft:armor_stand.tag)/EntityTag"), "entity"),
+			new TagMarker(NodeMatcher.of("(item.minecraft:spawn_egg.tag)/EntityTag"), "entity"),
 			new TagMarker(NodeMatcher.of("(store.player)/RootVehicle/Entity"), "entity"),
 			new TagMarker(NodeMatcher.of("(store.chunk)/Level/Entities/*"), "entity"),
 			new TagMarker(NodeMatcher.of("(entity)/Riding"), "entity"),
@@ -110,7 +115,72 @@ public final class TagMarkers {
 
 			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/*"), "tileentity"),
 			new TagMarker(NodeMatcher.of("(entity.falling_block)/TileEntityData"), "tileentity"),
-			new TagMarker(NodeMatcher.of("(item)/tag/BlockEntityTag"), "tileentity"),
+			new TagMarker(NodeMatcher.of("(item._.tag)/BlockEntityTag"), "tileentity"),
+
+			entityAlias("mushroomcow", "mooshroom"),
+			entityAlias("ozelot", "ocelot"),
+			entityAlias("leashknot", "leash_knot"),
+			entityAlias("dragonfireball", "dragon_fireball"),
+			entityAlias("minecartchest", "chest_minecart"),
+			entityAlias("thrownegg", "egg"),
+			entityAlias("lightningbolt", "lightning_bolt"),
+			entityAlias("endercrystal", "ender_crystal"),
+			entityAlias("minecartcommandblock", "commandblock_minecart"),
+			entityAlias("enderdragon", "ender_dragon"),
+			entityAlias("cavespider", "cave_spider"),
+			entityAlias("thrownenderpearl", "ender_pearl"),
+			entityAlias("eyeofendersignal", "eye_of_ender_signal"),
+			entityAlias("areaeffectcloud", "area_effect_cloud"),
+			entityAlias("armorstand", "armor_stand"),
+			entityAlias("fallingsand", "falling_block"),
+			entityAlias("fireworksrocketentity", "fireworks_rocket"),
+			entityAlias("lavaslime", "magma_cube"),
+			entityAlias("minecartrideable", "minecart"),
+			entityAlias("polarbear", "polar_bear"),
+			entityAlias("minecartfurnace", "furnace_minecart"),
+			entityAlias("minecarthopper", "hopper_minecart"),
+			entityAlias("entityhorse", "horse"),
+			entityAlias("itemframe", "item_frame"),
+			entityAlias("shulkerbullet", "shulker_bullet"),
+			entityAlias("smallfireball", "small_fireball"),
+			entityAlias("spectralarrow", "spectral_arrow"),
+			entityAlias("thrownpotion", "potion"),
+			entityAlias("minecartspawner", "spawner_minecart"),
+			entityAlias("primedtnt", "tnt"),
+			entityAlias("minecarttnt", "tnt_minecart"),
+			entityAlias("villagergolem", "villager_golem"),
+			entityAlias("witherboss", "wither"),
+			entityAlias("witherskull", "wither_skull"),
+			entityAlias("thrownexpbottle", "xp_bottle"),
+			entityAlias("xporb", "xp_orb"),
+			entityAlias("pigzombie", "zombie_pigman"),
+
+			tileentityAlias("cauldron", "brewing_stand"),
+			tileentityAlias("control", "command_block"),
+			tileentityAlias("dldetector", "daylight_detector"),
+			tileentityAlias("trap", "dispenser"),
+			tileentityAlias("enchanttable", "enchanting_table"),
+			tileentityAlias("endgateway", "end_gateway"),
+			tileentityAlias("airportal", "end_portal"),
+			tileentityAlias("enderchest", "ender_chest"),
+			tileentityAlias("flowerpot", "flower_pot"),
+			tileentityAlias("recordplayer", "jukebox"),
+			tileentityAlias("mobspawner", "mob_spawner"),
+			tileentityAlias("music", "noteblock"),
+			tileentityAlias("structure", "structure_block"),
+
+	};
+
+	public static final NodeReplacer[] REPLACERS = {
+
+			new CommandReplacer("give <player> <item> <amount> <data> <dataTag>", singletonMap("dataTag", args -> {
+				Node node = TreeConstructor.construct(JsonNBTConverter.parse(args.get("dataTag")));
+				node.tags().add("item._.tag");
+				String itemName = args.get("item");
+				if (!itemName.contains(":")) itemName = "minecraft:" + itemName;
+				node.tags().add("item." + itemName + ".tag");
+				return node;
+			})).toNodeReplacer()
 
 	};
 
@@ -130,6 +200,20 @@ public final class TagMarkers {
 		return node -> func.apply(((NBTCompound) ((NBTNode) node).nbt));
 	}
 
-	private TagMarkers() {}
+	private static TagMarker entityAlias(String alias, String id) {
+		return new TagMarker(NodeMatcher.of("(entity." + alias + ")"), "entity." + id);
+	}
+
+	private static TagMarker tileentityAlias(String alias, String id) {
+		return new TagMarker(NodeMatcher.of("(tileentity." + alias + ")"), "tileentity." + id);
+	}
+
+	private static <K, V> Map<K, V> singletonMap(K k, V v) {
+		Map<K, V> map = new HashMap<>();
+		map.put(k, v);
+		return map;
+	}
+
+	private MinecraftRules() {}
 
 }

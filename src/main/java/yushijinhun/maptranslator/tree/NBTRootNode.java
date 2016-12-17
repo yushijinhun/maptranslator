@@ -2,7 +2,7 @@ package yushijinhun.maptranslator.tree;
 
 import yushijinhun.maptranslator.nbt.NBT;
 
-public class NBTRootNode extends NBTNode {
+public class NBTRootNode extends NBTNode implements ArgumentNode {
 
 	public NBTRootNode(NBT nbt) {
 		super(nbt);
@@ -11,6 +11,11 @@ public class NBTRootNode extends NBTNode {
 	@Override
 	public String toString() {
 		return "<nbt_root>";
+	}
+
+	@Override
+	public String toArgumentString() {
+		return nbt.toString();
 	}
 
 }

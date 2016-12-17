@@ -27,7 +27,7 @@ public class NBTString extends NBT {
 		if (!super.equals(another)) {
 			return false;
 		}
-		return Objects.equals(data, ((NBTString) another).data);
+		return Objects.equals(data, ((NBTString) another).getString());
 	}
 
 	@Override
