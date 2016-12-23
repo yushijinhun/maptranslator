@@ -42,7 +42,7 @@ public class NBTStringProxy extends NBTString {
 
 	@Override
 	public String toString() {
-		return "\"" + getString().replace("\"", "\\\"") + "\"";
+		return escapeString(getString());
 	}
 
 	@Override

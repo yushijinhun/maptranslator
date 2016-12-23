@@ -174,7 +174,7 @@ public final class MinecraftRules {
 	public static final NodeReplacer[] REPLACERS = {
 
 			new CommandReplacer("give <player> <item> <amount> <data> <dataTag>", singletonMap("dataTag", args -> {
-				Node node = TreeConstructor.construct(JsonNBTConverter.parse(args.get("dataTag")));
+				NBTRootNode node = TreeConstructor.construct(JsonNBTConverter.getTagFromJson(args.get("dataTag")));
 				node.tags().add("item._.tag");
 				String itemName = args.get("item");
 				if (!itemName.contains(":")) itemName = "minecraft:" + itemName;

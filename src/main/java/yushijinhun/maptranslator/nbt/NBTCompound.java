@@ -247,7 +247,10 @@ public class NBTCompound extends NBT {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("{");
-		tagMap.forEach((k, v) -> sb.append(k).append(':').append(v).append(','));
+		if (!tagMap.isEmpty()) {
+			tagMap.forEach((k, v) -> sb.append(k).append(':').append(v).append(','));
+			sb.deleteCharAt(sb.length() - 1);
+		}
 		sb.append('}');
 		return sb.toString();
 	}

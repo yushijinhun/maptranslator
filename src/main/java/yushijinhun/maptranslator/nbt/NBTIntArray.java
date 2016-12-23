@@ -56,8 +56,10 @@ public class NBTIntArray extends NBT {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("[");
-		for (int i = 0; i < data.length; i++) {
-			sb.append(data[i]).append(',');
+		if (data.length > 0) {
+			for (int d : data)
+				sb.append(d).append(',');
+			sb.deleteCharAt(sb.length() - 1);
 		}
 		sb.append(']');
 		return sb.toString();

@@ -52,7 +52,7 @@ public class NBTString extends NBT {
 
 	@Override
 	public String toString() {
-		return "\"" + data.replace("\"", "\\\"") + "\"";
+		return escapeString(data);
 	}
 
 	@Override
@@ -63,5 +63,19 @@ public class NBTString extends NBT {
 	@Override
 	public Object getData() {
 		return data;
+	}
+
+	protected static String escapeString(String str) {
+		StringBuilder sb = new StringBuilder(str.length() + 2);
+		sb.append('"');
+		for (int i = 0; i < str.length(); i++) {
+			char ch = str.charAt(i);
+			if (ch == '“' || ch == '\\') {
+				sb.append('\\');
+			}
+			sb.append(ch);
+		}
+		sb.append('"');
+		return sb.toString();
 	}
 }

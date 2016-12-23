@@ -117,8 +117,11 @@ public class NBTList extends NBT {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("[");
-		for (int i = 0; i < tagList.size(); i++) {
-			sb.append(i).append(':').append(tagList.get(i)).append(',');
+		if(!tagList.isEmpty()){
+			for (int i = 0; i < tagList.size(); i++) {
+				sb.append(i).append(':').append(tagList.get(i)).append(',');
+			}
+			sb.deleteCharAt(sb.length() - 1);
 		}
 		sb.append(']');
 		return sb.toString();
