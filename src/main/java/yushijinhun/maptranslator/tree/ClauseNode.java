@@ -1,16 +1,14 @@
 package yushijinhun.maptranslator.tree;
 
-public class TextArgumentNode extends Node implements ArgumentNode {
+import java.util.function.Supplier;
 
-	public String text;
+public class ClauseNode extends Node implements ArgumentNode {
 
-	public TextArgumentNode(String text) {
-		this.text = text;
-	}
+	public Supplier<String> clause;
 
 	@Override
 	public String toArgumentString() {
-		return text;
+		return clause.get();
 	}
 
 	@Override

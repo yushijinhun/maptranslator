@@ -77,7 +77,7 @@ public class NBTDouble extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	public String toString() {
+	public String valueToString() {
 		return "" + data + "d";
 	}
 

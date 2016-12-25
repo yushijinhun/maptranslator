@@ -4,24 +4,24 @@ import java.util.ArrayList;
 import java.util.Stack;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import yushijinhun.maptranslator.nbt.NBT.NBTPrimitive;
 
 public class JsonNBTConverter {
 
 	private static final Pattern INT_ARRAY_MATCHER = Pattern.compile("\\[[-+\\d|,\\s]+\\]");
 
-	public static NBTCompound getTagFromJson(String jsonString) throws NBTException {
-		jsonString = jsonString.trim();
-
-		if (!jsonString.startsWith("{")) {
+	public static NBTCompound getTagFromJson(String json) throws NBTException {
+		json = json.trim();
+		if (!json.startsWith("{")) {
 			throw new NBTException("Invalid tag encountered, expected \'{\' as first char.");
-		} else if (topTagsCount(jsonString) != 1) {
+		} else if (countTopTags(json) != 1) {
 			throw new NBTException("Encountered multiple top tags, only one expected");
 		} else {
-			return (NBTCompound) nameValueToNBT("tag", jsonString).parse();
+			return (NBTCompound) nameValueToNBT("tag", json).parse();
 		}
 	}
 
-	static int topTagsCount(String str) throws NBTException {
+	static int countTopTags(String str) throws NBTException {
 		int count = 0;
 		boolean escaped = false;
 		Stack<Character> stack = new Stack<>();
@@ -67,10 +67,6 @@ public class JsonNBTConverter {
 
 			return count;
 		}
-	}
-
-	static JsonNBTConverter.Any joinStrToNBT(String... args) throws NBTException {
-		return nameValueToNBT(args[0], args[1]);
 	}
 
 	static JsonNBTConverter.Any nameValueToNBT(String key, String value) throws NBTException {
@@ -130,9 +126,9 @@ public class JsonNBTConverter {
 	}
 
 	private static JsonNBTConverter.Any getTagFromNameValue(String str, boolean isArray) throws NBTException {
-		String s = locateName(str, isArray);
-		String s1 = locateValue(str, isArray);
-		return joinStrToNBT(new String[] { s, s1 });
+		String key = locateKey(str, isArray);
+		String value = locateValue(str, isArray);
+		return nameValueToNBT(key, value);
 	}
 
 	private static String nextNameValuePair(String str, boolean isCompound) throws NBTException {
@@ -210,7 +206,7 @@ public class JsonNBTConverter {
 		return str.substring(0, i);
 	}
 
-	private static String locateName(String str, boolean isArray) throws NBTException {
+	private static String locateKey(String str, boolean isArray) throws NBTException {
 		if (isArray) {
 			str = str.trim();
 
@@ -321,8 +317,13 @@ public class JsonNBTConverter {
 		public NBT parse() throws NBTException {
 			NBTList nbttaglist = new NBTList();
 
-			for (JsonNBTConverter.Any jsontonbt$any : this.tagList) {
-				nbttaglist.add(jsontonbt$any.parse());
+			int i = 0;
+			for (JsonNBTConverter.Any child : this.tagList) {
+				nbttaglist.add(child.parse());
+				if (child.json.isEmpty()) {
+					nbttaglist._noIndex.add(i);
+				}
+				i++;
 			}
 
 			return nbttaglist;
@@ -349,40 +350,37 @@ public class JsonNBTConverter {
 		@Override
 		public NBT parse() throws NBTException {
 			try {
+				NBTPrimitive primitive = null;
 				if (DOUBLE.matcher(this.jsonValue).matches()) {
-					return new NBTDouble(Double.parseDouble(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
+					primitive = new NBTDouble(Double.parseDouble(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
+				} else if (FLOAT.matcher(this.jsonValue).matches()) {
+					primitive = new NBTFloat(Float.parseFloat(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
+				} else if (BYTE.matcher(this.jsonValue).matches()) {
+					primitive = new NBTByte(Byte.parseByte(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
+				} else if (LONG.matcher(this.jsonValue).matches()) {
+					primitive = new NBTLong(Long.parseLong(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
+				} else if (SHORT.matcher(this.jsonValue).matches()) {
+					primitive = new NBTShort(Short.parseShort(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
+				} else if (INTEGER.matcher(this.jsonValue).matches()) {
+					primitive = new NBTInt(Integer.parseInt(this.jsonValue));
+				} else if (DOUBLE_UNTYPED.matcher(this.jsonValue).matches()) {
+					primitive = new NBTDouble(Double.parseDouble(this.jsonValue));
 				}
-
-				if (FLOAT.matcher(this.jsonValue).matches()) {
-					return new NBTFloat(Float.parseFloat(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-				}
-
-				if (BYTE.matcher(this.jsonValue).matches()) {
-					return new NBTByte(Byte.parseByte(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-				}
-
-				if (LONG.matcher(this.jsonValue).matches()) {
-					return new NBTLong(Long.parseLong(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-				}
-
-				if (SHORT.matcher(this.jsonValue).matches()) {
-					return new NBTShort(Short.parseShort(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-				}
-
-				if (INTEGER.matcher(this.jsonValue).matches()) {
-					return new NBTInt(Integer.parseInt(this.jsonValue));
-				}
-
-				if (DOUBLE_UNTYPED.matcher(this.jsonValue).matches()) {
-					return new NBTDouble(Double.parseDouble(this.jsonValue));
+				if (primitive != null) {
+					primitive._str = jsonValue;
+					return primitive;
 				}
 
 				if ("true".equalsIgnoreCase(this.jsonValue) || "false".equalsIgnoreCase(this.jsonValue)) {
-					return new NBTByte((byte) (Boolean.parseBoolean(this.jsonValue) ? 1 : 0));
+					NBTByte tagByte = new NBTByte((byte) (Boolean.parseBoolean(this.jsonValue) ? 1 : 0));
+					tagByte._str = jsonValue;
+					return tagByte;
 				}
 			} catch (NumberFormatException var6) {
 				this.jsonValue = this.jsonValue.replaceAll("\\\\\"", "\"");
-				return new NBTString(this.jsonValue);
+				NBTString tag = new NBTString(this.jsonValue);
+				tag._noQuote = true;
+				return tag;
 			}
 
 			if (this.jsonValue.startsWith("[") && this.jsonValue.endsWith("]")) {
@@ -398,11 +396,15 @@ public class JsonNBTConverter {
 
 					return new NBTIntArray(aint);
 				} catch (NumberFormatException var5) {
-					return new NBTString(this.jsonValue);
+					NBTString tag = new NBTString(this.jsonValue);
+					tag._noQuote = true;
+					return tag;
 				}
 			} else {
+				boolean noQuote = true;
 				if (this.jsonValue.startsWith("\"") && this.jsonValue.endsWith("\"")) {
 					this.jsonValue = this.jsonValue.substring(1, this.jsonValue.length() - 1);
+					noQuote = false;
 				}
 
 				this.jsonValue = this.jsonValue.replaceAll("\\\\\"", "\"");
@@ -417,7 +419,9 @@ public class JsonNBTConverter {
 					}
 				}
 
-				return new NBTString(stringbuilder.toString());
+				NBTString tag = new NBTString(stringbuilder.toString());
+				tag._noQuote = noQuote;
+				return tag;
 			}
 		}
 	}

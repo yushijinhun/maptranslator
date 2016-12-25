@@ -4,13 +4,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NBTList extends NBT {
 
 	public static final byte ID = 9;
 
 	private List<NBT> tagList = new ArrayList<>();
+	Set<Integer> _noIndex = new HashSet<>();
 
 	/**
 	 * The type byte for the tags in the list - they must all be of the same
@@ -119,7 +122,10 @@ public class NBTList extends NBT {
 		StringBuilder sb = new StringBuilder("[");
 		if(!tagList.isEmpty()){
 			for (int i = 0; i < tagList.size(); i++) {
-				sb.append(i).append(':').append(tagList.get(i)).append(',');
+				if (!_noIndex.contains(i)) {
+					sb.append(i).append(':');
+				}
+				sb.append(tagList.get(i)).append(',');
 			}
 			sb.deleteCharAt(sb.length() - 1);
 		}

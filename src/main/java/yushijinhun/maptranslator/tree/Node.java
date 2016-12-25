@@ -1,7 +1,9 @@
 package yushijinhun.maptranslator.tree;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -11,6 +13,7 @@ public abstract class Node {
 	private Set<Node> children = new LinkedHashSet<>();
 	private Set<Node> unmodifiableChildren = Collections.unmodifiableSet(children);
 	private Node parent;
+	private Map<String, Object> properties = new HashMap<>();
 
 	public Set<String> tags() {
 		return tags;
@@ -22,6 +25,10 @@ public abstract class Node {
 
 	public Node parent() {
 		return parent;
+	}
+
+	public Map<String, Object> properties() {
+		return properties;
 	}
 
 	public void addChild(Node child) {
@@ -36,10 +43,41 @@ public abstract class Node {
 		children.remove(child);
 	}
 
+	public boolean hasTag(String str) {
+		if (tags.contains(str)) return true;
+		for (String pattern : tags) {
+			if (pattern.indexOf('*') != -1) {
+				int r = -1;
+				int n = 0;
+				do {
+					int l = r + 1;
+					r = pattern.indexOf('*', l);
+					if (r == -1) r = pattern.length();
+					n = str.indexOf(pattern.substring(l, r), n);
+					if (n == -1) break;
+					n += r - l;
+				} while (r < pattern.length());
+				if (n != -1) return true;
+			}
+		}
+		return false;
+	}
+
+	// for method-chain
+	public Node withTag(String tag) {
+		tags().add(tag);
+		return this;
+	}
+
 	boolean runTagMarking(TagMarker marker) {
 		boolean changed = false;
 		if (marker.condition.test(this)) {
-			changed |= tags.addAll(marker.tags.apply(this));
+			for (String tag : marker.tags.apply(this)) {
+				if (!hasTag(tag)) {
+					tags.add(tag);
+					changed = true;
+				}
+			}
 		}
 		for (Node child : children) {
 			changed |= child.runTagMarking(marker);

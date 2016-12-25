@@ -53,7 +53,7 @@ public class NodeMatcher implements Predicate<Node> {
 					return false;
 			if (tags[i] != null)
 				for (String tag : tags[i])
-				if (!node.tags().contains(tag))
+				if (!node.hasTag(tag))
 					return false;
 			node = node.parent();
 		}

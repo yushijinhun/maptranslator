@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -163,7 +164,7 @@ public class JSONObject implements Serializable {
 	 * Construct an empty JSONObject.
 	 */
 	public JSONObject() {
-		this.map = new TreeMap<String, Object>();
+		this.map = new LinkedHashMap<String, Object>();
 	}
 
 	/**

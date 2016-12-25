@@ -1,7 +1,9 @@
 package yushijinhun.maptranslator.tree;
 
 import yushijinhun.maptranslator.internal.org.json.JSONArray;
+import yushijinhun.maptranslator.internal.org.json.JSONException;
 import yushijinhun.maptranslator.internal.org.json.JSONObject;
+import yushijinhun.maptranslator.nbt.JsonNBTConverter;
 import yushijinhun.maptranslator.nbt.NBT;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.nbt.NBTList;
@@ -9,6 +11,18 @@ import yushijinhun.maptranslator.nbt.NBTList;
 public final class TreeConstructor {
 
 	private TreeConstructor() {}
+
+	public static NBTRootNode constructNBT(String nbt) {
+		return construct(JsonNBTConverter.getTagFromJson(nbt));
+	}
+
+	public static JsonRootNode constructJson(String json) {
+		try {
+			return construct(new JSONObject(json));
+		} catch (JSONException e) {
+			throw new ArgumentParseException(e);
+		}
+	}
 
 	public static NBTRootNode construct(NBT nbt) {
 		NBTRootNode root = new NBTRootNode(nbt);

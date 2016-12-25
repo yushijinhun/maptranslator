@@ -5,18 +5,20 @@ import java.util.function.Supplier;
 
 class CommandHandler implements Supplier<String> {
 
-	private NBTNode commandNode;
-	private String[] arguments;
-	private String[] argumentNames;
+	Node commandNode;
+	String[] arguments;
+	String[] argumentNames;
 
-	public CommandHandler(NBTNode commandNode, String[] arguments, String[] argumentNames) {
-		this.commandNode = commandNode;
+	public CommandHandler(String[] arguments, String[] argumentNames) {
 		this.arguments = arguments;
 		this.argumentNames = argumentNames;
 	}
 
 	@Override
 	public String get() {
+		if (commandNode == null) {
+			throw new IllegalStateException("Command handler hasn't been initialized");
+		}
 		boolean first = true;
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < arguments.length; i++) {
@@ -38,7 +40,8 @@ class CommandHandler implements Supplier<String> {
 						}
 					}
 				}
-				if (value == null) throw new IllegalStateException("Argument node " + key + " not found");
+				if (value == null)
+					throw new IllegalStateException("Argument node " + key + " not found");
 				sb.append(value);
 			} else {
 				sb.append(arguments[i]);

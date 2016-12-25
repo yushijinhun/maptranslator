@@ -76,7 +76,7 @@ public class NBTFloat extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	public String toString() {
+	public String valueToString() {
 		return "" + data + "f";
 	}
 

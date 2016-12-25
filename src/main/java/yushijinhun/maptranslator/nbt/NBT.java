@@ -8,6 +8,8 @@ public abstract class NBT {
 
 	public abstract static class NBTPrimitive extends NBT {
 
+		String _str;
+
 		public abstract byte getByte();
 
 		public abstract double getDouble();
@@ -19,6 +21,15 @@ public abstract class NBT {
 		public abstract long getLong();
 
 		public abstract short getShort();
+
+		@Override
+		public String toString() {
+			if (_str != null) return _str;
+			return valueToString();
+		}
+
+		abstract protected String valueToString();
+
 	}
 
 	protected static NBT createNewByType(byte id) {

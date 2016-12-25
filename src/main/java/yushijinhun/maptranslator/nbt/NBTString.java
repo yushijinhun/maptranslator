@@ -10,6 +10,7 @@ public class NBTString extends NBT {
 	public static final byte ID = 8;
 
 	private String data;
+	boolean _noQuote;
 
 	protected NBTString() {}
 
@@ -52,7 +53,7 @@ public class NBTString extends NBT {
 
 	@Override
 	public String toString() {
-		return escapeString(data);
+		return escapeString(data, _noQuote);
 	}
 
 	@Override
@@ -66,16 +67,20 @@ public class NBTString extends NBT {
 	}
 
 	protected static String escapeString(String str) {
+		return escapeString(str, false);
+	}
+
+	private static String escapeString(String str, boolean noQuote) {
 		StringBuilder sb = new StringBuilder(str.length() + 2);
-		sb.append('"');
+		if (!noQuote) sb.append('"');
 		for (int i = 0; i < str.length(); i++) {
 			char ch = str.charAt(i);
-			if (ch == '“' || ch == '\\') {
+			if (ch == '"' || ch == '\\') {
 				sb.append('\\');
 			}
 			sb.append(ch);
 		}
-		sb.append('"');
+		if (!noQuote) sb.append('"');
 		return sb.toString();
 	}
 }
