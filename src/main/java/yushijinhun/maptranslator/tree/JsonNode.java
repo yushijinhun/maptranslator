@@ -8,4 +8,8 @@ public abstract class JsonNode extends Node {
 		this.json = json;
 	}
 
+	public void replaceJson(Object json) {
+		this.json = json;
+	}
+
 }

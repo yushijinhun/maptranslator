@@ -1,5 +1,7 @@
 package yushijinhun.maptranslator.tree;
 
+import yushijinhun.maptranslator.internal.org.json.JSONObject;
+
 public class JsonMapNode extends JsonNode implements MapNode {
 
 	public final String key;
@@ -17,6 +19,12 @@ public class JsonMapNode extends JsonNode implements MapNode {
 	@Override
 	public String key() {
 		return key;
+	}
+
+	@Override
+	public void replaceJson(Object json) {
+		super.replaceJson(json);
+		((JSONObject) ((JsonNode) parent()).json).put(key, json);
 	}
 
 }

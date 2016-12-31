@@ -3,63 +3,9 @@ package yushijinhun.maptranslator.tree;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
-import yushijinhun.maptranslator.nbt.NBT;
-import yushijinhun.maptranslator.nbt.NBTString;
 
-public class CommandReplacer {
-
-	public static final Map<Class<?>, CommandContext> CTXS = new ConcurrentHashMap<>();
-
-	static {
-		CTXS.put(NBTNode.class, new CommandContext() {
-
-			@Override
-			public String getCommand(Node node) {
-				if (node instanceof NBTNode) {
-					NBT nbt = ((NBTNode) node).nbt;
-					if (nbt instanceof NBTString) return ((NBTString) nbt).getString();
-				}
-				return null;
-			}
-
-			@Override
-			public Node replaceNode(Node node, Supplier<String> proxyTarget) {
-				NBTStringProxy proxy = new NBTStringProxy();
-				proxy.handler = proxyTarget;
-				((NBTNode) node).replaceNBT(proxy);
-				return node;
-			}
-		});
-		CTXS.put(TextArgumentNode.class, new CommandContext() {
-
-			@Override
-			public String getCommand(Node node) {
-				if (node instanceof TextArgumentNode) {
-					return ((TextArgumentNode) node).text;
-				}
-				return null;
-			}
-
-			@Override
-			public Node replaceNode(Node node, Supplier<String> proxyTarget) {
-				ClauseNode clause = new ClauseNode();
-				clause.clause = proxyTarget;
-				return clause;
-			}
-		});
-	}
-
-	public static interface CommandContext {
-
-		String getCommand(Node node);
-
-		Node replaceNode(Node node, Supplier<String> proxyTarget);
-
-	}
+public class CommandReplacer extends TextNodeReplacer {
 
 	public static NodeReplacer of(String expression, String arg, Function<Map<String, String>, Node> subtree) {
 		return of("command", expression, arg, subtree);
@@ -100,9 +46,9 @@ public class CommandReplacer {
 
 	private boolean matches(Node node) {
 		if (node.unmodifiableChildren().isEmpty() && node.hasTag(tag)) {
-			CommandContext ctx = getContext(node);
+			TextContext ctx = getContext(node);
 			if (ctx == null) return false;
-			String command = ctx.getCommand(node);
+			String command = ctx.getText(node);
 			if (command != null && !command.trim().isEmpty()) {
 				String[] splited = command.split(" ", argumentNames.length + 1);
 				if (splited.length == argumentNames.length + 1) {
@@ -134,9 +80,8 @@ public class CommandReplacer {
 	}
 
 	private Node replace(Node node) {
-		CommandContext ctx = getContext(node);
-		if (ctx == null) return node;
-		String cmd = ctx.getCommand(node);
+		TextContext ctx = getContext(node);
+		String cmd = ctx.getText(node);
 		String[] splited = cmd.split(" ", argumentNames.length + 1);
 		String[] n_argnames = new String[argumentNames.length + 1];
 		System.arraycopy(argumentNames, 0, n_argnames, 1, argumentNames.length);
@@ -149,7 +94,7 @@ public class CommandReplacer {
 
 		CommandHandler handler = new CommandHandler(splited, n_argnames);
 		Node replaced = ctx.replaceNode(node, handler);
-		replaced.properties().put("originCmd", cmd);
+		replaced.properties().put("origin", cmd);
 		for (int i = 0; i < subtreeBuilders.length; i++) {
 			if (subtreeBuilders[i] != null) {
 				splited[i + 1] = null;
@@ -162,13 +107,7 @@ public class CommandReplacer {
 		return replaced;
 	}
 
-	private CommandContext getContext(Node node) {
-		for (Entry<Class<?>, CommandContext> ety : CTXS.entrySet()) {
-			if (ety.getKey().isInstance(node)) return ety.getValue();
-		}
-		return null;
-	}
-
+	@Override
 	public NodeReplacer toNodeReplacer() {
 		return new NodeReplacer(this::matches, this::replace);
 	}

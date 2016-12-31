@@ -20,7 +20,12 @@ public final class TreeConstructor {
 		try {
 			return construct(new JSONObject(json));
 		} catch (JSONException e) {
-			throw new ArgumentParseException(e);
+			try {
+				return construct(new JSONArray(json));
+			} catch (JSONException e1) {
+				throw new ArgumentParseException(json);
+			}
+
 		}
 	}
 
@@ -31,6 +36,12 @@ public final class TreeConstructor {
 	}
 
 	public static JsonRootNode construct(JSONObject json) {
+		JsonRootNode root = new JsonRootNode(json);
+		constructSubtree(root);
+		return root;
+	}
+
+	public static JsonRootNode construct(JSONArray json) {
 		JsonRootNode root = new JsonRootNode(json);
 		constructSubtree(root);
 		return root;

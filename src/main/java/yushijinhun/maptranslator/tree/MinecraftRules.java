@@ -1,17 +1,15 @@
 package yushijinhun.maptranslator.tree;
 
-import static yushijinhun.maptranslator.tree.TreeConstructor.constructNBT;
 import static yushijinhun.maptranslator.tree.TreeConstructor.constructJson;
+import static yushijinhun.maptranslator.tree.TreeConstructor.constructNBT;
 import java.util.Collections;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import yushijinhun.maptranslator.internal.org.json.JSONArray;
+import yushijinhun.maptranslator.internal.org.json.JSONObject;
 import yushijinhun.maptranslator.nbt.NBT;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.nbt.NBTString;
-import yushijinhun.maptranslator.tree.NBTNode;
-import yushijinhun.maptranslator.tree.Node;
-import yushijinhun.maptranslator.tree.NodeMatcher;
-import yushijinhun.maptranslator.tree.TagMarker;
 
 public final class MinecraftRules {
 
@@ -62,10 +60,20 @@ public final class MinecraftRules {
 
 			new TagMarker(NodeMatcher.of("(tileentity)/CustomName"), "blockdisplay.name", translatable),
 
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text1"), "sign.text", translatable),
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text2"), "sign.text", translatable),
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text3"), "sign.text", translatable),
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text4"), "sign.text", translatable),
+			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text1"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text2"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text3"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text4"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(sign.text)"), "formattable_string"),
+			new TagMarker(NodeMatcher.of("(formattable_string)").and(node -> TextNodeReplacer.getText(node).isPresent()), node -> {
+				boolean isJson = true;
+				try {
+					TreeConstructor.constructJson(TextNodeReplacer.getText(node).get());
+				} catch (ArgumentParseException e2) {
+					isJson = false;
+				}
+				return Collections.singleton(isJson ? "rawmsg" : translatable);
+			}),
 
 			new TagMarker(NodeMatcher.of("(entity)/DeathLootTable"), "loottable"),
 			new TagMarker(NodeMatcher.of("(entity)/LootTable"), "loottable"),
@@ -95,6 +103,28 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/*"), "tileentity"),
 			new TagMarker(NodeMatcher.of("(entity.falling_block)/TileEntityData"), "tileentity"),
 			new TagMarker(NodeMatcher.of("(itemtag)/BlockEntityTag"), "tileentity"),
+
+			new TagMarker(NodeMatcher.of("(msg)"), node -> {
+				Object obj = ((JsonNode) node).json;
+				if (obj instanceof JSONObject) {
+					return Collections.singleton("msg.obj");
+				} else if (obj instanceof JSONArray) {
+					return Collections.singleton("msg.array");
+				} else if (obj instanceof String) {
+					return Collections.singleton(translatable);
+				} else {
+					return Collections.emptySet();
+				}
+			}),
+
+			new TagMarker(NodeMatcher.of("(msg.array)/*"), "msg"),
+			new TagMarker(NodeMatcher.of("(msg.obj)/text"), translatable),
+			new TagMarker(NodeMatcher.of("(msg.obj)/extra/*"), "msg"),
+			new TagMarker(NodeMatcher.of("(msg.obj)/clickEvent"), toJson(json -> "click_event." + json.get("action")).andThen(Collections::singleton)),
+			new TagMarker(NodeMatcher.of("(msg.obj)/hoverEvent"), toJson(json -> "hover_event." + json.get("action")).andThen(Collections::singleton)),
+			new TagMarker(NodeMatcher.of("(click_event.run_command)/value").and(node -> TextNodeReplacer.getText(node).map(text -> !text.trim().isEmpty()).orElse(false)), node -> Collections.singleton(TextNodeReplacer.getText(node).get().startsWith("/") ? "command" : translatable)),
+			new TagMarker(NodeMatcher.of("(click_event.suggest_command)/value"), "suggest_command", translatable),
+			new TagMarker(NodeMatcher.of("(hover_event.show_text)/value"), "formattable_string", "hover_text"),
 
 			entityAlias("mushroomcow", "mooshroom"),
 			entityAlias("ozelot", "ocelot"),
@@ -257,7 +287,7 @@ public final class MinecraftRules {
 
 			CommandReplacer.of("tellraw <player> <message>", "message",
 					args -> constructJson(args.get("message"))
-							.withTag("rawmsg")),
+							.withTag("msg")),
 
 			CommandReplacer.of("testfor <player> <dataTag>", "dataTag",
 					args -> constructNBT(args.get("dataTag"))
@@ -276,15 +306,28 @@ public final class MinecraftRules {
 
 			CommandReplacer.of("title.clause", "title <message>", "message",
 					args -> constructJson(args.get("message"))
-							.withTag("rawmsg")),
+							.withTag("msg")),
 
 			CommandReplacer.of("title.clause", "subtitle <message>", "message",
 					args -> constructJson(args.get("message"))
-							.withTag("rawmsg")),
+							.withTag("msg")),
 
 			CommandReplacer.of("title.clause", "actionbar <message>", "message",
 					args -> constructJson(args.get("message"))
-							.withTag("rawmsg")),
+							.withTag("msg")),
+
+			TextReplacer.of("rawmsg",
+					json -> TreeConstructor.constructJson(json)
+							.withTag("msg")),
+
+			TextReplacer.of("(hover_event.show_item)/value",
+					json -> TreeConstructor.constructNBT(json)
+							.withTag("item")),
+
+			TextReplacer.of("(hover_event.show_entity)/value",
+					json -> TreeConstructor.constructNBT(json)
+							.withTag("entity")),
+
 	};
 
 	private static Predicate<Node> compoundMatches(Predicate<NBTCompound> condition) {
@@ -301,6 +344,10 @@ public final class MinecraftRules {
 
 	private static <R> Function<Node, R> toCompound(Function<NBTCompound, R> func) {
 		return node -> func.apply(((NBTCompound) ((NBTNode) node).nbt));
+	}
+
+	private static <R> Function<Node, R> toJson(Function<JSONObject, R> func) {
+		return node -> func.apply(((JSONObject) ((JsonNode) node).json));
 	}
 
 	private static TagMarker entityAlias(String alias, String id) {
