@@ -70,6 +70,23 @@ abstract public class TextNodeReplacer {
 			}
 
 		});
+		CTXS.put(ClauseNode.class, new TextContext() {
+
+			@Override
+			public String getText(Node node) {
+				if (node instanceof ClauseNode) {
+					return ((ClauseNode) node).toArgumentString();
+				}
+				return null;
+			}
+
+			@Override
+			public Node replaceNode(Node node, Supplier<String> proxyTarget) {
+				((ClauseNode) node).clause = proxyTarget;
+				return node;
+			}
+
+		});
 	}
 
 	public static interface TextContext {

@@ -9,12 +9,9 @@ import java.util.Set;
 import yushijinhun.maptranslator.core.NBTDescriptorFactory;
 import yushijinhun.maptranslator.core.NBTDescriptorSet;
 import yushijinhun.maptranslator.nbt.NBT;
-import yushijinhun.maptranslator.nbt.NBTString;
-import yushijinhun.maptranslator.tree.ClauseNode;
 import yushijinhun.maptranslator.tree.MinecraftRules;
 import yushijinhun.maptranslator.tree.NBTNode;
 import yushijinhun.maptranslator.tree.Node;
-import yushijinhun.maptranslator.tree.TextArgumentNode;
 import yushijinhun.maptranslator.tree.TextNodeReplacer;
 import yushijinhun.maptranslator.tree.TreeIterator;
 import yushijinhun.maptranslator.tree.TextNodeReplacer.TextContext;
@@ -55,11 +52,9 @@ public class Main {
 		System.out.print(node);
 		System.out.print(' ');
 		System.out.print(node.tags());
-		if (node instanceof NBTNode) {
-			if (((NBTNode) node).nbt instanceof NBT.NBTPrimitive) {
-				System.out.print(" = ");
-				System.out.print(((NBTNode) node).nbt);
-			}
+		if (node instanceof NBTNode && ((NBTNode) node).nbt instanceof NBT.NBTPrimitive) {
+			System.out.print(" = ");
+			System.out.print(((NBTNode) node).nbt);
 		} else {
 			TextNodeReplacer.getText(node).ifPresent(t -> {
 				System.out.print(" = ");
@@ -68,7 +63,7 @@ public class Main {
 		}
 		System.out.println();
 		if (node.properties().containsKey("origin")) {
-			String s = extractString(node);
+			String s = TextNodeReplacer.getText(node).get();
 			if (!s.equals(node.properties().get("origin"))) {
 				diff.put((String) node.properties().get("origin"), s);
 			}
@@ -83,17 +78,6 @@ public class Main {
 			}
 		}
 		node.unmodifiableChildren().forEach(child -> printTree(child, tabs + 1));
-	}
-
-	private static String extractString(Node node) {
-		if (node instanceof NBTNode) {
-			return ((NBTString) ((NBTNode) node).nbt).getString();
-		} else if (node instanceof TextArgumentNode) {
-			return ((TextArgumentNode) node).text;
-		} else if (node instanceof ClauseNode) {
-			return ((ClauseNode) node).toArgumentString();
-		}
-		throw new IllegalArgumentException(node.toString());
 	}
 
 }

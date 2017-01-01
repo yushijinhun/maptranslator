@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 
 public abstract class Node {
 
@@ -14,6 +15,22 @@ public abstract class Node {
 	private Set<Node> unmodifiableChildren = Collections.unmodifiableSet(children);
 	private Node parent;
 	private Map<String, Object> properties = new HashMap<>();
+
+	// stats
+	private long childrenCount;
+
+	private void updateChildrenCount() {
+		childrenCount = children.size();
+		for (Node child : children)
+			childrenCount += child.childrenCount;
+		if (parent != null)
+			parent.updateChildrenCount();
+	}
+
+	public long getAllChildrenCount() {
+		return childrenCount;
+	}
+	//
 
 	public Set<String> tags() {
 		return tags;
@@ -35,12 +52,14 @@ public abstract class Node {
 		if (child.parent != null) throw new IllegalArgumentException("parent node already exists");
 		child.parent = this;
 		children.add(child);
+		updateChildrenCount();
 	}
 
 	public void removeChild(Node child) {
 		if (child.parent != this) throw new IllegalArgumentException("not this node's child");
 		child.parent = null;
 		children.remove(child);
+		updateChildrenCount();
 	}
 
 	public boolean hasTag(String str) {
@@ -69,23 +88,28 @@ public abstract class Node {
 		return this;
 	}
 
-	boolean runTagMarking(TagMarker marker) {
+	boolean runTagMarking(TagMarker marker, BiConsumer<Node, Set<String>> listener) {
 		boolean changed = false;
+		Set<String> addTags = new LinkedHashSet<>();
 		if (marker.condition.test(this)) {
+			addTags.clear();
 			for (String tag : marker.tags.apply(this)) {
 				if (!hasTag(tag)) {
 					tags.add(tag);
 					changed = true;
+					addTags.add(tag);
 				}
 			}
+			if (!addTags.isEmpty())
+				listener.accept(this, addTags);
 		}
 		for (Node child : children) {
-			changed |= child.runTagMarking(marker);
+			changed |= child.runTagMarking(marker, listener);
 		}
 		return changed;
 	}
 
-	boolean runNodeReplacing(NodeReplacer replacer) {
+	boolean runNodeReplacing(NodeReplacer replacer, BiConsumer<Node, Node> listener) {
 		boolean changed = false;
 		for (Node child : children) {
 			if (replacer.condition.test(child)) {
@@ -103,10 +127,12 @@ public abstract class Node {
 						children.add(ch);
 					}
 				}
+				listener.accept(child, newChild);
 			} else {
-				changed |= child.runNodeReplacing(replacer);
+				changed |= child.runNodeReplacing(replacer, listener);
 			}
 		}
+		if (changed) updateChildrenCount();
 		return changed;
 	}
 
