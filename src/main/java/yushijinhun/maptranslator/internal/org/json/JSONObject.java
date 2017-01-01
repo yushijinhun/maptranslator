@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -152,6 +153,9 @@ public class JSONObject implements Serializable {
 	 */
 	private final Map<String, Object> map;
 
+	Map<String, Character> _keyMeta = new HashMap<>();
+	Map<String, _ParseMetadata> _valMeta = new HashMap<>();
+
 	/**
 	 * It is sometimes more convenient and less ambiguous to have a
 	 * <code>NULL</code> object than to use Java's <code>null</code> value.
@@ -209,6 +213,7 @@ public class JSONObject implements Serializable {
 				default:
 					x.back();
 					key = x.nextValue().toString();
+					_keyMeta.put(key, x._quoter);
 			}
 
 			// The key is followed by ':'.
@@ -217,7 +222,11 @@ public class JSONObject implements Serializable {
 			if (c != ':') {
 				throw x.syntaxError("Expected a ':' after a key");
 			}
-			this.putOnce(key, x.nextValue());
+			Object val = x.nextValue();
+			this.putOnce(key, val);
+			if (val instanceof String) {
+				_valMeta.put(key, new _ParseMetadata(val, x._quoter));
+			}
 
 			// Pairs are separated by ','.
 
@@ -1249,8 +1258,15 @@ public class JSONObject implements Serializable {
 	}
 
 	public static Writer quote(String string, Writer w) throws IOException {
+		return _quote(string, w, '"');
+	}
+
+	static Writer _quote(String string, Writer w, char quoter) throws IOException {
 		if (string == null || string.length() == 0) {
-			w.write("\"\"");
+			if (quoter != 0) {
+				w.write(quoter);
+				w.write(quoter);
+			}
 			return w;
 		}
 
@@ -1260,11 +1276,14 @@ public class JSONObject implements Serializable {
 		int i;
 		int len = string.length();
 
-		w.write('"');
+		if (quoter != 0)
+			w.write(quoter);
 		for (i = 0; i < len; i += 1) {
 			b = c;
 			c = string.charAt(i);
 			switch (c) {
+				case '\'':
+					if (quoter != '\'') break;
 				case '\\':
 				case '"':
 					w.write('\\');
@@ -1303,7 +1322,8 @@ public class JSONObject implements Serializable {
 					}
 			}
 		}
-		w.write('"');
+		if (quoter != 0)
+			w.write(quoter);
 		return w;
 	}
 
@@ -1649,6 +1669,15 @@ public class JSONObject implements Serializable {
 		return writer;
 	}
 
+	static Writer _writeValue(Writer writer, Object value, int indentFactor, int indent, _ParseMetadata _meta) throws JSONException, IOException {
+		if (_meta != null && !(value instanceof JSONString) && _meta.matches(value)) {
+			_quote(value.toString(), writer, _meta.quoter);
+			return writer;
+		} else {
+			return writeValue(writer, value, indentFactor, indent);
+		}
+	}
+
 	static final void indent(Writer writer, int indent) throws IOException {
 		for (int i = 0; i < indent; i += 1) {
 			writer.write(' ');
@@ -1679,12 +1708,17 @@ public class JSONObject implements Serializable {
 
 			if (length == 1) {
 				Object key = keys.next();
-				writer.write(quote(key.toString()));
+				Character _q = _keyMeta.get(key);
+				if (_q == null) {
+					writer.write(quote(key.toString()));
+				} else {
+					_quote(key.toString(), writer, _q);
+				}
 				writer.write(':');
 				if (indentFactor > 0) {
 					writer.write(' ');
 				}
-				writeValue(writer, this.map.get(key), indentFactor, indent);
+				_writeValue(writer, this.map.get(key), indentFactor, indent, _valMeta.get(key));
 			} else if (length != 0) {
 				final int newindent = indent + indentFactor;
 				while (keys.hasNext()) {
@@ -1696,12 +1730,17 @@ public class JSONObject implements Serializable {
 						writer.write('\n');
 					}
 					indent(writer, newindent);
-					writer.write(quote(key.toString()));
+					Character _q = _keyMeta.get(key);
+					if (_q == null) {
+						writer.write(quote(key.toString()));
+					} else {
+						_quote(key.toString(), writer, _q);
+					}
 					writer.write(':');
 					if (indentFactor > 0) {
 						writer.write(' ');
 					}
-					writeValue(writer, this.map.get(key), indentFactor, newindent);
+					_writeValue(writer, this.map.get(key), indentFactor, newindent, _valMeta.get(key));
 					commanate = true;
 				}
 				if (indentFactor > 0) {

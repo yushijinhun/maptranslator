@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import yushijinhun.maptranslator.internal.org.json.JSONObject;
 import yushijinhun.maptranslator.internal.org.json.JSONString;
 import yushijinhun.maptranslator.nbt.NBT;
 import yushijinhun.maptranslator.nbt.NBTString;
@@ -63,7 +64,7 @@ abstract public class TextNodeReplacer {
 
 			@Override
 			public Node replaceNode(Node node, Supplier<String> proxyTarget) {
-				JSONString proxy = proxyTarget::get;
+				JSONString proxy = () -> JSONObject.quote(proxyTarget.get());
 				((JsonNode) node).replaceJson(proxy);
 				return node;
 			}

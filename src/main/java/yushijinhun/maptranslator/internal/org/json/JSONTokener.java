@@ -362,6 +362,7 @@ public class JSONTokener {
 		switch (c) {
 			case '"':
 			case '\'':
+				_quoter = c;
 				return this.nextString(c);
 			case '{':
 				this.back();
@@ -391,8 +392,11 @@ public class JSONTokener {
 		if ("".equals(string)) {
 			throw this.syntaxError("Missing value");
 		}
+		_quoter = '\0';
 		return JSONObject.stringToValue(string);
 	}
+
+	char _quoter;
 
 	/**
 	 * Skip characters until the next character is the requested character. If
