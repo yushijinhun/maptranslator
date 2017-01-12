@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public abstract class Node {
 
@@ -17,9 +18,9 @@ public abstract class Node {
 	private Map<String, Object> properties = new HashMap<>();
 
 	// stats
-	private long childrenCount;
+	private volatile long childrenCount;
 
-	private void updateChildrenCount() {
+	private synchronized void updateChildrenCount() {
 		childrenCount = children.size();
 		for (Node child : children)
 			childrenCount += child.childrenCount;
@@ -86,6 +87,11 @@ public abstract class Node {
 	public Node withTag(String tag) {
 		tags().add(tag);
 		return this;
+	}
+
+	public void travel(Consumer<Node> visitor) {
+		visitor.accept(this);
+		children.forEach(child -> child.travel(visitor));
 	}
 
 	boolean runTagMarking(TagMarker marker, BiConsumer<Node, Set<String>> listener) {

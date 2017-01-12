@@ -6,7 +6,7 @@ import java.io.UncheckedIOException;
 import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 
-public class NBTDescriptorPlainFile extends NBTDescriptorFile {
+class NBTDescriptorPlainFile extends NBTDescriptorFile {
 
 	public NBTDescriptorPlainFile(File file) {
 		super(file);

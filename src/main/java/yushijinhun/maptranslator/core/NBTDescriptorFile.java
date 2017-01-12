@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 
-public abstract class NBTDescriptorFile implements NBTDescriptor {
+abstract class NBTDescriptorFile implements NBTDescriptor {
 
 	protected File file;
 

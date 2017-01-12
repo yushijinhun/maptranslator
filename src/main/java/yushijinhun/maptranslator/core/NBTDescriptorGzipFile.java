@@ -8,7 +8,7 @@ import java.io.UncheckedIOException;
 import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 
-public class NBTDescriptorGzipFile extends NBTDescriptorFile {
+class NBTDescriptorGzipFile extends NBTDescriptorFile {
 
 	public NBTDescriptorGzipFile(File file) {
 		super(file);

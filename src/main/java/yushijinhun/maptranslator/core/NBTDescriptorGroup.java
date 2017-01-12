@@ -10,24 +10,24 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import yushijinhun.maptranslator.IteratorArgument;
 import yushijinhun.maptranslator.tree.NBTStoreNode;
 import yushijinhun.maptranslator.tree.RootNode;
+import yushijinhun.maptranslator.tree.TreeIterator;
 
-public class NBTDescriptorSet implements Closeable {
+public class NBTDescriptorGroup implements Closeable {
 
 	private Logger logger = Logger.getLogger(getClass().getCanonicalName());
 	private ExecutorService pool;
 
-	public final Set<NBTDescriptor> descriptors;
-	public final Set<Closeable> closeables;
+	private final Set<Closeable> closeables;
 	public final RootNode tree;
 
-	public NBTDescriptorSet(ExecutorService pool, Set<NBTDescriptor> descriptors, Set<Closeable> closeables) {
-		this.descriptors = descriptors;
+	public NBTDescriptorGroup(ExecutorService pool, Set<NBTDescriptor> descriptors, Set<Closeable> closeables) {
 		this.closeables = closeables;
 		this.pool = pool;
 		tree = new RootNode();
-		descriptors.forEach(descriptor -> tree.addChild(new NBTStoreNode(descriptor)));
+		descriptors.forEach(descriptor -> tree.addChild(new NBTStoreNode(new SyncNBTDescriptor(descriptor))));
 	}
 
 	public CompletableFuture<Void> read() {
@@ -36,6 +36,13 @@ public class NBTDescriptorSet implements Closeable {
 
 	public CompletableFuture<Void> write() {
 		return executeOnChildren(child -> child.asyncWrite(pool));
+	}
+
+	public CompletableFuture<Void> iterate(IteratorArgument arg) {
+		return executeOnChildren(child -> CompletableFuture.runAsync(() -> {
+			TreeIterator iterator = new TreeIterator(arg);
+			iterator.iterate(child);
+		}, pool));
 	}
 
 	private CompletableFuture<Void> executeOnChildren(Function<NBTStoreNode, CompletableFuture<?>> action) {

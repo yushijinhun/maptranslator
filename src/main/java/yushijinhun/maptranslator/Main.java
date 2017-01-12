@@ -3,33 +3,37 @@ package yushijinhun.maptranslator;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import yushijinhun.maptranslator.core.NBTDescriptorFactory;
-import yushijinhun.maptranslator.core.NBTDescriptorSet;
+import yushijinhun.maptranslator.core.NBTDescriptorGroup;
 import yushijinhun.maptranslator.nbt.NBT;
 import yushijinhun.maptranslator.tree.MinecraftRules;
 import yushijinhun.maptranslator.tree.NBTNode;
 import yushijinhun.maptranslator.tree.Node;
 import yushijinhun.maptranslator.tree.TextNodeReplacer;
-import yushijinhun.maptranslator.tree.TreeIterator;
 import yushijinhun.maptranslator.tree.TextNodeReplacer.TextContext;
 
 public class Main {
 
 	private static Map<String, String> diff = new HashMap<>();
-	private static Set<String> translatables = new LinkedHashSet<>();
+	private static Map<String, Set<Node>> translatables = new LinkedHashMap<>();
 
 	public static void main(String[] args) throws Exception {
 		//test code
-		NBTDescriptorSet collection = NBTDescriptorFactory.getDescriptors(new File("/home/yushijinhun/.minecraft/saves/Captive Minecraft III"), 8);
+		NBTDescriptorGroup collection = NBTDescriptorFactory.getDescriptors(new File("/home/yushijinhun/.minecraft/saves/Captive Minecraft III"), 8);
 		collection.read().get();
 
-		TreeIterator iterator = new TreeIterator();
-		iterator.markers.addAll(Arrays.asList(MinecraftRules.MARKERS));
-		iterator.replacers.addAll(Arrays.asList(MinecraftRules.REPLACERS));
-		iterator.iterate(collection.tree);
+		IteratorArgument arg = new IteratorArgument();
+		arg.markers.addAll(Arrays.asList(MinecraftRules.MARKERS));
+		arg.replacers.addAll(Arrays.asList(MinecraftRules.REPLACERS));
+
+		long t0 = System.currentTimeMillis();
+		collection.iterate(arg).get();
+		long t1 = System.currentTimeMillis();
+		System.out.println(t1 - t0);
 
 		printTree(collection.tree, 0);
 		collection.close();
@@ -38,7 +42,8 @@ public class Main {
 		diff.forEach((k, v) -> System.out.printf("- %s\n+ %s\n\n", k, v));
 		System.out.println();
 		System.out.println();
-		translatables.forEach(System.out::println);
+		diff.keySet().forEach(System.out::println);
+		System.out.println();
 	}
 
 	private static void printTree(Node node, int tabs) {
@@ -73,7 +78,10 @@ public class Main {
 			if (ctx != null) {
 				String text = ctx.getText(node);
 				if (text != null) {
-					translatables.add(text);
+					if (!translatables.containsKey(text)) {
+						translatables.put(text, new LinkedHashSet<>());
+					}
+					translatables.get(text).add(node);
 				}
 			}
 		}

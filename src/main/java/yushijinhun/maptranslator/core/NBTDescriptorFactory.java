@@ -17,11 +17,11 @@ public final class NBTDescriptorFactory {
 
 	private static Logger logger = Logger.getLogger(NBTDescriptorFactory.class.getCanonicalName());
 
-	public static NBTDescriptorSet getDescriptors(File file, int threads) {
+	public static NBTDescriptorGroup getDescriptors(File file, int threads) {
 		Set<NBTDescriptor> descriptors = new LinkedHashSet<>();
 		Set<Closeable> closeables = new LinkedHashSet<>();
 		getDescriptors(file, descriptors, closeables);
-		return new NBTDescriptorSet(Executors.newFixedThreadPool(threads), descriptors, closeables);
+		return new NBTDescriptorGroup(Executors.newFixedThreadPool(threads), descriptors, closeables);
 	}
 
 	private static void getDescriptors(File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {

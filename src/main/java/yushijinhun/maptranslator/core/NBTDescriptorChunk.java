@@ -10,7 +10,7 @@ import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.nbt.RegionFile;
 
-public class NBTDescriptorChunk implements NBTDescriptor {
+class NBTDescriptorChunk implements NBTDescriptor {
 
 	private RegionFile file;
 	private int x;
