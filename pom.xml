@@ -41,7 +41,7 @@
 					<archive>
 						<manifest>
 							<mainClass>
-								yushijinhun.maptranslator.Main
+								yushijinhun.maptranslator.ui.MainApplication
 							</mainClass>
 						</manifest>
 					</archive>
