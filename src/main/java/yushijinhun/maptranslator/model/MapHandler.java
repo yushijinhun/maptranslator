@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import javafx.collections.ObservableList;
 import yushijinhun.maptranslator.tree.Node;
 
 public interface MapHandler {
@@ -14,7 +13,7 @@ public interface MapHandler {
 		return MapHandlerImpl.create(mapFolder);
 	}
 
-	ObservableList<String> excludes();
+	List<String> excludes();
 
 	CompletableFuture<Map<String, Set<Node>>> extractStrings();
 

@@ -2,7 +2,6 @@ package yushijinhun.maptranslator.tree;
 
 import java.util.Set;
 import java.util.logging.Logger;
-import yushijinhun.maptranslator.IteratorArgument;
 
 public class TreeIterator {
 

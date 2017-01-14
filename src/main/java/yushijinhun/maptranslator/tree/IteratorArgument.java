@@ -1,9 +1,7 @@
-package yushijinhun.maptranslator;
+package yushijinhun.maptranslator.tree;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import yushijinhun.maptranslator.tree.NodeReplacer;
-import yushijinhun.maptranslator.tree.TagMarker;
 
 public class IteratorArgument {
 

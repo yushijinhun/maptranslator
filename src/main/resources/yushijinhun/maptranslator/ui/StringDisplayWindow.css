@@ -1,0 +1,7 @@
+.translated {
+	-fx-background-color: #90ee90;
+}
+
+.translated:selected {
+	-fx-background-color: #90eeff;
+}

@@ -2,6 +2,7 @@ package yushijinhun.maptranslator.model;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -11,11 +12,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import yushijinhun.maptranslator.IteratorArgument;
 import yushijinhun.maptranslator.core.NBTDescriptorFactory;
 import yushijinhun.maptranslator.core.NBTDescriptorGroup;
+import yushijinhun.maptranslator.tree.IteratorArgument;
 import yushijinhun.maptranslator.tree.MinecraftRules;
 import yushijinhun.maptranslator.tree.Node;
 import yushijinhun.maptranslator.tree.NodeReplacer;
@@ -29,7 +28,7 @@ class MapHandlerImpl implements MapHandler {
 
 	private File dir;
 	private NBTDescriptorGroup desGroup;
-	private ObservableList<String> excludes = FXCollections.observableArrayList();
+	private List<String> excludes = new ArrayList<>();
 	private List<ParseWarning> parseWarnings = new ArrayList<>();
 
 	public MapHandlerImpl(File dir) {
@@ -39,6 +38,12 @@ class MapHandlerImpl implements MapHandler {
 	private CompletableFuture<MapHandler> init() {
 		return CompletableFuture.runAsync(() -> desGroup = NBTDescriptorFactory.getDescriptors(dir, 16))
 				.thenCompose(dummy -> desGroup.read())
+				.thenCompose(dummy -> {
+					IteratorArgument arg = new IteratorArgument();
+					arg.markers.addAll(Arrays.asList(MinecraftRules.MARKERS));
+					arg.replacers.addAll(Arrays.asList(MinecraftRules.REPLACERS));
+					return desGroup.iterate(arg);
+				})
 				.thenRun(() -> {
 					desGroup.tree.travel(node -> {
 						if (node.properties().containsKey("origin")) {
@@ -62,14 +67,16 @@ class MapHandlerImpl implements MapHandler {
 			rootNode().travel(node -> {
 				if (node.hasTag(MinecraftRules.translatable)) {
 					TextNodeReplacer.getText(node).ifPresent(text -> {
-						Set<Node> g = result.get(text);
-						if (g != null) {
-							g.add(node);
-						} else {
-							if (!excluder.test(text)) {
-								g = new LinkedHashSet<>();
+						if (!text.trim().isEmpty()) {
+							Set<Node> g = result.get(text);
+							if (g != null) {
 								g.add(node);
-								result.put(text, g);
+							} else {
+								if (!excluder.test(text)) {
+									g = new LinkedHashSet<>();
+									g.add(node);
+									result.put(text, g);
+								}
 							}
 						}
 					});
@@ -113,7 +120,7 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	@Override
-	public ObservableList<String> excludes() {
+	public List<String> excludes() {
 		return excludes;
 	}
 
