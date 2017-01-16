@@ -25,7 +25,7 @@ class TranslateWindow {
 
 		String origin;
 		SimpleStringProperty originProperty = new SimpleStringProperty();
-		SimpleStringProperty targetProperty = new SimpleStringProperty();
+		SimpleStringProperty targetProperty = new SimpleStringProperty("");
 
 	}
 
@@ -83,6 +83,14 @@ class TranslateWindow {
 				onRemoved.accept(origin);
 			}
 		});
+		table.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if (event.getCode() == KeyCode.ENTER && event.isControlDown()) {
+				TranslateEntry entry = table.getSelectionModel().getSelectedItem();
+				if (entry != null) {
+					TranslateEditWindow.show(entry);
+				}
+			}
+		});
 		table.setEditable(true);
 	}
 
@@ -104,11 +112,14 @@ class TranslateWindow {
 		TranslateEntry entry = new TranslateEntry();
 		entry.origin = origin;
 		entry.originProperty.set(origin);
+		entry.targetProperty.set(origin);
 		entries.add(entry);
 		onAdded.accept(origin);
 		stage.requestFocus();
 		table.requestFocus();
-		table.edit(entries.size() - 1, colTarget);
+		table.getSelectionModel().select(entry);
+		table.scrollTo(table.getSelectionModel().getSelectedIndex());
+		TranslateEditWindow.show(entry);
 	}
 
 	void importEntry(String origin, String target) {

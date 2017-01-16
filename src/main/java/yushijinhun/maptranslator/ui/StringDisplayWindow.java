@@ -7,8 +7,11 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
@@ -19,12 +22,17 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 class StringDisplayWindow {
 
-	static final String DEFAULT_IGNORE = "@";
+	static final String DEFAULT_IGNORE = "@\nnull\n\"\"";
 
 	Stage stage;
 	ListView<String> list;
@@ -35,6 +43,10 @@ class StringDisplayWindow {
 	Map<String, ListCell<String>> cellsMapping = new WeakHashMap<>();
 	MenuItem menuShowIn = new MenuItem("查找出现");
 	ContextMenu popupMenu = new ContextMenu(menuShowIn);
+	TextField txtFilter;
+
+	Runnable showFilter;
+	Runnable hideFilter;
 
 	Consumer<String> onStringDbclick;
 	Predicate<String> isStringTranslated;
@@ -43,9 +55,10 @@ class StringDisplayWindow {
 	StringDisplayWindow() {
 		stage = new Stage();
 		stage.setTitle("原文列表");
-		list = new ListView<>(strings);
+		list = new ListView<>();
 		txtIgnore = new TextArea(DEFAULT_IGNORE);
 		btnLoad = new Button("读取");
+		txtFilter = new TextField();
 
 		BorderPane ignorePane = new BorderPane();
 		ignorePane.setCenter(txtIgnore);
@@ -63,6 +76,16 @@ class StringDisplayWindow {
 		Scene scene = new Scene(rootPane);
 		stage.setScene(scene);
 		scene.getStylesheets().add("/yushijinhun/maptranslator/ui/StringDisplayWindow.css");
+
+		showFilter = () -> {
+			rootPane.setTop(txtFilter);
+			txtFilter.requestFocus();
+		};
+		hideFilter = () -> {
+			if (!txtFilter.getText().isEmpty())
+				txtFilter.setText(null);
+			rootPane.setTop(null);
+		};
 
 		list.setCellFactory(param -> new ListCell<String>() {
 
@@ -97,10 +120,42 @@ class StringDisplayWindow {
 		});
 		list.setContextMenu(popupMenu);
 		popupMenu.setOnShowing(event -> menuShowIn.setDisable(list.getSelectionModel().isEmpty()));
-		menuShowIn.setOnAction(event->{
+		menuShowIn.setOnAction(event -> {
 			String str = list.getSelectionModel().getSelectedItem();
 			if (str != null) showIn.accept(str);
 		});
+
+		list.itemsProperty().bind(Bindings.createObjectBinding(() -> {
+			if (txtFilter.getText().isEmpty()) {
+				txtFilter.getStyleClass().remove("errorregex");
+				return strings;
+			}
+			ObservableList<String> result = FXCollections.observableArrayList();
+			Pattern pattern;
+			try {
+				pattern = Pattern.compile(txtFilter.getText());
+			} catch (PatternSyntaxException e) {
+				if (!txtFilter.getStyleClass().contains("errorregex")) {
+					txtFilter.getStyleClass().add("errorregex");
+				}
+				return result;
+			}
+			txtFilter.getStyleClass().remove("errorregex");
+			strings.forEach(str -> {
+				if (pattern.matcher(str).find())
+					result.add(str);
+			});
+			return result;
+		}, strings, txtFilter.textProperty()));
+		txtFilter.focusedProperty().addListener((dummy, oldVal, newVal) -> {
+			if (!newVal && txtFilter.getText().isEmpty())
+				hideFilter.run();
+		});
+		txtFilter.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+			if (event.getCode() == KeyCode.ESCAPE)
+				hideFilter.run();
+		});
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN), showFilter);
 	}
 
 	void onStringAddedToTranslate(String origin) {
@@ -126,6 +181,9 @@ class StringDisplayWindow {
 	}
 
 	void jumpToString(String origin) {
+		if (!txtFilter.getText().isEmpty() && !list.getItems().contains(origin)) {
+			hideFilter.run();
+		}
 		stage.requestFocus();
 		list.requestFocus();
 		list.getSelectionModel().select(origin);
@@ -136,8 +194,8 @@ class StringDisplayWindow {
 		strings.setAll(newstrings);
 		stringsSet = newstrings;
 	}
-	
-	boolean stringExists(String str){
+
+	boolean stringExists(String str) {
 		return stringsSet.contains(str);
 	}
 

@@ -3,7 +3,7 @@ package yushijinhun.maptranslator.model;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import yushijinhun.maptranslator.tree.Node;
 
@@ -15,16 +15,18 @@ public interface MapHandler {
 
 	List<String> excludes();
 
-	CompletableFuture<Map<String, Set<Node>>> extractStrings();
+	CompletableFuture<Map<String, List<String[]>>> extractStrings();
 
-	Node rootNode();
+	List<ParseWarning> lastParseWarnings();
 
-	List<ParseWarning> parseWarnings();
+	CompletableFuture<Void> replace(Map<String, String> table);
 
-	CompletableFuture<Void> save();
+	CompletableFuture<Optional<Node>> resolveNode(String[] path);
 
 	CompletableFuture<Void> close();
 
-	CompletableFuture<Void> replace(Map<String, String> table);
+	long currentProgress();
+
+	long totalProgress();
 
 }

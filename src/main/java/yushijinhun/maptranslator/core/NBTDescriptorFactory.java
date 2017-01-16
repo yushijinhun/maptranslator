@@ -5,12 +5,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import yushijinhun.maptranslator.nbt.RegionFile;
 
@@ -18,21 +24,20 @@ public final class NBTDescriptorFactory {
 
 	private static Logger logger = Logger.getLogger(NBTDescriptorFactory.class.getCanonicalName());
 
-	public static NBTDescriptorGroup getDescriptors(File file, int threads) {
-		Set<NBTDescriptor> descriptors = new LinkedHashSet<>();
-		Set<Closeable> closeables = new LinkedHashSet<>();
-		getDescriptors(file.toPath(), file, descriptors, closeables);
-		return new NBTDescriptorGroup(Executors.newFixedThreadPool(threads), descriptors, closeables);
-	}
-
-	private static void getDescriptors(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
-		if (file.isFile()) {
-			getDescriptorsFromFile(root, file, result, closeables);
-		} else if (file.isDirectory()) {
-			for (String child : file.list()) {
-				getDescriptors(root, new File(file, child), result, closeables);
-			}
+	public static NBTDescriptorGroup getDescriptors(File file) {
+		logger.info("Scanning " + file);
+		Set<NBTDescriptor> descriptors = new ConcurrentSkipListSet<>(Comparator.comparing(obj -> obj.toString()));
+		Set<Closeable> closeables = Collections.newSetFromMap(new ConcurrentHashMap<>());
+		Path root = file.toPath();
+		List<Path> files;
+		try {
+			files = Files.walk(root).collect(Collectors.toList());
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
+		files.parallelStream().map(path -> path.toFile()).forEach(f -> getDescriptorsFromFile(root, f, descriptors, closeables));
+		logger.info("Creating NBTDescriptorGroup, descriptorsCount=" + descriptors.size());
+		return new NBTDescriptorGroup(descriptors, closeables);
 	}
 
 	private static void getDescriptorsFromFile(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
@@ -55,7 +60,7 @@ public final class NBTDescriptorFactory {
 		for (int x = 0; x < 32; x++) {
 			for (int z = 0; z < 32; z++) {
 				if (region.isChunkSaved(x, z)) {
-					result.add(new NBTDescriptorChunk(root, region, x, z));
+					result.add(new SyncNBTDescriptor(new NBTDescriptorChunk(root, region, x, z)));
 				}
 			}
 		}
@@ -63,9 +68,9 @@ public final class NBTDescriptorFactory {
 
 	private static void getDescriptorsFromNBTFile(Path root, File file, Set<NBTDescriptor> result) {
 		if (isInGzip(file)) {
-			result.add(new NBTDescriptorGzipFile(root, file));
+			result.add(new SyncNBTDescriptor(new NBTDescriptorGzipFile(root, file)));
 		} else {
-			result.add(new NBTDescriptorPlainFile(root, file));
+			result.add(new SyncNBTDescriptor(new NBTDescriptorPlainFile(root, file)));
 		}
 	}
 

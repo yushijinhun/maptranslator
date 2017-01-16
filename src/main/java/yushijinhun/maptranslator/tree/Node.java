@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
@@ -18,22 +19,6 @@ public abstract class Node {
 	private Set<Node> unmodifiableChildren = Collections.unmodifiableSet(children);
 	private Node parent;
 	private Map<String, Object> properties = new HashMap<>();
-
-	// stats
-	private volatile long childrenCount;
-
-	private synchronized void updateChildrenCount() {
-		childrenCount = children.size();
-		for (Node child : children)
-			childrenCount += child.childrenCount;
-		if (parent != null)
-			parent.updateChildrenCount();
-	}
-
-	public long getAllChildrenCount() {
-		return childrenCount;
-	}
-	//
 
 	public Set<String> tags() {
 		return tags;
@@ -55,14 +40,12 @@ public abstract class Node {
 		if (child.parent != null) throw new IllegalArgumentException("parent node already exists");
 		child.parent = this;
 		children.add(child);
-		updateChildrenCount();
 	}
 
 	public void removeChild(Node child) {
 		if (child.parent != this) throw new IllegalArgumentException("not this node's child");
 		child.parent = null;
 		children.remove(child);
-		updateChildrenCount();
 	}
 
 	public boolean hasTag(String str) {
@@ -116,6 +99,46 @@ public abstract class Node {
 		return sb.toString();
 	}
 
+	public String[] getPathArray() {
+		List<InPathNode> chain = new ArrayList<>();
+		Node node = this;
+		while (node != null) {
+			if (node instanceof InPathNode)
+				chain.add((InPathNode) node);
+			node = node.parent();
+		}
+		String[] result = new String[chain.size()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = chain.get(result.length - i - 1).getPathName();
+		}
+		return result;
+	}
+
+	public Optional<Node> resolve(String[] path, int beginIdx) {
+		Node node = this;
+		int i = beginIdx;
+		loop_node:
+		while (i < path.length) {
+			String name = path[i];
+			for (Node child : node.children) {
+				if (child instanceof InPathNode && name.equals(((InPathNode) child).getPathName())) {
+					node = child;
+					i++;
+					continue loop_node;
+				}
+			}
+			if (node.children.size() == 1) {
+				Node child = node.children.iterator().next();
+				if (!(child instanceof InPathNode)) {
+					node = child;
+					continue loop_node;
+				}
+			}
+			return Optional.empty();
+		}
+		return Optional.of(node);
+	}
+
 	boolean runTagMarking(TagMarker marker, BiConsumer<Node, Set<String>> listener) {
 		boolean changed = false;
 		Set<String> addTags = new LinkedHashSet<>();
@@ -160,7 +183,6 @@ public abstract class Node {
 				changed |= child.runNodeReplacing(replacer, listener);
 			}
 		}
-		if (changed) updateChildrenCount();
 		return changed;
 	}
 

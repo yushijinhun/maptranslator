@@ -1,7 +1,5 @@
 package yushijinhun.maptranslator.tree;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import yushijinhun.maptranslator.core.NBTDescriptor;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.tree.NBTRootNode;
@@ -21,31 +19,27 @@ public class NBTStoreNode extends Node implements InPathNode {
 		return descriptor.toString();
 	}
 
-	public CompletableFuture<Void> asyncRead(Executor executor) {
-		return CompletableFuture.supplyAsync(descriptor::read, executor)
-				.thenAccept(nbt -> {
-					synchronized (this) {
-						unmodifiableChildren().forEach(this::removeChild);
-						NBTRootNode node = TreeConstructor.construct(nbt);
-						node.tags().addAll(descriptor.getTags());
-						addChild(node);
-					}
-				});
+	public void read() {
+		unmodifiableChildren().forEach(this::removeChild);
+		NBTRootNode node = TreeConstructor.construct(descriptor.read());
+		node.tags().addAll(descriptor.getTags());
+		addChild(node);
 	}
 
-	public CompletableFuture<Void> asyncWrite(Executor executor) {
-		return CompletableFuture.supplyAsync(() -> {
-			synchronized (this) {
-				if (unmodifiableChildren().size() == 1) {
-					Node node = unmodifiableChildren().iterator().next();
-					if (node instanceof NBTRootNode) {
-						return (NBTCompound) ((NBTRootNode) node).nbt.clone();
-					}
-				}
-				throw new IllegalStateException("No NBT data found in the node");
+	public void write() {
+		if (unmodifiableChildren().size() == 1) {
+			Node node = unmodifiableChildren().iterator().next();
+			if (node instanceof NBTRootNode) {
+				descriptor.write((NBTCompound) ((NBTRootNode) node).nbt.clone());
+				return;
 			}
-		}, executor).thenAccept(descriptor::write);
+		}
+		throw new IllegalStateException("No NBT data found in the node");
 
+	}
+
+	public void close() {
+		unmodifiableChildren().forEach(this::removeChild);
 	}
 
 }

@@ -5,3 +5,7 @@
 .translated:selected {
 	-fx-background-color: #90eeff;
 }
+
+.errorregex {
+	-fx-background-color: #ff6347;
+}

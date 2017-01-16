@@ -12,26 +12,20 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.FileChooser.ExtensionFilter;
 import yushijinhun.maptranslator.internal.org.json.JSONObject;
 import yushijinhun.maptranslator.internal.org.json.JSONTokener;
 import yushijinhun.maptranslator.model.MapHandler;
 import yushijinhun.maptranslator.model.ParseWarning;
-import yushijinhun.maptranslator.tree.Node;
 
 class MainApplication {
 
@@ -45,18 +39,11 @@ class MainApplication {
 	StringDisplayWindow strDisWin;
 	TranslateWindow traWin;
 	TreeViewWindow treeWin;
-	Map<String, Set<Node>> mapping;
-	Stage progressStage;
-
-	void createProgressStage() {
-		progressStage = new Stage(StageStyle.UTILITY);
-		progressStage.setScene(new Scene(new Label("处理中...")));
-		progressStage.setWidth(160);
-		progressStage.setHeight(60);
-	}
+	ProgressWindow progressWin;
+	Map<String, List<String[]>> mapping;
 
 	void start() {
-		createProgressStage();
+		progressWin = new ProgressWindow();
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle("选择要翻译的存档");
 		folder = chooser.showDialog(null);
@@ -64,12 +51,8 @@ class MainApplication {
 			new Alert(AlertType.ERROR, "没有选择存档！").show();
 			return;
 		}
-		showProgressWindow();
+		showProgressWindow(false);
 		MapHandler.create(folder)
-				.thenApplyAsync(param -> {
-					TreeItemConstructor.construct(param.rootNode());
-					return param;
-				}, Platform::runLater)
 				.thenAcceptAsync(createdHandler -> {
 					hideProgressWindow();
 					handler = createdHandler;
@@ -78,6 +61,7 @@ class MainApplication {
 	}
 
 	void initUI() {
+		progressWin.progressGetter = () -> ((double) handler.currentProgress()) / ((double) handler.totalProgress());
 		strDisWin = new StringDisplayWindow();
 		traWin = new TranslateWindow();
 		treeWin = new TreeViewWindow();
@@ -93,19 +77,30 @@ class MainApplication {
 		treeWin.showIn = strDisWin::jumpToString;
 		treeWin.isStringInList = strDisWin::stringExists;
 		strDisWin.showIn = str -> {
-			treeWin.stage.requestFocus();
-			treeWin.tree.requestFocus();
-			treeWin.setAppearances(new ArrayList<>(mapping.get(str)));
+			if (mapping.containsKey(str)) {
+				treeWin.stage.requestFocus();
+				treeWin.tree.requestFocus();
+				treeWin.setAppearances(new ArrayList<>(mapping.get(str)));
+			}
+		};
+		treeWin.nodeLoader = path -> {
+			showProgressWindow(false);
+			return handler.resolveNode(path)
+					.thenApplyAsync(result -> {
+						hideProgressWindow();
+						return result;
+					}, Platform::runLater);
 		};
 
 		strDisWin.btnLoad.setOnAction(event -> {
-			showProgressWindow();
+			showProgressWindow(true);
 			handler.excludes().clear();
 			handler.excludes().addAll(strDisWin.getIgnores());
 			handler.extractStrings().thenAcceptAsync(param -> {
 				mapping = param;
 				strDisWin.setStrings(mapping.keySet());
 				hideProgressWindow();
+				showParseWarnings();
 			}, Platform::runLater);
 		});
 
@@ -115,7 +110,7 @@ class MainApplication {
 			chooser.setSelectedExtensionFilter(new ExtensionFilter("JSON key-value mapping", ".json"));
 			File target = chooser.showSaveDialog(traWin.stage);
 			if (target == null) return;
-			showProgressWindow();
+			showProgressWindow(false);
 			Map<String, String> copy = traWin.toTranslateTable();
 			CompletableFuture.runAsync(() -> {
 				JSONObject json = new JSONObject(copy);
@@ -140,7 +135,7 @@ class MainApplication {
 			chooser.setSelectedExtensionFilter(new ExtensionFilter("JSON key-value mapping", ".json"));
 			File target = chooser.showOpenDialog(traWin.stage);
 			if (target == null) return;
-			showProgressWindow();
+			showProgressWindow(false);
 			CompletableFuture.supplyAsync(() -> {
 				try (Reader reader = new InputStreamReader(new FileInputStream(target), "UTF-8")) {
 					return new JSONObject(new JSONTokener(reader));
@@ -162,11 +157,10 @@ class MainApplication {
 		});
 
 		traWin.btnApply.setOnAction(event -> {
-			showProgressWindow();
+			showProgressWindow(true);
 			handler.excludes().clear();
 			handler.excludes().addAll(strDisWin.getIgnores());
 			handler.replace(traWin.toTranslateTable())
-					.thenCompose(dummy -> handler.save())
 					.handleAsync((result, err) -> {
 						hideProgressWindow();
 						if (err == null) {
@@ -178,13 +172,28 @@ class MainApplication {
 					}, Platform::runLater);
 		});
 
-		treeWin.setRoot(handler.rootNode());
-
 		strDisWin.stage.show();
 		traWin.stage.show();
 		treeWin.stage.show();
+	}
 
-		List<ParseWarning> warnings = handler.parseWarnings();
+	void showProgressWindow(boolean progress) {
+		progressWin.show(progress);
+	}
+
+	void hideProgressWindow() {
+		progressWin.hide();
+	}
+
+	void exit() {
+		handler.close();
+		traWin.stage.close();
+		strDisWin.stage.close();
+		treeWin.stage.close();
+	}
+
+	void showParseWarnings() {
+		List<ParseWarning> warnings = handler.lastParseWarnings();
 		if (!warnings.isEmpty()) {
 			Alert alert = new Alert(AlertType.WARNING, "部分字符串将无法以原格式保存：");
 			TextArea textArea = new TextArea(
@@ -200,20 +209,6 @@ class MainApplication {
 			}));
 			alert.show();
 		}
-	}
-
-	void showProgressWindow() {
-		progressStage.show();
-	}
-
-	void hideProgressWindow() {
-		progressStage.hide();
-	}
-
-	void exit() {
-		handler.close();
-		traWin.stage.close();
-		strDisWin.stage.close();
 	}
 
 }

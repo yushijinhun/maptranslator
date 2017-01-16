@@ -27,7 +27,7 @@ import yushijinhun.maptranslator.tree.Node;
 import yushijinhun.maptranslator.tree.NodeArgument;
 import yushijinhun.maptranslator.tree.TextArgumentNode;
 
-class TreeItemConstructor {
+public class TreeItemConstructor {
 
 	static final Image img_boolean = new Image("/yushijinhun/maptranslator/ui/icon/nbt/boolean.png");
 	static final Image img_byte_array = new Image("/yushijinhun/maptranslator/ui/icon/nbt/byte_array.png");
@@ -44,7 +44,7 @@ class TreeItemConstructor {
 	static final Image img_file = new Image("/yushijinhun/maptranslator/ui/icon/common/package-x-generic.png");
 	static final Image img_argument = new Image("/yushijinhun/maptranslator/ui/icon/common/curly-brackets.png");
 
-	static TreeItem<Node> construct(Node value) {
+	public static TreeItem<Node> construct(Node value) {
 		TreeItem<Node> node = new TreeItem<>(value);
 
 		Image icon = null;

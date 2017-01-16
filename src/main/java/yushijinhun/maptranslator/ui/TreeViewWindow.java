@@ -2,8 +2,11 @@ package yushijinhun.maptranslator.ui;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -34,10 +37,12 @@ class TreeViewWindow {
 	ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowIn);
 	IntegerProperty currentAppearance = new SimpleIntegerProperty();
 	IntegerProperty totalAppearance = new SimpleIntegerProperty();
-	ObjectProperty<List<Node>> appearances = new SimpleObjectProperty<>();
+	ObjectProperty<List<String[]>> appearances = new SimpleObjectProperty<>();
+	boolean loadingNode = false;
 
 	Consumer<String> showIn;
 	Predicate<String> isStringInList;
+	Function<String[], CompletableFuture<Optional<Node>>> nodeLoader;
 
 	TreeViewWindow() {
 		stage = new Stage();
@@ -51,10 +56,9 @@ class TreeViewWindow {
 		tree.setShowRoot(true);
 
 		Label lblAppearanceCount = new Label();
-		lblAppearanceCount.textProperty().bind(Bindings.concat("第", currentAppearance.add(1), "个，共", totalAppearance, "个 (Ctrl+N 下一个，Ctrl+P 上一个，Ctrl+; 清除)"));
-		lblAppearanceCount.visibleProperty().bind(appearances.isNotNull());
-		lblAppearanceCount.visibleProperty().addListener(dummy -> rootPane.requestLayout());
+		lblAppearanceCount.textProperty().bind(Bindings.concat("第", currentAppearance.add(1), "个匹配，共", totalAppearance, "个 (Ctrl+N 下一个，Ctrl+P 上一个，Ctrl+; 清除)"));
 		rootPane.setBottom(lblAppearanceCount);
+		lblAppearanceCount.visibleProperty().bind(appearances.isNotNull());
 
 		Label lblPath = new Label();
 		lblPath.textProperty().bind(Bindings.createStringBinding(() -> {
@@ -163,7 +167,7 @@ class TreeViewWindow {
 		tree.scrollTo(idx);
 	}
 
-	void setAppearances(List<Node> nodes) {
+	void setAppearances(List<String[]> nodes) {
 		appearances.set(nodes);
 		if (nodes != null) {
 			currentAppearance.set(1);
@@ -172,13 +176,36 @@ class TreeViewWindow {
 		}
 	}
 
+	Optional<Optional<Node>> tryLoadFromCurrent(String[] path) {
+		if (tree.getRoot() != null) {
+			Node root = tree.getRoot().getValue();
+			while (root.parent() != null)
+				root = root.parent();
+			if (root.toString().equals(path[0])) {
+				return Optional.of(root.resolve(path, 1));
+			}
+		}
+		return Optional.empty();
+	}
+
 	void switchAppearance(int offset) {
-		if (appearances.get() != null) {
+		if (appearances.get() != null && !loadingNode) {
 			int newIdx = currentAppearance.get() + offset;
 			if (newIdx < 0) newIdx = totalAppearance.get() - 1;
 			if (newIdx >= totalAppearance.get()) newIdx = 0;
 			currentAppearance.set(newIdx);
-			selectNode(appearances.get().get(newIdx));
+			String[] path = appearances.get().get(newIdx);
+			Optional<Optional<Node>> tryCurrent = tryLoadFromCurrent(path);
+			if (tryCurrent.isPresent()) {
+				tryCurrent.get().ifPresent(node -> selectNode(node));
+			} else {
+				loadingNode = true;
+				nodeLoader.apply(path)
+						.thenAcceptAsync(optional -> {
+							loadingNode = false;
+							optional.ifPresent(node -> selectNode(node));
+						}, Platform::runLater);
+			}
 		}
 	}
 
