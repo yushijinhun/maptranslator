@@ -8,7 +8,7 @@ public class JsonRootNode extends JsonNode implements ArgumentNode {
 
 	@Override
 	public String toString() {
-		return "<json root>";
+		return "<json>";
 	}
 
 	@Override

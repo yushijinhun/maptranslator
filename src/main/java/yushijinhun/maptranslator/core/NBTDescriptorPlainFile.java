@@ -3,13 +3,14 @@ package yushijinhun.maptranslator.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 
 class NBTDescriptorPlainFile extends NBTDescriptorFile {
 
-	public NBTDescriptorPlainFile(File file) {
-		super(file);
+	public NBTDescriptorPlainFile(Path root, File file) {
+		super(root, file);
 	}
 
 	@Override

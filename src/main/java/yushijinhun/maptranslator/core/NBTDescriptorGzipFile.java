@@ -5,13 +5,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import yushijinhun.maptranslator.nbt.NBTIO;
 import yushijinhun.maptranslator.nbt.NBTCompound;
 
 class NBTDescriptorGzipFile extends NBTDescriptorFile {
 
-	public NBTDescriptorGzipFile(File file) {
-		super(file);
+	public NBTDescriptorGzipFile(Path root, File file) {
+		super(root, file);
 	}
 
 	@Override

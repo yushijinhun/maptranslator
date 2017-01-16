@@ -8,7 +8,7 @@ import yushijinhun.maptranslator.tree.NBTRootNode;
 import yushijinhun.maptranslator.tree.TreeConstructor;
 import yushijinhun.maptranslator.tree.Node;
 
-public class NBTStoreNode extends Node {
+public class NBTStoreNode extends Node implements InPathNode {
 
 	public final NBTDescriptor descriptor;
 

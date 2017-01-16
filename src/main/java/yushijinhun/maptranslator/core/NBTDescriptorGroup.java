@@ -3,6 +3,7 @@ package yushijinhun.maptranslator.core;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -27,7 +28,9 @@ public class NBTDescriptorGroup implements Closeable {
 		this.closeables = closeables;
 		this.pool = pool;
 		tree = new RootNode();
-		descriptors.forEach(descriptor -> tree.addChild(new NBTStoreNode(new SyncNBTDescriptor(descriptor))));
+		descriptors.stream()
+				.sorted(Comparator.comparing(desp -> desp.toString()))
+				.forEach(descriptor -> tree.addChild(new NBTStoreNode(new SyncNBTDescriptor(descriptor))));
 	}
 
 	public CompletableFuture<Void> read() {

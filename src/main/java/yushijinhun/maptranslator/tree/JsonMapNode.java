@@ -1,5 +1,6 @@
 package yushijinhun.maptranslator.tree;
 
+import yushijinhun.maptranslator.internal.org.json.JSONArray;
 import yushijinhun.maptranslator.internal.org.json.JSONObject;
 
 public class JsonMapNode extends JsonNode implements MapNode {
@@ -25,6 +26,15 @@ public class JsonMapNode extends JsonNode implements MapNode {
 	public void replaceJson(Object json) {
 		super.replaceJson(json);
 		((JSONObject) ((JsonNode) parent()).json).put(key, json);
+	}
+
+	@Override
+	public String getDisplayText() {
+		if (json instanceof JSONObject || json instanceof JSONArray) {
+			return toString();
+		} else {
+			return key + " = " + json;
+		}
 	}
 
 }

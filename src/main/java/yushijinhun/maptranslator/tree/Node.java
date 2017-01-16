@@ -1,8 +1,10 @@
 package yushijinhun.maptranslator.tree;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -92,6 +94,26 @@ public abstract class Node {
 	public void travel(Consumer<Node> visitor) {
 		visitor.accept(this);
 		children.forEach(child -> child.travel(visitor));
+	}
+
+	public String getDisplayText() {
+		return toString();
+	}
+
+	public String getPath() {
+		List<InPathNode> chain = new ArrayList<>();
+		Node node = this;
+		while (node != null) {
+			if (node instanceof InPathNode)
+				chain.add((InPathNode) node);
+			node = node.parent();
+		}
+		StringBuilder sb = new StringBuilder();
+		for (int i = chain.size() - 1; i >= 0; i--) {
+			sb.append('/');
+			sb.append(chain.get(i).getPathName());
+		}
+		return sb.toString();
 	}
 
 	boolean runTagMarking(TagMarker marker, BiConsumer<Node, Set<String>> listener) {

@@ -1,6 +1,6 @@
 package yushijinhun.maptranslator.tree;
 
-public class NodeArgument extends Node {
+public class NodeArgument extends Node implements InPathNode {
 
 	public final String argumentName;
 

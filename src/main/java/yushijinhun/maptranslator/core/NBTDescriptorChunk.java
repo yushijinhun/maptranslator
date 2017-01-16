@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 import yushijinhun.maptranslator.nbt.NBTIO;
@@ -12,11 +13,13 @@ import yushijinhun.maptranslator.nbt.RegionFile;
 
 class NBTDescriptorChunk implements NBTDescriptor {
 
+	private Path root;
 	private RegionFile file;
 	private int x;
 	private int y;
 
-	public NBTDescriptorChunk(RegionFile file, int x, int y) {
+	public NBTDescriptorChunk(Path root, RegionFile file, int x, int y) {
+		this.root = root;
 		this.file = file;
 		this.x = x;
 		this.y = y;
@@ -42,7 +45,7 @@ class NBTDescriptorChunk implements NBTDescriptor {
 
 	@Override
 	public String toString() {
-		return file.getFile().getPath() + "/chunk[" + x + "," + y + "]";
+		return root.relativize(file.getFile().toPath()) + "/chunk[" + x + "," + y + "]";
 	}
 
 	@Override

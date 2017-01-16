@@ -13,9 +13,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -29,11 +31,14 @@ class StringDisplayWindow {
 	ObservableList<String> strings = FXCollections.observableArrayList();
 	TextArea txtIgnore;
 	Button btnLoad;
-
+	Set<String> stringsSet;
 	Map<String, ListCell<String>> cellsMapping = new WeakHashMap<>();
+	MenuItem menuShowIn = new MenuItem("查找出现");
+	ContextMenu popupMenu = new ContextMenu(menuShowIn);
 
 	Consumer<String> onStringDbclick;
 	Predicate<String> isStringTranslated;
+	Consumer<String> showIn;
 
 	StringDisplayWindow() {
 		stage = new Stage();
@@ -90,6 +95,12 @@ class StringDisplayWindow {
 				if (selected != null) onStringDbclick.accept(selected);
 			}
 		});
+		list.setContextMenu(popupMenu);
+		popupMenu.setOnShowing(event -> menuShowIn.setDisable(list.getSelectionModel().isEmpty()));
+		menuShowIn.setOnAction(event->{
+			String str = list.getSelectionModel().getSelectedItem();
+			if (str != null) showIn.accept(str);
+		});
 	}
 
 	void onStringAddedToTranslate(String origin) {
@@ -115,12 +126,19 @@ class StringDisplayWindow {
 	}
 
 	void jumpToString(String origin) {
+		stage.requestFocus();
+		list.requestFocus();
 		list.getSelectionModel().select(origin);
 		list.scrollTo(origin);
 	}
 
 	void setStrings(Set<String> newstrings) {
 		strings.setAll(newstrings);
+		stringsSet = newstrings;
+	}
+	
+	boolean stringExists(String str){
+		return stringsSet.contains(str);
 	}
 
 }

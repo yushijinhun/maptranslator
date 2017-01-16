@@ -1,6 +1,7 @@
 package yushijinhun.maptranslator.tree;
 
 import yushijinhun.maptranslator.nbt.NBT;
+import yushijinhun.maptranslator.nbt.NBTCompound;
 import yushijinhun.maptranslator.nbt.NBTList;
 
 public class NBTListNode extends NBTNode implements ListNode {
@@ -26,6 +27,15 @@ public class NBTListNode extends NBTNode implements ListNode {
 	public void replaceNBT(NBT newnbt) {
 		super.replaceNBT(newnbt);
 		((NBTList) ((NBTNode) parent()).nbt).set(index, newnbt);
+	}
+
+	@Override
+	public String getDisplayText() {
+		if (nbt instanceof NBTCompound || nbt instanceof NBTList) {
+			return toString();
+		} else {
+			return "[" + index + "] = " + valueToString(nbt);
+		}
 	}
 
 }

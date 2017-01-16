@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -20,29 +21,29 @@ public final class NBTDescriptorFactory {
 	public static NBTDescriptorGroup getDescriptors(File file, int threads) {
 		Set<NBTDescriptor> descriptors = new LinkedHashSet<>();
 		Set<Closeable> closeables = new LinkedHashSet<>();
-		getDescriptors(file, descriptors, closeables);
+		getDescriptors(file.toPath(), file, descriptors, closeables);
 		return new NBTDescriptorGroup(Executors.newFixedThreadPool(threads), descriptors, closeables);
 	}
 
-	private static void getDescriptors(File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
+	private static void getDescriptors(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
 		if (file.isFile()) {
-			getDescriptorsFromFile(file, result, closeables);
+			getDescriptorsFromFile(root, file, result, closeables);
 		} else if (file.isDirectory()) {
 			for (String child : file.list()) {
-				getDescriptors(new File(file, child), result, closeables);
+				getDescriptors(root, new File(file, child), result, closeables);
 			}
 		}
 	}
 
-	private static void getDescriptorsFromFile(File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
+	private static void getDescriptorsFromFile(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
 		if (file.getName().endsWith(".mca")) {
-			getDescriptorsFromMcaFile(file, result, closeables);
+			getDescriptorsFromMcaFile(root, file, result, closeables);
 		} else if (file.getName().endsWith(".dat")) {
-			getDescriptorsFromNBTFile(file, result);
+			getDescriptorsFromNBTFile(root, file, result);
 		}
 	}
 
-	private static void getDescriptorsFromMcaFile(File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
+	private static void getDescriptorsFromMcaFile(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
 		RegionFile region;
 		try {
 			region = new RegionFile(file);
@@ -54,17 +55,17 @@ public final class NBTDescriptorFactory {
 		for (int x = 0; x < 32; x++) {
 			for (int z = 0; z < 32; z++) {
 				if (region.isChunkSaved(x, z)) {
-					result.add(new NBTDescriptorChunk(region, x, z));
+					result.add(new NBTDescriptorChunk(root, region, x, z));
 				}
 			}
 		}
 	}
 
-	private static void getDescriptorsFromNBTFile(File file, Set<NBTDescriptor> result) {
+	private static void getDescriptorsFromNBTFile(Path root, File file, Set<NBTDescriptor> result) {
 		if (isInGzip(file)) {
-			result.add(new NBTDescriptorGzipFile(file));
+			result.add(new NBTDescriptorGzipFile(root, file));
 		} else {
-			result.add(new NBTDescriptorPlainFile(file));
+			result.add(new NBTDescriptorPlainFile(root, file));
 		}
 	}
 

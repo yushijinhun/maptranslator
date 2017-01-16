@@ -7,4 +7,9 @@ public class RootNode extends Node {
 		return "<root>";
 	}
 
+	@Override
+	public String getPath() {
+		return "/";
+	}
+
 }

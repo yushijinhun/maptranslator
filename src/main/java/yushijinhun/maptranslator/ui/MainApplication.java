@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ class MainApplication {
 	MapHandler handler;
 	StringDisplayWindow strDisWin;
 	TranslateWindow traWin;
+	TreeViewWindow treeWin;
 	Map<String, Set<Node>> mapping;
 	Stage progressStage;
 
@@ -64,6 +66,10 @@ class MainApplication {
 		}
 		showProgressWindow();
 		MapHandler.create(folder)
+				.thenApplyAsync(param -> {
+					TreeItemConstructor.construct(param.rootNode());
+					return param;
+				}, Platform::runLater)
 				.thenAcceptAsync(createdHandler -> {
 					hideProgressWindow();
 					handler = createdHandler;
@@ -74,14 +80,23 @@ class MainApplication {
 	void initUI() {
 		strDisWin = new StringDisplayWindow();
 		traWin = new TranslateWindow();
+		treeWin = new TreeViewWindow();
 		strDisWin.stage.setOnCloseRequest(event -> exit());
 		traWin.stage.setOnCloseRequest(event -> exit());
+		treeWin.stage.setOnCloseRequest(event -> exit());
 
 		traWin.onAdded = strDisWin::onStringAddedToTranslate;
 		traWin.onRemoved = strDisWin::onStringRemovedFromTranslate;
 		traWin.onTextDbclick = strDisWin::jumpToString;
 		strDisWin.onStringDbclick = traWin::tryAddEntry;
 		strDisWin.isStringTranslated = traWin::isStringTranslated;
+		treeWin.showIn = strDisWin::jumpToString;
+		treeWin.isStringInList = strDisWin::stringExists;
+		strDisWin.showIn = str -> {
+			treeWin.stage.requestFocus();
+			treeWin.tree.requestFocus();
+			treeWin.setAppearances(new ArrayList<>(mapping.get(str)));
+		};
 
 		strDisWin.btnLoad.setOnAction(event -> {
 			showProgressWindow();
@@ -163,8 +178,11 @@ class MainApplication {
 					}, Platform::runLater);
 		});
 
+		treeWin.setRoot(handler.rootNode());
+
 		strDisWin.stage.show();
 		traWin.stage.show();
+		treeWin.stage.show();
 
 		List<ParseWarning> warnings = handler.parseWarnings();
 		if (!warnings.isEmpty()) {

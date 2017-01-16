@@ -10,7 +10,7 @@ public class NBTRootNode extends NBTNode implements ArgumentNode {
 
 	@Override
 	public String toString() {
-		return "<nbt_root>";
+		return "<nbt>";
 	}
 
 	@Override

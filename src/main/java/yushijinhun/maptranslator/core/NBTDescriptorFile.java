@@ -1,20 +1,23 @@
 package yushijinhun.maptranslator.core;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 
 abstract class NBTDescriptorFile implements NBTDescriptor {
 
+	private Path root;
 	protected File file;
 
-	public NBTDescriptorFile(File file) {
+	public NBTDescriptorFile(Path root, File file) {
+		this.root = root;
 		this.file = file;
 	}
 
 	@Override
 	public String toString() {
-		return file.getPath();
+		return root.relativize(file.toPath()).toString();
 	}
 
 	@Override
