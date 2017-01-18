@@ -50,8 +50,4 @@ public class NBTStringProxy extends NBTString {
 		output.writeUTF(getString());
 	}
 
-	@Override
-	public Object getData() {
-		return getString();
-	}
 }

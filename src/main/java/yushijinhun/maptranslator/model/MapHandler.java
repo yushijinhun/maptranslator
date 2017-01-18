@@ -17,7 +17,7 @@ public interface MapHandler {
 
 	CompletableFuture<Map<String, List<String[]>>> extractStrings();
 
-	List<ParseWarning> lastParseWarnings();
+	List<ParsingWarning> lastParsingWarnings();
 
 	CompletableFuture<Void> replace(Map<String, String> table);
 

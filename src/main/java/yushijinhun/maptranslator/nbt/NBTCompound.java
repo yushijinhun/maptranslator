@@ -50,7 +50,7 @@ public class NBTCompound extends NBT {
 	public boolean equals(Object another) {
 		if (super.equals(another)) {
 			NBTCompound casted = (NBTCompound) another;
-			return tagMap.entrySet().equals(casted.tagMap.entrySet());
+			return tagMap.equals(casted.tagMap);
 		}
 		return false;
 	}
@@ -263,8 +263,4 @@ public class NBTCompound extends NBT {
 		output.writeByte(0);
 	}
 
-	@Override
-	public Object getData() {
-		return null;
-	}
 }

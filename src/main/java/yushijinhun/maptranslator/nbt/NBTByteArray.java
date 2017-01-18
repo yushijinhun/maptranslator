@@ -61,8 +61,4 @@ public class NBTByteArray extends NBT {
 		output.write(data);
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
 }

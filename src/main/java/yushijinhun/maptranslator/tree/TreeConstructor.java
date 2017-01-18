@@ -10,20 +10,68 @@ import yushijinhun.maptranslator.nbt.NBTList;
 
 public final class TreeConstructor {
 
+	private static final boolean _TO_STRING_VERIFY = true;
+
+	private static final NBTCompound parseNBT(String nbt) {
+		NBTCompound parsed = JsonNBTConverter.getTagFromJson(nbt);
+		if (_TO_STRING_VERIFY) {
+			try {
+				String serialized = parsed.toString();
+				if (!parsed.equals(JsonNBTConverter.getTagFromJson(serialized))) {
+					throw new IllegalStateException("Object mismatch, serialized: " + serialized);
+				}
+			} catch (Exception e) {
+				throw new ArgumentParseException("*** Parsing verify failed (nbt): " + nbt, e);
+			}
+		}
+		return parsed;
+	}
+
+	private static final JSONArray parseJsonArray(String json) {
+		JSONArray parsed = new JSONArray(json);
+		if (_TO_STRING_VERIFY) {
+			try {
+				String serialized = parsed.toString();
+				if (!parsed.equals(new JSONArray(serialized))) {
+					throw new IllegalStateException("Object mismatch, serialized: " + serialized);
+				}
+			} catch (Exception e) {
+				throw new ArgumentParseException("*** Parsing verify failed (json array): " + json, e);
+			}
+		}
+		return parsed;
+	}
+
+	private static final JSONObject parseJsonObject(String json) {
+		JSONObject parsed = new JSONObject(json);
+		if (_TO_STRING_VERIFY) {
+			try {
+				String serialized = parsed.toString();
+				if (!parsed.equals(new JSONObject(serialized))) {
+					throw new IllegalStateException("Object mismatch, serialized: " + serialized);
+				}
+			} catch (Exception e) {
+				throw new ArgumentParseException("*** Parsing verify failed (json object): " + json, e);
+			}
+		}
+		return parsed;
+	}
+
 	private TreeConstructor() {}
 
 	public static NBTRootNode constructNBT(String nbt) {
-		return construct(JsonNBTConverter.getTagFromJson(nbt));
+		return construct(parseNBT(nbt));
 	}
 
 	public static JsonRootNode constructJson(String json) {
 		try {
-			return construct(new JSONObject(json));
+			return construct(parseJsonObject(json));
 		} catch (JSONException e) {
 			try {
-				return construct(new JSONArray(json));
+				return construct(parseJsonArray(json));
 			} catch (JSONException e1) {
-				throw new ArgumentParseException(json);
+				e.addSuppressed(e1);
+				throw new ArgumentParseException(json, e);
 			}
 
 		}

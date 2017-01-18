@@ -32,15 +32,13 @@ public class NBTDescriptorGroup implements Closeable {
 				.map(desp -> {
 					try {
 						NBTStoreNode root = new NBTStoreNode(desp);
-						try {
-							root.read();
-						} catch (UncheckedIOException e) {
-							logger.log(Level.WARNING, "Couldn't read " + desp, e);
-							return Optional.<T> empty();
-						}
+						root.read();
 						Optional<T> result = Optional.of(mapper.apply(root));
 						root.close();
 						return result;
+					} catch (Exception e) {
+						logger.log(Level.WARNING, "Couldn't handle " + desp, e);
+						return Optional.<T> empty();
 					} finally {
 						processed++;
 					}

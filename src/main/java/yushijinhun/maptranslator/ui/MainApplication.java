@@ -6,14 +6,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.control.Alert;
@@ -25,7 +26,9 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import yushijinhun.maptranslator.internal.org.json.JSONObject;
 import yushijinhun.maptranslator.internal.org.json.JSONTokener;
 import yushijinhun.maptranslator.model.MapHandler;
-import yushijinhun.maptranslator.model.ParseWarning;
+import yushijinhun.maptranslator.model.ParsingWarning;
+import yushijinhun.maptranslator.model.ResolveFailedWarning;
+import yushijinhun.maptranslator.model.StringMismatchWarning;
 
 class MainApplication {
 
@@ -193,13 +196,10 @@ class MainApplication {
 	}
 
 	void showParseWarnings() {
-		List<ParseWarning> warnings = handler.lastParseWarnings();
+		List<ParsingWarning> warnings = handler.lastParsingWarnings();
 		if (!warnings.isEmpty()) {
-			Alert alert = new Alert(AlertType.WARNING, "部分字符串将无法以原格式保存：");
-			TextArea textArea = new TextArea(
-					warnings.stream()
-							.map(warning -> String.format("- %s\n+ %s\n", warning.origin, warning.current))
-							.collect(Collectors.joining("\n")));
+			Alert alert = new Alert(AlertType.WARNING, "读入过程中出现了一些错误");
+			TextArea textArea = new TextArea(warningsToString(warnings));
 			textArea.setEditable(false);
 			alert.getDialogPane().setExpandableContent(textArea);
 			alert.getDialogPane().setExpanded(true);
@@ -209,6 +209,52 @@ class MainApplication {
 			}));
 			alert.show();
 		}
+	}
+
+	String warningsToString(List<ParsingWarning> warnings) {
+		List<ResolveFailedWarning> resolveFailures = new ArrayList<>();
+		List<StringMismatchWarning> stringMismatches = new ArrayList<>();
+		warnings.forEach(element -> {
+			if (element instanceof ResolveFailedWarning)
+				resolveFailures.add((ResolveFailedWarning) element);
+			else if (element instanceof StringMismatchWarning)
+				stringMismatches.add((StringMismatchWarning) element);
+		});
+		StringBuilder sb = new StringBuilder();
+
+		if (!resolveFailures.isEmpty()) {
+			sb.append("部分命令无法解析:\n");
+			sb.append('\n');
+			resolveFailures.forEach(failure -> {
+				sb.append("位置: ").append(failure.path).append('\n');
+				sb.append("文本: ").append(failure.text).append('\n');
+				sb.append("参数列表: ").append('\n');
+				failure.arguments.forEach((k, v) -> sb.append("    ").append(k).append(" = ").append(v).append('\n'));
+				sb.append("异常: \n");
+				sb.append(throwableToString(failure.exception));
+				sb.append('\n');
+			});
+			sb.append('\n');
+		}
+		if (!stringMismatches.isEmpty()) {
+			sb.append("部分字符串不能保证输出时与原格式相同:\n");
+			sb.append('\n');
+			stringMismatches.forEach(mismatch -> {
+				sb.append("位置: ").append(mismatch.path).append('\n');
+				sb.append("原文: ").append(mismatch.origin).append('\n');
+				sb.append("输出: ").append(mismatch.current).append('\n');
+				sb.append('\n');
+			});
+			sb.append('\n');
+		}
+		return sb.toString();
+	}
+
+	String throwableToString(Throwable e) {
+		StringWriter writer = new StringWriter();
+		PrintWriter pw = new PrintWriter(writer);
+		e.printStackTrace(pw);
+		return writer.toString();
 	}
 
 }

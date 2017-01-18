@@ -85,8 +85,4 @@ public class NBTByte extends NBT.NBTPrimitive {
 		output.writeByte(data);
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
 }

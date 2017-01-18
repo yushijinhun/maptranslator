@@ -107,6 +107,4 @@ public abstract class NBT {
 
 	protected abstract void write(DataOutput output) throws IOException;
 
-	public abstract Object getData();
-
 }

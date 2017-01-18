@@ -61,11 +61,6 @@ public class NBTString extends NBT {
 		output.writeUTF(data);
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
-
 	protected static String escapeString(String str) {
 		return escapeString(str, false);
 	}

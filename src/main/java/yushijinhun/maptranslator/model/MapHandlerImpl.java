@@ -16,8 +16,10 @@ import java.util.regex.Pattern;
 import yushijinhun.maptranslator.core.NBTDescriptor;
 import yushijinhun.maptranslator.core.NBTDescriptorFactory;
 import yushijinhun.maptranslator.core.NBTDescriptorGroup;
+import yushijinhun.maptranslator.tree.CommandReplacer;
 import yushijinhun.maptranslator.tree.IteratorArgument;
 import yushijinhun.maptranslator.tree.MinecraftRules;
+import yushijinhun.maptranslator.tree.NBTMapNode;
 import yushijinhun.maptranslator.tree.NBTStoreNode;
 import yushijinhun.maptranslator.tree.Node;
 import yushijinhun.maptranslator.tree.NodeReplacer;
@@ -34,7 +36,7 @@ class MapHandlerImpl implements MapHandler {
 	private File dir;
 	private NBTDescriptorGroup desGroup;
 	private List<String> excludes = new Vector<>();
-	private List<ParseWarning> lastParseWarnings = new Vector<>();
+	private List<ParsingWarning> lastParsingWarnings = new Vector<>();
 	private IteratorArgument mapResolvingArgument;
 	private ForkJoinPool pool = new ForkJoinPool(4 * Runtime.getRuntime().availableProcessors());
 
@@ -64,10 +66,19 @@ class MapHandlerImpl implements MapHandler {
 					}
 				});
 			};
-			lastParseWarnings.clear();
+			lastParsingWarnings.clear();
 			return desGroup.read(node -> {
-				resolveMap(node);
-				computeParseWarnings(node);
+				CommandReplacer.redirectResolvingFailures(() -> resolveMap(node), lastParsingWarnings::add);
+				computeStringMismatches(node);
+
+				// === Test code
+				// For languages which have non-unicode characters,
+				// we can easily test if the strings we need to translate are all found, 
+				// by comparing our outputs to the strings that contain non-unicode characters.
+				//
+				// test(node);
+				// ===
+
 				return extractStrings(node, excluder);
 			}).collect(LinkedHashMap<String, List<String[]>>::new, merger, merger);
 		}, pool);
@@ -109,13 +120,13 @@ class MapHandlerImpl implements MapHandler {
 		new TreeIterator(mapResolvingArgument).iterate(node);
 	}
 
-	private void computeParseWarnings(Node root) {
+	private void computeStringMismatches(Node root) {
 		root.travel(node -> {
 			if (node.properties().containsKey("origin")) {
 				TextNodeReplacer.getText(node).ifPresent(current -> {
 					String origin = (String) node.properties().get("origin");
 					if (!origin.equals(current)) {
-						lastParseWarnings.add(new ParseWarning(node, origin, current));
+						lastParsingWarnings.add(new StringMismatchWarning(node, origin, current));
 					}
 				});
 			}
@@ -144,6 +155,36 @@ class MapHandlerImpl implements MapHandler {
 		});
 		return result;
 	}
+
+	// === Test code
+	private void test(Node root) {
+		root.travel(node -> {
+			if (node.hasTag(MinecraftRules.translatable)) {
+				while (node != null) {
+					node.tags().add("_tc");
+					node = node.parent();
+				}
+			}
+		});
+		root.travel(node -> {
+			if (node instanceof NBTMapNode && ((NBTMapNode) node).key().equals("LastOutput")) return;
+			TextNodeReplacer.getText(node).ifPresent(text -> {
+				boolean ta = false;
+				for (int i = 0; i < text.length(); i++) {
+					if (text.charAt(i) > '\u00ff') {
+						ta = true;
+						break;
+					}
+				}
+				if (ta) {
+					if (!node.hasTag("_tc")) {
+						System.out.printf("%s\n%s\n\n", node.getPath(), text);
+					}
+				}
+			});
+		});
+	}
+	// ===
 
 	private IteratorArgument createReplacingArgument(Map<String, String> table) {
 		Predicate<String> excluder = createTextExcluder();
@@ -193,8 +234,8 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	@Override
-	public List<ParseWarning> lastParseWarnings() {
-		return lastParseWarnings;
+	public List<ParsingWarning> lastParsingWarnings() {
+		return lastParsingWarnings;
 	}
 
 	@Override

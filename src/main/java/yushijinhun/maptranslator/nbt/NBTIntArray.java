@@ -74,8 +74,4 @@ public class NBTIntArray extends NBT {
 		}
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
 }

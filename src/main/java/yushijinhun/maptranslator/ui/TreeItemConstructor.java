@@ -1,5 +1,6 @@
 package yushijinhun.maptranslator.ui;
 
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
@@ -110,9 +111,11 @@ public class TreeItemConstructor {
 				if (item.hasTag(MinecraftRules.translatable)) {
 					translatable = true;
 				}
+				setTooltip(new Tooltip(item.tags().toString()));
 			} else {
 				setText(null);
 				setGraphic(null);
+				setTooltip(null);
 			}
 			if (translatable != getStyleClass().contains("translatable")) {
 				if (translatable) {

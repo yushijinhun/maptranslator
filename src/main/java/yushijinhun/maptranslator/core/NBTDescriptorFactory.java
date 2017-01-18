@@ -25,7 +25,6 @@ public final class NBTDescriptorFactory {
 	private static Logger logger = Logger.getLogger(NBTDescriptorFactory.class.getCanonicalName());
 
 	public static NBTDescriptorGroup getDescriptors(File file) {
-		logger.info("Scanning " + file);
 		Set<NBTDescriptor> descriptors = new ConcurrentSkipListSet<>(Comparator.comparing(obj -> obj.toString()));
 		Set<Closeable> closeables = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		Path root = file.toPath();
@@ -36,7 +35,6 @@ public final class NBTDescriptorFactory {
 			throw new UncheckedIOException(e);
 		}
 		files.parallelStream().map(path -> path.toFile()).forEach(f -> getDescriptorsFromFile(root, f, descriptors, closeables));
-		logger.info("Creating NBTDescriptorGroup, descriptorsCount=" + descriptors.size());
 		return new NBTDescriptorGroup(descriptors, closeables);
 	}
 

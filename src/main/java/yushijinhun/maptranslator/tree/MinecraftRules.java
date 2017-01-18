@@ -2,7 +2,10 @@ package yushijinhun.maptranslator.tree;
 
 import static yushijinhun.maptranslator.tree.TreeConstructor.constructJson;
 import static yushijinhun.maptranslator.tree.TreeConstructor.constructNBT;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import yushijinhun.maptranslator.internal.org.json.JSONArray;
@@ -14,6 +17,11 @@ import yushijinhun.maptranslator.nbt.NBTString;
 public final class MinecraftRules {
 
 	public static final String translatable = "localizable_string";
+
+	private static final String[] NON_TRANSLATABLE_MODIFIER_NAMES = {
+
+	};
+	private static final Set<String> nonTranslatableModifierNamesSet = new HashSet<>(Arrays.asList(NON_TRANSLATABLE_MODIFIER_NAMES));
 
 	public static final TagMarker[] MARKERS = {
 			new TagMarker(NodeMatcher.of("(store.level)/Data/LevelName"), "level.name", translatable),
@@ -59,6 +67,7 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(tileentity.jukebox)/RecordItem"), "item"),
 
 			new TagMarker(NodeMatcher.of("(tileentity)/CustomName"), "blockdisplay.name", translatable),
+			new TagMarker(NodeMatcher.of("(tileentity)/Lock"), translatable),
 
 			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text1"), "sign.text"),
 			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text2"), "sign.text"),
@@ -82,6 +91,7 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(entity.spawner_minecart)"), "spawner"),
 			new TagMarker(NodeMatcher.of("(tileentity.mob_spawner)"), "spawner"),
 			new TagMarker(NodeMatcher.of("(spawner)/SpawnPotentials/*/Entity"), "entity"),
+			new TagMarker(NodeMatcher.of("(spawner)/SpawnPotentials/*/Properties"), "entity", "entity.*"),
 			new TagMarker(NodeMatcher.of("(spawner)/SpawnData"), "entity"),
 
 			new TagMarker(NodeMatcher.of("(entity.commandblock_minecart)/Command"), "command"),
@@ -101,8 +111,14 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(entity.skeleton_horse)"), "horse.entity"),
 
 			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/*"), "tileentity"),
-			new TagMarker(NodeMatcher.of("(entity.falling_block)/TileEntityData"), "tileentity"),
-			new TagMarker(NodeMatcher.of("(itemtag)/BlockEntityTag"), "tileentity"),
+			new TagMarker(NodeMatcher.of("(entity.falling_block)/TileEntityData"), "tileentity", "tileentity.*"),
+			new TagMarker(NodeMatcher.of("(itemtag)/BlockEntityTag"), "tileentity", "tileentity.*"),
+
+			new TagMarker(NodeMatcher.of("(itemtag)/AttributeModifiers/*"), "modifier"),
+			new TagMarker(NodeMatcher.of("(modifier)/Name"), "modifier_name"),
+			new TagMarker(NodeMatcher.of("(entity)/Attributes/*"), "attribute"),
+			new TagMarker(NodeMatcher.of("(attribute)/Modifiers/*"), "modifier"),
+			new TagMarker(NodeMatcher.of("(modifier_name)").and(node -> TextNodeReplacer.getText(node).map(text -> !nonTranslatableModifierNamesSet.contains(text)).orElse(false)), translatable),
 
 			new TagMarker(NodeMatcher.of("(msg)"), node -> {
 				Object obj = ((JsonNode) node).json;
@@ -214,7 +230,7 @@ public final class MinecraftRules {
 								.withTag(clause.startsWith("detect ") ? "execute.clause" : "command");
 					}),
 
-			CommandReplacer.of("execute.clause", "detect <block> <state> <command>", "command",
+			CommandReplacer.of("execute.clause", "detect <x2> <y2> <z2> <block> <state> <command>", "command",
 					args -> new TextArgumentNode(args.get("command"))
 							.withTag("command")),
 
@@ -286,8 +302,16 @@ public final class MinecraftRules {
 							.withTag(translatable)),
 
 			CommandReplacer.of("tellraw <player> <message>", "message",
-					args -> constructJson(args.get("message"))
-							.withTag("msg")),
+					args -> {
+						String txt = args.get("message");
+						try {
+							return constructJson(txt)
+									.withTag("msg");
+						} catch (ArgumentParseException e) {
+							return new TextArgumentNode(txt)
+									.withTag(translatable);
+						}
+					}),
 
 			CommandReplacer.of("testfor <player> <dataTag>", "dataTag",
 					args -> constructNBT(args.get("dataTag"))
@@ -316,15 +340,57 @@ public final class MinecraftRules {
 					args -> constructJson(args.get("message"))
 							.withTag("msg")),
 
-			TextReplacer.of("rawmsg",
+			CommandReplacer.of("scoreboard <clause>", "clause",
+					args -> new TextArgumentNode(args.get("clause"))
+							.withTag("scoreboard.clause")),
+
+			CommandReplacer.of("scoreboard.clause", "objectives <clause>", "clause",
+					args -> new TextArgumentNode(args.get("clause"))
+							.withTag("scoreboard.clause.objectives")),
+
+			CommandReplacer.of("scoreboard.clause", "players <clause>", "clause",
+					args -> new TextArgumentNode(args.get("clause"))
+							.withTag("scoreboard.clause.players")),
+
+			CommandReplacer.of("scoreboard.clause", "teams <clause>", "clause",
+					args -> new TextArgumentNode(args.get("clause"))
+							.withTag("scoreboard.clause.teams")),
+
+			CommandReplacer.of("scoreboard.clause.objectives", "add <name> <criteria> <display_name>", "display_name",
+					args -> new TextArgumentNode(args.get("display_name"))
+							.withTag(translatable)),
+
+			CommandReplacer.of("scoreboard.clause.players", "set <player> <objective> <score> <dataTag>", "dataTag",
+					args -> constructNBT(args.get("dataTag"))
+							.withTag("entity")
+							.withTag("entity.*")
+							.withTag("store.player")),
+
+			CommandReplacer.of("scoreboard.clause.players", "add <player> <objective> <count> <dataTag>", "dataTag",
+					args -> constructNBT(args.get("dataTag"))
+							.withTag("entity")
+							.withTag("entity.*")
+							.withTag("store.player")),
+
+			CommandReplacer.of("scoreboard.clause.players", "remove <player> <objective> <count> <dataTag>", "dataTag",
+					args -> constructNBT(args.get("dataTag"))
+							.withTag("entity")
+							.withTag("entity.*")
+							.withTag("store.player")),
+
+			CommandReplacer.of("scoreboard.clause.teams", "add <name> <display_name>", "display_name",
+					args -> new TextArgumentNode(args.get("display_name"))
+							.withTag(translatable)),
+
+			TextReplacer.of(NodeMatcher.of("(rawmsg)"),
 					json -> TreeConstructor.constructJson(json)
 							.withTag("msg")),
 
-			TextReplacer.of("(hover_event.show_item)/value",
+			TextReplacer.of(NodeMatcher.of("(hover_event.show_item)/value"),
 					json -> TreeConstructor.constructNBT(json)
 							.withTag("item")),
 
-			TextReplacer.of("(hover_event.show_entity)/value",
+			TextReplacer.of(NodeMatcher.of("(hover_event.show_entity)/value"),
 					json -> TreeConstructor.constructNBT(json)
 							.withTag("entity")),
 

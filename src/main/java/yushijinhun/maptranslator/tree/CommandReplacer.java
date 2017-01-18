@@ -3,9 +3,17 @@ package yushijinhun.maptranslator.tree;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Stack;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import yushijinhun.maptranslator.model.ResolveFailedWarning;
 
 public class CommandReplacer extends TextNodeReplacer {
+
+	private static final Logger LOGGER = Logger.getLogger(CommandReplacer.class.getCanonicalName());
 
 	public static NodeReplacer of(String expression, String arg, Function<Map<String, String>, Node> subtree) {
 		return of("command", expression, arg, subtree);
@@ -15,6 +23,35 @@ public class CommandReplacer extends TextNodeReplacer {
 		Map<String, Function<Map<String, String>, Node>> subtrees = new HashMap<>();
 		subtrees.put(arg, subtree);
 		return new CommandReplacer(tag, expression, subtrees).toNodeReplacer();
+	}
+
+	private static ThreadLocal<Stack<Consumer<ResolveFailedWarning>>> resolvingFailedListeners = ThreadLocal.withInitial(Stack::new);
+
+	public static void redirectResolvingFailures(Runnable action, Consumer<ResolveFailedWarning> handler) {
+		redirectResolvingFailures(() -> {
+			action.run();
+			return null;
+		}, handler);
+	}
+
+	public static <T> T redirectResolvingFailures(Supplier<T> action, Consumer<ResolveFailedWarning> handler) {
+		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
+		stack.push(handler);
+		T result = action.get();
+		stack.pop();
+		if (stack.isEmpty()) {
+			resolvingFailedListeners.remove();
+		}
+		return result;
+	}
+
+	private static void postResolveFailedWarning(ResolveFailedWarning post) {
+		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
+		stack.forEach(listener -> listener.accept(post));
+		if (stack.isEmpty()) {
+			resolvingFailedListeners.remove();
+			LOGGER.log(Level.WARNING, String.format("Couldn't solve command node %s\nText: %s\nArguments: %s", post.path, post.text, post.arguments), post.exception);
+		}
 	}
 
 	private String commandName;
@@ -50,6 +87,7 @@ public class CommandReplacer extends TextNodeReplacer {
 			if (ctx == null) return false;
 			String command = ctx.getText(node);
 			if (command != null && !command.trim().isEmpty()) {
+				command = command.trim();
 				String[] splited = command.split(" ", argumentNames.length + 1);
 				if (splited.length == argumentNames.length + 1) {
 					if (splited[0].startsWith("/") ? commandName.equals(splited[0].substring(1)) : commandName.equals(splited[0])) {
@@ -67,6 +105,7 @@ public class CommandReplacer extends TextNodeReplacer {
 								try {
 									func.apply(arguments);
 								} catch (ArgumentParseException e) {
+									postResolveFailedWarning(new ResolveFailedWarning(node, command, arguments, e));
 									return false;
 								}
 							}
@@ -81,7 +120,7 @@ public class CommandReplacer extends TextNodeReplacer {
 
 	private Node replace(Node node) {
 		TextContext ctx = getContext(node);
-		String cmd = ctx.getText(node);
+		String cmd = ctx.getText(node).trim();
 		String[] splited = cmd.split(" ", argumentNames.length + 1);
 		String[] n_argnames = new String[argumentNames.length + 1];
 		System.arraycopy(argumentNames, 0, n_argnames, 1, argumentNames.length);

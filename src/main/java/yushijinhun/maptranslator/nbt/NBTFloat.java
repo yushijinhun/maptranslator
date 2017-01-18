@@ -85,8 +85,4 @@ public class NBTFloat extends NBT.NBTPrimitive {
 		output.writeFloat(data);
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
 }

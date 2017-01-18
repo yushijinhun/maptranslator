@@ -85,8 +85,4 @@ public class NBTShort extends NBT.NBTPrimitive {
 		output.writeShort(data);
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
 }

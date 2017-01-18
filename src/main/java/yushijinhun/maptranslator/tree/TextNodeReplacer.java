@@ -64,7 +64,19 @@ abstract public class TextNodeReplacer {
 
 			@Override
 			public Node replaceNode(Node node, Supplier<String> proxyTarget) {
-				JSONString proxy = () -> JSONObject.quote(proxyTarget.get());
+				JSONString proxy = new JSONString() {
+
+					@Override
+					public String toJSONString() {
+						return JSONObject.quote(proxyTarget.get());
+					}
+
+					@Override
+					public String toString() {
+						return proxyTarget.get();
+					}
+
+				};
 				((JsonNode) node).replaceJson(proxy);
 				return node;
 			}

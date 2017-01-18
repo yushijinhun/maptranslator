@@ -86,8 +86,4 @@ public class NBTDouble extends NBT.NBTPrimitive {
 		output.writeDouble(data);
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
 }

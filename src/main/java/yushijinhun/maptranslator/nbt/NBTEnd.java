@@ -29,8 +29,4 @@ public class NBTEnd extends NBT {
 	@Override
 	protected void write(DataOutput output) throws IOException {}
 
-	@Override
-	public Object getData() {
-		return null;
-	}
 }

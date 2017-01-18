@@ -85,8 +85,4 @@ public class NBTLong extends NBT.NBTPrimitive {
 		output.writeLong(data);
 	}
 
-	@Override
-	public Object getData() {
-		return data;
-	}
 }

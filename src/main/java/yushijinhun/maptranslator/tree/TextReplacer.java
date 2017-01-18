@@ -1,17 +1,18 @@
 package yushijinhun.maptranslator.tree;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class TextReplacer extends TextNodeReplacer {
 
-	public static NodeReplacer of(String tag, Function<String, Node> subtreeBuilder) {
-		return new TextReplacer(new NodeMatcher("(" + tag + ")"), subtreeBuilder).toNodeReplacer();
+	public static NodeReplacer of(Predicate<Node> nodeMatcher, Function<String, Node> subtreeBuilder) {
+		return new TextReplacer(nodeMatcher, subtreeBuilder).toNodeReplacer();
 	}
 
-	private NodeMatcher nodeMatcher;
+	private Predicate<Node> nodeMatcher;
 	private Function<String, Node> subtreeBuilder;
 
-	public TextReplacer(NodeMatcher nodeMatcher, Function<String, Node> subtreeBuilder) {
+	public TextReplacer(Predicate<Node> nodeMatcher, Function<String, Node> subtreeBuilder) {
 		this.nodeMatcher = nodeMatcher;
 		this.subtreeBuilder = subtreeBuilder;
 	}

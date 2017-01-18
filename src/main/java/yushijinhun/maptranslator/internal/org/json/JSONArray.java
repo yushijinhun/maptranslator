@@ -123,7 +123,7 @@ public class JSONArray implements Iterable<Object>, Serializable {
 					if (val instanceof String) {
 						_parseMetadata.put(list.size(), new _ParseMetadata(val, x._quoter));
 					}
-					this.list.add(x.nextValue());
+					this.list.add(val);
 				}
 				switch (x.nextClean()) {
 					case ',':

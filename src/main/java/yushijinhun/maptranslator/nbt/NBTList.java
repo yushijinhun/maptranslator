@@ -149,8 +149,4 @@ public class NBTList extends NBT {
 		}
 	}
 
-	@Override
-	public Object getData() {
-		return null;
-	}
 }

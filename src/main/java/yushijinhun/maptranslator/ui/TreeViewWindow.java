@@ -13,11 +13,14 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -125,16 +128,11 @@ class TreeViewWindow {
 			});
 			popupMenu.getScene().getRoot().requestLayout();
 		});
-		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN), () -> {
-			switchAppearance(+1);
-		});
-		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN), () -> {
-			switchAppearance(-1);
-		});
-		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.SEMICOLON, KeyCombination.CONTROL_DOWN), () -> {
-			appearances.set(null);
-		});
-
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN), () -> switchAppearance(+1));
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN), () -> switchAppearance(-1));
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.SEMICOLON, KeyCombination.CONTROL_DOWN), () -> appearances.set(null));
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), () -> showGoTo());
+		
 		stage.getScene().getStylesheets().add("/yushijinhun/maptranslator/ui/TreeViewWindow.css");
 	}
 
@@ -188,6 +186,20 @@ class TreeViewWindow {
 		return Optional.empty();
 	}
 
+	void switchNode(String[] path) {
+		Optional<Optional<Node>> tryCurrent = tryLoadFromCurrent(path);
+		if (tryCurrent.isPresent()) {
+			tryCurrent.get().ifPresent(node -> selectNode(node));
+		} else {
+			loadingNode = true;
+			nodeLoader.apply(path)
+					.thenAcceptAsync(optional -> {
+						loadingNode = false;
+						optional.ifPresent(node -> selectNode(node));
+					}, Platform::runLater);
+		}
+	}
+
 	void switchAppearance(int offset) {
 		if (appearances.get() != null && !loadingNode) {
 			int newIdx = currentAppearance.get() + offset;
@@ -195,18 +207,22 @@ class TreeViewWindow {
 			if (newIdx >= totalAppearance.get()) newIdx = 0;
 			currentAppearance.set(newIdx);
 			String[] path = appearances.get().get(newIdx);
-			Optional<Optional<Node>> tryCurrent = tryLoadFromCurrent(path);
-			if (tryCurrent.isPresent()) {
-				tryCurrent.get().ifPresent(node -> selectNode(node));
-			} else {
-				loadingNode = true;
-				nodeLoader.apply(path)
-						.thenAcceptAsync(optional -> {
-							loadingNode = false;
-							optional.ifPresent(node -> selectNode(node));
-						}, Platform::runLater);
-			}
+			switchNode(path);
 		}
+	}
+
+	void showGoTo() {
+		Alert alert = new Alert(AlertType.CONFIRMATION, "要切换到的根节点名称：");
+		TextField txt = new TextField();
+		alert.getDialogPane().setExpandableContent(txt);
+		alert.getDialogPane().setExpanded(true);
+		alert.getDialogPane().expandedProperty().addListener(dummy -> Platform.runLater(() -> {
+			alert.getDialogPane().requestLayout();
+			alert.getDialogPane().getScene().getWindow().sizeToScene();
+		}));
+		alert.setOnHidden(event -> switchNode(new String[] { txt.getText() }));
+		alert.show();
+		txt.requestFocus();
 	}
 
 }
