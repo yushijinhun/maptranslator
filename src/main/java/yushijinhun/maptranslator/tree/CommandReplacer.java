@@ -37,12 +37,14 @@ public class CommandReplacer extends TextNodeReplacer {
 	public static <T> T redirectResolvingFailures(Supplier<T> action, Consumer<ResolveFailedWarning> handler) {
 		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
 		stack.push(handler);
-		T result = action.get();
-		stack.pop();
-		if (stack.isEmpty()) {
-			resolvingFailedListeners.remove();
+		try {
+			return action.get();
+		} finally {
+			stack.pop();
+			if (stack.isEmpty()) {
+				resolvingFailedListeners.remove();
+			}
 		}
-		return result;
 	}
 
 	private static void postResolveFailedWarning(ResolveFailedWarning post) {

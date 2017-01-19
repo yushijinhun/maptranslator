@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -19,7 +20,7 @@ public class NBTDescriptorGroup implements Closeable {
 
 	private final Set<Closeable> closeables;
 	public final Set<NBTDescriptor> descriptors;
-	public volatile int processed;
+	public final AtomicInteger processed = new AtomicInteger();
 
 	public NBTDescriptorGroup(Set<NBTDescriptor> descriptors, Set<Closeable> closeables) {
 		this.closeables = closeables;
@@ -27,7 +28,7 @@ public class NBTDescriptorGroup implements Closeable {
 	}
 
 	public synchronized <T> Stream<T> read(Function<Node, T> mapper) {
-		processed = 0;
+		processed.set(0);
 		return descriptors.parallelStream()
 				.map(desp -> {
 					try {
@@ -40,7 +41,7 @@ public class NBTDescriptorGroup implements Closeable {
 						logger.log(Level.WARNING, "Couldn't handle " + desp, e);
 						return Optional.<T> empty();
 					} finally {
-						processed++;
+						processed.getAndIncrement();
 					}
 				})
 				.filter(optional -> optional.isPresent())
@@ -48,7 +49,7 @@ public class NBTDescriptorGroup implements Closeable {
 	}
 
 	public synchronized void write(Consumer<Node> mapper) {
-		processed = 0;
+		processed.set(0);
 		descriptors.parallelStream()
 				.forEach(desp -> {
 					try {
@@ -67,7 +68,7 @@ public class NBTDescriptorGroup implements Closeable {
 							return;
 						}
 					} finally {
-						processed++;
+						processed.getAndIncrement();
 					}
 				});
 	}

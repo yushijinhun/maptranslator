@@ -40,8 +40,10 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeMap;
 
 /**
@@ -1261,7 +1263,30 @@ public class JSONObject implements Serializable {
 		return _quote(string, w, '"');
 	}
 
+	static ThreadLocal<Stack<Boolean>> tlUseGson = new ThreadLocal<>();
+
+	public static <T> T _use_gson_toString(Supplier<T> action) {
+		if (tlUseGson.get() == null)
+			tlUseGson.set(new Stack<>());
+		Stack<Boolean> stack = tlUseGson.get();
+		stack.push(true);
+		try {
+			return action.get();
+		} finally {
+			stack.pop();
+			if (stack.isEmpty())
+				tlUseGson.remove();
+		}
+	}
+
 	static Writer _quote(String string, Writer w, char quoter) throws IOException {
+		Stack<Boolean> stack = tlUseGson.get();
+		if (stack != null && !stack.isEmpty())
+			return _quote_gson(string, w, quoter);
+		return _quote_default(string, w, quoter);
+	}
+
+	static Writer _quote_default(String string, Writer w, char quoter) throws IOException {
 		if (string == null || string.length() == 0) {
 			if (quoter != 0) {
 				w.write(quoter);
@@ -1325,6 +1350,72 @@ public class JSONObject implements Serializable {
 		if (quoter != 0)
 			w.write(quoter);
 		return w;
+	}
+
+	static String[] REPLACEMENT_CHARS;
+	static String[] HTML_SAFE_REPLACEMENT_CHARS;
+	static {
+		REPLACEMENT_CHARS = new String[128];
+		for (int i = 0; i <= 0x1f; i++) {
+			REPLACEMENT_CHARS[i] = String.format("\\u%04x", i);
+		}
+		REPLACEMENT_CHARS['"'] = "\\\"";
+		REPLACEMENT_CHARS['\\'] = "\\\\";
+		REPLACEMENT_CHARS['\t'] = "\\t";
+		REPLACEMENT_CHARS['\b'] = "\\b";
+		REPLACEMENT_CHARS['\n'] = "\\n";
+		REPLACEMENT_CHARS['\r'] = "\\r";
+		REPLACEMENT_CHARS['\f'] = "\\f";
+		HTML_SAFE_REPLACEMENT_CHARS = REPLACEMENT_CHARS.clone();
+		HTML_SAFE_REPLACEMENT_CHARS['<'] = "\\u003c";
+		HTML_SAFE_REPLACEMENT_CHARS['>'] = "\\u003e";
+		HTML_SAFE_REPLACEMENT_CHARS['&'] = "\\u0026";
+		HTML_SAFE_REPLACEMENT_CHARS['='] = "\\u003d";
+		HTML_SAFE_REPLACEMENT_CHARS['\''] = "\\u0027";
+	}
+	static String[] escape_table = HTML_SAFE_REPLACEMENT_CHARS;
+	static Writer _quote_gson(String string, Writer out, char quoter) throws IOException {
+		if (string == null || string.length() == 0) {
+			if (quoter != 0) {
+				out.write(quoter);
+				out.write(quoter);
+			}
+			return out;
+		}
+
+		if (quoter != 0)
+			out.write(quoter);
+
+		int last = 0;
+		int length = string.length();
+		for (int i = 0; i < length; i++) {
+			char c = string.charAt(i);
+			String replacement;
+			if (c < 128) {
+				replacement = escape_table[c];
+				if (replacement == null) {
+					continue;
+				}
+			} else if (c == '\u2028') {
+				replacement = "\\u2028";
+			} else if (c == '\u2029') {
+				replacement = "\\u2029";
+			} else {
+				continue;
+			}
+			if (last < i) {
+				out.write(string, last, i - last);
+			}
+			out.write(replacement);
+			last = i + 1;
+		}
+		if (last < length) {
+			out.write(string, last, length - last);
+		}
+
+		if (quoter != 0)
+			out.write(quoter);
+		return out;
 	}
 
 	/**

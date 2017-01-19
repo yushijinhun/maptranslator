@@ -1,18 +1,23 @@
 package yushijinhun.maptranslator.tree;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class TextReplacer extends TextNodeReplacer {
 
 	public static NodeReplacer of(Predicate<Node> nodeMatcher, Function<String, Node> subtreeBuilder) {
+		return of(nodeMatcher, (node, string) -> subtreeBuilder.apply(string));
+	}
+
+	public static NodeReplacer of(Predicate<Node> nodeMatcher, BiFunction<Node, String, Node> subtreeBuilder) {
 		return new TextReplacer(nodeMatcher, subtreeBuilder).toNodeReplacer();
 	}
 
 	private Predicate<Node> nodeMatcher;
-	private Function<String, Node> subtreeBuilder;
+	private BiFunction<Node, String, Node> subtreeBuilder;
 
-	public TextReplacer(Predicate<Node> nodeMatcher, Function<String, Node> subtreeBuilder) {
+	public TextReplacer(Predicate<Node> nodeMatcher, BiFunction<Node, String, Node> subtreeBuilder) {
 		this.nodeMatcher = nodeMatcher;
 		this.subtreeBuilder = subtreeBuilder;
 	}
@@ -30,7 +35,7 @@ public class TextReplacer extends TextNodeReplacer {
 			throw new IllegalStateException("Child node is missing");
 		});
 		replacedNode.properties().put("origin", json);
-		replacedNode.addChild(subtreeBuilder.apply(json));
+		replacedNode.addChild(subtreeBuilder.apply(node, json));
 		return replacedNode;
 	}
 
@@ -42,7 +47,7 @@ public class TextReplacer extends TextNodeReplacer {
 				String text = ctx.getText(node);
 				if (text != null) {
 					try {
-						subtreeBuilder.apply(text);
+						subtreeBuilder.apply(node, text);
 					} catch (ArgumentParseException e) {
 						return false;
 					}

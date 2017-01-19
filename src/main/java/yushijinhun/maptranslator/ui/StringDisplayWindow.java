@@ -1,5 +1,6 @@
 package yushijinhun.maptranslator.ui;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +40,7 @@ class StringDisplayWindow {
 	ObservableList<String> strings = FXCollections.observableArrayList();
 	TextArea txtIgnore;
 	Button btnLoad;
-	Set<String> stringsSet;
+	Set<String> stringsSet = new HashSet<>();
 	Map<String, ListCell<String>> cellsMapping = new WeakHashMap<>();
 	MenuItem menuShowIn = new MenuItem("查找出现");
 	ContextMenu popupMenu = new ContextMenu(menuShowIn);

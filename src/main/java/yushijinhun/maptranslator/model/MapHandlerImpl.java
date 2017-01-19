@@ -19,7 +19,6 @@ import yushijinhun.maptranslator.core.NBTDescriptorGroup;
 import yushijinhun.maptranslator.tree.CommandReplacer;
 import yushijinhun.maptranslator.tree.IteratorArgument;
 import yushijinhun.maptranslator.tree.MinecraftRules;
-import yushijinhun.maptranslator.tree.NBTMapNode;
 import yushijinhun.maptranslator.tree.NBTStoreNode;
 import yushijinhun.maptranslator.tree.Node;
 import yushijinhun.maptranslator.tree.NodeReplacer;
@@ -103,9 +102,9 @@ class MapHandlerImpl implements MapHandler {
 				if (desp.toString().equals(despName)) {
 					NBTStoreNode root = new NBTStoreNode(desp);
 					root.read();
+					resolveMap(root);
 					Optional<Node> result = root.resolve(path, 1);
 					if (result.isPresent()) {
-						resolveMap(root);
 						TreeItemConstructor.construct(root);
 						return result;
 					}
@@ -157,6 +156,7 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	// === Test code
+	/*
 	private void test(Node root) {
 		root.travel(node -> {
 			if (node.hasTag(MinecraftRules.translatable)) {
@@ -184,6 +184,7 @@ class MapHandlerImpl implements MapHandler {
 			});
 		});
 	}
+	*/
 	// ===
 
 	private IteratorArgument createReplacingArgument(Map<String, String> table) {
@@ -240,7 +241,7 @@ class MapHandlerImpl implements MapHandler {
 
 	@Override
 	public long currentProgress() {
-		return desGroup.processed;
+		return desGroup.processed.get();
 	}
 
 	@Override

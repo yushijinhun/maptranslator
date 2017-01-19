@@ -2,10 +2,7 @@ package yushijinhun.maptranslator.tree;
 
 import static yushijinhun.maptranslator.tree.TreeConstructor.constructJson;
 import static yushijinhun.maptranslator.tree.TreeConstructor.constructNBT;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import yushijinhun.maptranslator.internal.org.json.JSONArray;
@@ -18,10 +15,12 @@ public final class MinecraftRules {
 
 	public static final String translatable = "localizable_string";
 
+	/*
 	private static final String[] NON_TRANSLATABLE_MODIFIER_NAMES = {
-
+	
 	};
 	private static final Set<String> nonTranslatableModifierNamesSet = new HashSet<>(Arrays.asList(NON_TRANSLATABLE_MODIFIER_NAMES));
+	*/
 
 	public static final TagMarker[] MARKERS = {
 			new TagMarker(NodeMatcher.of("(store.level)/Data/LevelName"), "level.name", translatable),
@@ -69,6 +68,7 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(tileentity)/CustomName"), "blockdisplay.name", translatable),
 			new TagMarker(NodeMatcher.of("(tileentity)/Lock"), translatable),
 
+			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/(tileentity.sign)/(sign.text)"), "sign.text.auto_generated"),
 			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text1"), "sign.text"),
 			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text2"), "sign.text"),
 			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text3"), "sign.text"),
@@ -92,7 +92,7 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(tileentity.mob_spawner)"), "spawner"),
 			new TagMarker(NodeMatcher.of("(spawner)/SpawnPotentials/*/Entity"), "entity"),
 			new TagMarker(NodeMatcher.of("(spawner)/SpawnPotentials/*/Properties"), "entity", "entity.*"),
-			new TagMarker(NodeMatcher.of("(spawner)/SpawnData"), "entity"),
+			new TagMarker(NodeMatcher.of("(spawner)/SpawnData"), "entity", "entity.*"),
 
 			new TagMarker(NodeMatcher.of("(entity.commandblock_minecart)/Command"), "command"),
 			new TagMarker(NodeMatcher.of("(tileentity.command_block)/Command"), "command"),
@@ -118,7 +118,8 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(modifier)/Name"), "modifier_name"),
 			new TagMarker(NodeMatcher.of("(entity)/Attributes/*"), "attribute"),
 			new TagMarker(NodeMatcher.of("(attribute)/Modifiers/*"), "modifier"),
-			new TagMarker(NodeMatcher.of("(modifier_name)").and(node -> TextNodeReplacer.getText(node).map(text -> !nonTranslatableModifierNamesSet.contains(text)).orElse(false)), translatable),
+			// It's unnecessary to translate modifier_name
+			// new TagMarker(NodeMatcher.of("(modifier_name)").and(node -> TextNodeReplacer.getText(node).map(text -> !nonTranslatableModifierNamesSet.contains(text)).orElse(false)), translatable),
 
 			new TagMarker(NodeMatcher.of("(msg)"), node -> {
 				Object obj = ((JsonNode) node).json;
@@ -383,8 +384,13 @@ public final class MinecraftRules {
 							.withTag(translatable)),
 
 			TextReplacer.of(NodeMatcher.of("(rawmsg)"),
-					json -> TreeConstructor.constructJson(json)
-							.withTag("msg")),
+					(origin, json) -> {
+						Node node = TreeConstructor.constructJson(json)
+								.withTag("msg");
+						if (origin.hasTag("sign.text.auto_generated"))
+							node.properties().put("json.to_string.algorithm", "gson");
+						return node;
+					}),
 
 			TextReplacer.of(NodeMatcher.of("(hover_event.show_item)/value"),
 					json -> TreeConstructor.constructNBT(json)
