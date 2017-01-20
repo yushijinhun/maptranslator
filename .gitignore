@@ -22,5 +22,6 @@ eclipse/
 nbbuild/
 nbproject/
 *~
+*.log
 
 /target/
