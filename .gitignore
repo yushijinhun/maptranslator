@@ -23,5 +23,5 @@ nbbuild/
 nbproject/
 *~
 *.log
-
+dependency-reduced-pom.xml
 /target/
