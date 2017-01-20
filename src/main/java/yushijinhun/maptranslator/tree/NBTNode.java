@@ -23,4 +23,9 @@ public abstract class NBTNode extends Node {
 		}
 	}
 
+	@Override
+	public String getStringValue() {
+		return valueToString(nbt);
+	}
+
 }

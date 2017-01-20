@@ -18,4 +18,9 @@ public class TextArgumentNode extends Node implements ArgumentNode {
 		return toArgumentString();
 	}
 
+	@Override
+	public String getStringValue() {
+		return toArgumentString();
+	}
+
 }

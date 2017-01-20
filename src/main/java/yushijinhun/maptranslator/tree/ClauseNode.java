@@ -16,4 +16,9 @@ public class ClauseNode extends Node implements ArgumentNode {
 		return toArgumentString();
 	}
 
+	@Override
+	public String getStringValue() {
+		return toArgumentString();
+	}
+
 }

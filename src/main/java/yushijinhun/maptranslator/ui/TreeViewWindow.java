@@ -13,14 +13,15 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.control.Alert.AlertType;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -37,7 +38,9 @@ class TreeViewWindow {
 	MenuItem menuGoInto = new MenuItem();
 	MenuItem menuUpTo = new MenuItem();
 	MenuItem menuShowIn = new MenuItem("在原文列表中显示");
-	ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowIn);
+	MenuItem menuCopyPath = new MenuItem("复制路径");
+	MenuItem menuCopyValue = new MenuItem("复制值");
+	ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowIn, new SeparatorMenuItem(), menuCopyPath, menuCopyValue);
 	IntegerProperty currentAppearance = new SimpleIntegerProperty();
 	IntegerProperty totalAppearance = new SimpleIntegerProperty();
 	ObjectProperty<List<String[]>> appearances = new SimpleObjectProperty<>();
@@ -45,7 +48,7 @@ class TreeViewWindow {
 
 	Consumer<String> showIn;
 	Predicate<String> isStringInList;
-	Function<String[], CompletableFuture<Optional<Node>>> nodeLoader;
+	Function<Object, CompletableFuture<Optional<Node>>> nodeLoader;
 
 	TreeViewWindow() {
 		stage = new Stage();
@@ -77,53 +80,66 @@ class TreeViewWindow {
 
 		tree.setContextMenu(popupMenu);
 		popupMenu.setOnShowing(event -> {
-			Node up = null;
-			Node down = null;
-			Node current = null;
+			Node rootParent;
+			Node selected;
+			Node root;
 			if (tree.getRoot() != null) {
-				current = tree.getRoot().getValue();
-				up = current.parent();
-				down = Optional.ofNullable(tree.getSelectionModel().getSelectedItem()).map(item -> item.getValue()).orElse(null);
+				root = tree.getRoot().getValue();
+				rootParent = root.parent();
+				selected = Optional.ofNullable(tree.getSelectionModel().getSelectedItem()).map(item -> item.getValue()).orElse(null);
+			} else {
+				rootParent = selected = root = null;
 			}
-			if (up == null) {
+			if (rootParent == null) {
 				menuUpTo.setText("返回到...");
 				menuUpTo.setDisable(true);
 			} else {
-				menuUpTo.setText("返回到 " + up);
+				menuUpTo.setText("返回到 " + rootParent);
 				menuUpTo.setDisable(false);
 			}
-			if (down == null) {
+			if (selected == null) {
 				menuGoInto.setText("进入到...");
 				menuGoInto.setDisable(true);
 			} else {
-				menuGoInto.setText("进入到 " + down);
-				menuGoInto.setDisable(down == current);
+				menuGoInto.setText("进入到 " + selected);
+				menuGoInto.setDisable(selected == root);
 			}
-			String text = null;
-			if (down != null) {
-				text = TextNodeReplacer.getText(down).orElse(null);
+			String text;
+			if (selected != null) {
+				text = TextNodeReplacer.getText(selected).orElse(null);
+			} else {
+				text = null;
 			}
-			if (down == null || text == null) {
+			if (selected == null || text == null) {
 				menuShowIn.setDisable(true);
 			} else {
 				menuShowIn.setDisable(!isStringInList.test(text));
 			}
-			Node upNode = up;
-			Node downNode = down;
-			String nodeText = text;
+			menuCopyPath.setDisable(selected == null);
+			menuCopyValue.setDisable(selected == null);
 			menuUpTo.setOnAction(e -> {
-				if (upNode != null) {
-					setRoot(upNode);
+				if (rootParent != null) {
+					setRoot(rootParent);
 				}
 			});
 			menuGoInto.setOnAction(e -> {
-				if (downNode != null) {
-					setRoot(downNode);
+				if (selected != null) {
+					setRoot(selected);
 				}
 			});
 			menuShowIn.setOnAction(e -> {
-				if (nodeText != null) {
-					showIn.accept(nodeText);
+				if (text != null) {
+					showIn.accept(text);
+				}
+			});
+			menuCopyPath.setOnAction(e -> {
+				if (selected != null) {
+					copyToClipboard(selected.getPath());
+				}
+			});
+			menuCopyValue.setOnAction(e -> {
+				if (selected != null) {
+					copyToClipboard(selected.getStringValue());
 				}
 			});
 			popupMenu.getScene().getRoot().requestLayout();
@@ -132,8 +148,14 @@ class TreeViewWindow {
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN), () -> switchAppearance(-1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.SEMICOLON, KeyCombination.CONTROL_DOWN), () -> appearances.set(null));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), () -> showGoTo());
-		
+
 		stage.getScene().getStylesheets().add("/yushijinhun/maptranslator/ui/TreeViewWindow.css");
+	}
+
+	void copyToClipboard(String string) {
+		ClipboardContent content = new ClipboardContent();
+		content.putString(string);
+		Clipboard.getSystemClipboard().setContent(content);
 	}
 
 	void setRoot(Node node) {
@@ -174,19 +196,20 @@ class TreeViewWindow {
 		}
 	}
 
-	Optional<Optional<Node>> tryLoadFromCurrent(String[] path) {
-		if (tree.getRoot() != null) {
+	Optional<Optional<Node>> tryLoadFromCurrent(Object path) {
+		if (tree.getRoot() != null && path instanceof String[]) {
 			Node root = tree.getRoot().getValue();
 			while (root.parent() != null)
 				root = root.parent();
-			if (root.toString().equals(path[0])) {
-				return Optional.of(root.resolve(path, 1));
+			String[] pathArray = (String[]) path;
+			if (root.toString().equals(pathArray[0])) {
+				return Optional.of(root.resolve(pathArray, 1));
 			}
 		}
 		return Optional.empty();
 	}
 
-	void switchNode(String[] path) {
+	void switchNode(Object path) {
 		Optional<Optional<Node>> tryCurrent = tryLoadFromCurrent(path);
 		if (tryCurrent.isPresent()) {
 			tryCurrent.get().ifPresent(node -> selectNode(node));
@@ -212,17 +235,17 @@ class TreeViewWindow {
 	}
 
 	void showGoTo() {
-		Alert alert = new Alert(AlertType.CONFIRMATION, "要切换到的根节点名称：");
-		TextField txt = new TextField();
-		alert.getDialogPane().setExpandableContent(txt);
-		alert.getDialogPane().setExpanded(true);
-		alert.getDialogPane().expandedProperty().addListener(dummy -> Platform.runLater(() -> {
-			alert.getDialogPane().requestLayout();
-			alert.getDialogPane().getScene().getWindow().sizeToScene();
-		}));
-		alert.setOnHidden(event -> switchNode(new String[] { txt.getText() }));
-		alert.show();
-		txt.requestFocus();
+		TextInputDialog dialog = new TextInputDialog();
+		dialog.setTitle("切换节点");
+		dialog.setHeaderText("切换节点");
+		dialog.setContentText("要切换到的节点的路径：");
+		dialog.setOnHidden(event -> {
+			String result = dialog.getResult();
+			if (result != null && !result.trim().isEmpty()) switchNode(result);
+		});
+		dialog.show();
+		dialog.setWidth(600);
+		dialog.getDialogPane().getScene().getWindow().centerOnScreen();
 	}
 
 }

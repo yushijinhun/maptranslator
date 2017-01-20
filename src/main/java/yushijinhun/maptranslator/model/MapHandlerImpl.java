@@ -100,19 +100,51 @@ class MapHandlerImpl implements MapHandler {
 			String despName = path[0];
 			for (NBTDescriptor desp : desGroup.descriptors) {
 				if (desp.toString().equals(despName)) {
-					NBTStoreNode root = new NBTStoreNode(desp);
-					root.read();
-					resolveMap(root);
-					Optional<Node> result = root.resolve(path, 1);
-					if (result.isPresent()) {
-						TreeItemConstructor.construct(root);
-						return result;
-					}
-					root.close();
+					return resolveNode(path, desp);
 				}
 			}
 			return Optional.empty();
 		}, pool);
+	}
+
+	@Override
+	public CompletableFuture<Optional<Node>> resolveNode(String argPath) {
+		return CompletableFuture.supplyAsync(() -> {
+			String path = argPath.trim();
+			if (path.startsWith("/")) path = path.substring(1);
+			for (NBTDescriptor desp : desGroup.descriptors) {
+				String despName = desp.toString();
+				if (path.startsWith(despName)) {
+					String[] split = path.substring(despName.length()).split("/");
+					int splitLen = split.length;
+					int splitPos = 0;
+					if (splitLen > 0 && split[splitLen - 1].isEmpty()) splitLen--;
+					if (splitLen > 0 && split[0].isEmpty()) {
+						splitLen--;
+						splitPos++;
+					}
+					String[] pathArray = new String[splitLen + 1];
+					System.arraycopy(split, splitPos, pathArray, 1, splitLen);
+					pathArray[0] = despName;
+					return resolveNode(pathArray, desp);
+				}
+			}
+			return Optional.empty();
+		});
+	}
+
+	private Optional<Node> resolveNode(String[] path, NBTDescriptor desp) {
+		NBTStoreNode root = new NBTStoreNode(desp);
+		root.read();
+		resolveMap(root);
+		Optional<Node> result = root.resolve(path, 1);
+		if (result.isPresent()) {
+			TreeItemConstructor.construct(root);
+			return result;
+		} else {
+			root.close();
+			return Optional.empty();
+		}
 	}
 
 	private void resolveMap(Node node) {

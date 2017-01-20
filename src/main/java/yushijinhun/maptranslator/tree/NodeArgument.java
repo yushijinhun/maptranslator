@@ -23,4 +23,9 @@ public class NodeArgument extends Node implements InPathNode {
 		return "<" + argumentName + ">";
 	}
 
+	@Override
+	public String getStringValue() {
+		return toArgumentString();
+	}
+
 }

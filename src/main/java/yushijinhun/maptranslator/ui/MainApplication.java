@@ -83,11 +83,13 @@ class MainApplication {
 		};
 		treeWin.nodeLoader = path -> {
 			showProgressWindow(false);
-			return handler.resolveNode(path)
-					.thenApplyAsync(result -> {
-						hideProgressWindow();
-						return result;
-					}, Platform::runLater);
+			return ((path instanceof String)
+					? handler.resolveNode((String) path)
+					: handler.resolveNode((String[]) path))
+							.thenApplyAsync(result -> {
+								hideProgressWindow();
+								return result;
+							}, Platform::runLater);
 		};
 
 		strDisWin.btnLoad.setOnAction(event -> {

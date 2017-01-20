@@ -12,4 +12,9 @@ public abstract class JsonNode extends Node {
 		this.json = json;
 	}
 
+	@Override
+	public String getStringValue() {
+		return json.toString();
+	}
+
 }

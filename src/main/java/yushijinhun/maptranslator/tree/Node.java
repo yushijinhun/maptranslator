@@ -139,6 +139,8 @@ public abstract class Node {
 		return Optional.of(node);
 	}
 
+	public abstract String getStringValue();
+
 	boolean runTagMarking(TagMarker marker, BiConsumer<Node, Set<String>> listener) {
 		boolean changed = false;
 		Set<String> addTags = new LinkedHashSet<>();

@@ -42,4 +42,9 @@ public class NBTStoreNode extends Node implements InPathNode {
 		unmodifiableChildren().forEach(this::removeChild);
 	}
 
+	@Override
+	public String getStringValue() {
+		return descriptor.toString();
+	}
+
 }

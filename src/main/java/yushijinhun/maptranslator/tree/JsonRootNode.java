@@ -38,4 +38,9 @@ public class JsonRootNode extends JsonNode implements ArgumentNode {
 		return JSONObject._use_gson_toString(resolved::toString);
 	}
 
+	@Override
+	public String getStringValue() {
+		return toArgumentString();
+	}
+
 }
