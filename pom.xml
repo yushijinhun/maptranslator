@@ -3,9 +3,11 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>yushijinhun.maptranslator</groupId>
-	<version>${env.VERSION_PREFIX}${env.TRAVIS_BUILD_NUMBER}</version>
+	<groupId>org.to2mbn.maptranslator</groupId>
+	<artifactId>maptranslator</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>MapTranslator</name>
+	<description>Minecraft地图翻译器</description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jar.source>1.8</jar.source>
@@ -28,7 +30,7 @@
 					<archive>
 						<manifest>
 							<mainClass>
-								yushijinhun.maptranslator.ui.MainApplication
+								org.to2mbn.maptranslator.ui.MainApplication
 							</mainClass>
 						</manifest>
 					</archive>
@@ -43,7 +45,7 @@
 					<archive>
 						<manifest>
 							<mainClass>
-								yushijinhun.maptranslator.ui.MainApplication
+								org.to2mbn.maptranslator.ui.MainApplication
 							</mainClass>
 						</manifest>
 					</archive>
@@ -72,7 +74,5 @@
 			<version>3.5</version>
 		</dependency>
 	</dependencies>
-	<artifactId>maptranslator</artifactId>
-	<description>MC地图翻译工具</description>
 </project>
 
