@@ -2,7 +2,7 @@
 Minecraft地图翻译器
 
 ## 下载
-Jenkins: https://ci.to2mbn.org/job/maptranslator/
+GitHub Releases: https://github.com/to2mbn/maptranslator/releases
 
 要求Java1.8+，需要JavaFX。
 
