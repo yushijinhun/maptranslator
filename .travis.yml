@@ -9,7 +9,7 @@
 # deploy_github_token	- the github token
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y openjfx openjfx-source
+  - sudo apt-get install -y openjdk-8-jdk openjfx openjfx-source
 language: java
 jdk:
   - openjdk8
