@@ -7,14 +7,17 @@
 # deploy_artifact_id	- the artifact id
 # deploy_git_ssh_key	- the base64 encoded deploy ssh key
 # deploy_github_token	- the github token
+sudo: false
 language: java
 branches:
   only:
     - master
-before_install:
-  - sudo add-apt-repository -y ppa:openjdk-r/ppa
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq openjdk-8-jdk openjfx openjfx-source
+jdk:
+  - oraclejdk8
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
 before_deploy:
   - git config --global user.email ${deploy_git_email}
   - git config --global user.name ${deploy_git_name}
