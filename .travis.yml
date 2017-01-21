@@ -1,0 +1,39 @@
+# args
+# deploy_git_email		- git config(user.email)
+# deploy_git_name		- git config(user.name)
+# deploy_version_prefix	- the prefix of the version(such as 1.0.)
+# deploy_git_repo_url	- the url of the git repo(ssh)
+# deploy_group_id_path	- the groupId(replacing '.' with '/', such as org/to2mbn)
+# deploy_artifact_id	- the artifact id
+# deploy_git_ssh_key	- the base64 encoded deploy ssh key
+# deploy_github_token	- the github token
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y openjfx openjfx-source
+language: java
+jdk:
+  - openjdk8
+branches:
+  only:
+    - master
+before_deploy:
+  - git config --global user.email ${deploy_git_email}
+  - git config --global user.name ${deploy_git_name}
+  - git tag ${deploy_version_prefix}${TRAVIS_BUILD_NUMBER}
+  - eval "$(ssh-agent -s)"
+  - echo ${deploy_git_ssh_key}|base64 -d>key.pem
+  - chmod 600 key.pem
+  - ssh-add key.pem
+  - git push -q ${deploy_git_repo_url} --tags
+  - rm key.pem
+deploy:
+  provider: releases
+  api_key: "${deploy_github_token}"
+  file: "/home/travis/.m2/repository/${deploy_group_id_path}/${deploy_artifact_id}/${deploy_version_prefix}${TRAVIS_BUILD_NUMBER}/${deploy_artifact_id}-${deploy_version_prefix}${TRAVIS_BUILD_NUMBER}.jar"
+  skip_cleanup: true
+  on:
+    tags: false
+cache:
+  directories:
+    - /home/travis/.m2
+
