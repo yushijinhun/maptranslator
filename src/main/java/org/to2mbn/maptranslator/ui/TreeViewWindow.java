@@ -86,7 +86,8 @@ class TreeViewWindow {
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN), () -> switchAppearance(+1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN), () -> switchAppearance(-1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.SEMICOLON, KeyCombination.CONTROL_DOWN), () -> appearances.set(null));
-		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), () -> showGoTo());
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), this::showGoTo);
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN), this::copyOrigin);
 
 		stage.getScene().getStylesheets().add("/org/to2mbn/maptranslator/ui/TreeViewWindow.css");
 	}
@@ -185,6 +186,17 @@ class TreeViewWindow {
 		dialog.show();
 		dialog.setWidth(600);
 		dialog.getDialogPane().getScene().getWindow().centerOnScreen();
+	}
+
+	void copyOrigin() {
+		TreeItem<Node> selected = tree.getSelectionModel().getSelectedItem();
+		if (selected != null) {
+			Node node = selected.getValue();
+			String origin = (String) node.properties().get("origin");
+			if (origin != null) {
+				copyToClipboard(origin);
+			}
+		}
 	}
 
 	void updateContextMenu() {
