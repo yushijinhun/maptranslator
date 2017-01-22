@@ -28,9 +28,9 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(store.scoreboard)/data/Objectives/*/DisplayName"), "objective.displayname", translatable),
 			new TagMarker(NodeMatcher.of("(store.scoreboard)/data/Teams/*/DisplayName"), "team.displayname", translatable),
 
-			new TagMarker(NodeMatcher.of("(item)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "item." + nbt.getString("id").toLowerCase()).andThen(Collections::singleton)),
-			new TagMarker(NodeMatcher.of("(entity)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "entity." + nbt.getString("id").toLowerCase()).andThen(Collections::singleton)),
-			new TagMarker(NodeMatcher.of("(tileentity)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "tileentity." + nbt.getString("id").toLowerCase()).andThen(Collections::singleton)),
+			new TagMarker(NodeMatcher.of("(item)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "item." + toUniqueName(nbt.getString("id"))).andThen(Collections::singleton)),
+			new TagMarker(NodeMatcher.of("(entity)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "entity." + toUniqueName(nbt.getString("id"))).andThen(Collections::singleton)),
+			new TagMarker(NodeMatcher.of("(tileentity)").and(compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID))), toCompound(nbt -> "tileentity." + toUniqueName(nbt.getString("id"))).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(item)/tag"), "itemtag"),
 			new TagMarker(NodeMatcher.of("(item)/tag").and(node -> compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID)).test(node.parent())), node -> toCompound(nbt -> "itemtag." + toUniqueName(nbt.getString("id"))).andThen(Collections::singleton).apply(node.parent())),
 
@@ -55,24 +55,24 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(entity)/ArmorItems/*"), "item"),
 			new TagMarker(NodeMatcher.of("(horse.entity)/ArmorItem"), "item"),
 			new TagMarker(NodeMatcher.of("(horse.entity)/SaddleItem"), "item"),
-			new TagMarker(NodeMatcher.of("(entity.villager)/Offers/Recipes/*/buy"), "item"),
-			new TagMarker(NodeMatcher.of("(entity.villager)/Offers/Recipes/*/buyB"), "item"),
-			new TagMarker(NodeMatcher.of("(entity.villager)/Offers/Recipes/*/sell"), "item"),
-			new TagMarker(NodeMatcher.of("(entity.item)/Item"), "item"),
-			new TagMarker(NodeMatcher.of("(entity.item_frame)/Item"), "item"),
-			new TagMarker(NodeMatcher.of("(entity.llama)/DecorItem"), "item"),
-			new TagMarker(NodeMatcher.of("(entity.potion)/Potion"), "item"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:villager)/Offers/Recipes/*/buy"), "item"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:villager)/Offers/Recipes/*/buyB"), "item"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:villager)/Offers/Recipes/*/sell"), "item"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:item)/Item"), "item"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:item_frame)/Item"), "item"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:llama)/DecorItem"), "item"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:potion)/Potion"), "item"),
 			new TagMarker(NodeMatcher.of("(tileentity)/Items/*"), "item"),
-			new TagMarker(NodeMatcher.of("(tileentity.jukebox)/RecordItem"), "item"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:jukebox)/RecordItem"), "item"),
 
 			new TagMarker(NodeMatcher.of("(tileentity)/CustomName"), "blockdisplay.name", translatable),
 			new TagMarker(NodeMatcher.of("(tileentity)/Lock"), translatable),
 
-			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/(tileentity.sign)/(sign.text)"), "sign.text.auto_generated"),
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text1"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text2"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text3"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(tileentity.sign)/Text4"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/(tileentity.minecraft:sign)/(sign.text)"), "sign.text.auto_generated"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text1"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text2"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text3"), "sign.text"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text4"), "sign.text"),
 			new TagMarker(NodeMatcher.of("(sign.text)"), "formattable_string"),
 			new TagMarker(NodeMatcher.of("(formattable_string)").and(node -> TextNodeReplacer.getText(node).isPresent()), node -> {
 				boolean isJson = true;
@@ -88,14 +88,14 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(entity)/LootTable"), "loottable"),
 			new TagMarker(NodeMatcher.of("(tileentity)/LootTable"), "loottable"),
 
-			new TagMarker(NodeMatcher.of("(entity.spawner_minecart)"), "spawner"),
-			new TagMarker(NodeMatcher.of("(tileentity.mob_spawner)"), "spawner"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:spawner_minecart)"), "spawner"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:mob_spawner)"), "spawner"),
 			new TagMarker(NodeMatcher.of("(spawner)/SpawnPotentials/*/Entity"), "entity"),
 			new TagMarker(NodeMatcher.of("(spawner)/SpawnPotentials/*/Properties"), "entity", "entity.*"),
 			new TagMarker(NodeMatcher.of("(spawner)/SpawnData"), "entity", "entity.*"),
 
-			new TagMarker(NodeMatcher.of("(entity.commandblock_minecart)/Command"), "command"),
-			new TagMarker(NodeMatcher.of("(tileentity.command_block)/Command"), "command"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:commandblock_minecart)/Command"), "command"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:command_block)/Command"), "command"),
 
 			new TagMarker(NodeMatcher.of("(item.minecraft:armor_stand.tag)/EntityTag"), "entity"),
 			new TagMarker(NodeMatcher.of("(item.minecraft:spawn_egg.tag)/EntityTag"), "entity"),
@@ -104,14 +104,14 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(entity)/Riding"), "entity"),
 			new TagMarker(NodeMatcher.of("(entity)/Passengers/*"), "entity"),
 
-			new TagMarker(NodeMatcher.of("(entity.horse)"), "horse.entity"),
-			new TagMarker(NodeMatcher.of("(entity.donkey)"), "horse.entity"),
-			new TagMarker(NodeMatcher.of("(entity.mule)"), "horse.entity"),
-			new TagMarker(NodeMatcher.of("(entity.zombie_horse)"), "horse.entity"),
-			new TagMarker(NodeMatcher.of("(entity.skeleton_horse)"), "horse.entity"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:horse)"), "horse.entity"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:donkey)"), "horse.entity"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:mule)"), "horse.entity"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:zombie_horse)"), "horse.entity"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:skeleton_horse)"), "horse.entity"),
 
 			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/*"), "tileentity"),
-			new TagMarker(NodeMatcher.of("(entity.falling_block)/TileEntityData"), "tileentity", "tileentity.*"),
+			new TagMarker(NodeMatcher.of("(entity.minecraft:falling_block)/TileEntityData"), "tileentity", "tileentity.*"),
 			new TagMarker(NodeMatcher.of("(itemtag)/BlockEntityTag"), "tileentity", "tileentity.*"),
 
 			new TagMarker(NodeMatcher.of("(itemtag)/AttributeModifiers/*"), "modifier"),
@@ -141,7 +141,7 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(msg.obj)/hoverEvent"), toJson(json -> "hover_event." + json.get("action")).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(click_event.run_command)/value").and(node -> TextNodeReplacer.getText(node).map(text -> !text.trim().isEmpty()).orElse(false)), node -> Collections.singleton(TextNodeReplacer.getText(node).get().startsWith("/") ? "command" : translatable)),
 			new TagMarker(NodeMatcher.of("(click_event.suggest_command)/value"), "suggest_command", translatable),
-			new TagMarker(NodeMatcher.of("(hover_event.show_text)/value"), "formattable_string", "hover_text"),
+			new TagMarker(NodeMatcher.of("(hover_event.show_text)/value"), "hover_text", "msg"),
 
 			entityAlias("mushroomcow", "mooshroom"),
 			entityAlias("ozelot", "ocelot"),
@@ -285,7 +285,7 @@ public final class MinecraftRules {
 			CommandReplacer.of("summon <entity> <x> <y> <z> <dataTag>", "dataTag",
 					args -> constructNBT(args.get("dataTag"))
 							.withTag("entity")
-							.withTag("entity." + args.get("entity").toLowerCase())),
+							.withTag("entity." + toUniqueName(args.get("entity")))),
 
 			CommandReplacer.of("tell <player> <message>", "message",
 					args -> new TextArgumentNode(args.get("message"))
@@ -423,17 +423,17 @@ public final class MinecraftRules {
 	}
 
 	private static TagMarker entityAlias(String alias, String id) {
-		return new TagMarker(NodeMatcher.of("(entity." + alias + ")"), "entity." + id);
+		return new TagMarker(NodeMatcher.of("(entity." + alias + ")").or(NodeMatcher.of("(entity." + toUniqueName(alias) + ")")), "entity." + toUniqueName(id));
 	}
 
 	private static TagMarker tileentityAlias(String alias, String id) {
-		return new TagMarker(NodeMatcher.of("(tileentity." + alias + ")"), "tileentity." + id);
+		return new TagMarker(NodeMatcher.of("(tileentity." + alias + ")").or(NodeMatcher.of("(tileentity." + toUniqueName(alias) + ")")), "tileentity." + toUniqueName(id));
 	}
 
-	private static String toUniqueName(String itemName) {
-		itemName = itemName.toLowerCase();
-		if (itemName.indexOf(':') == -1) itemName = "minecraft:" + itemName;
-		return itemName;
+	private static String toUniqueName(String name) {
+		name = name.toLowerCase();
+		if (name.indexOf(':') == -1) name = "minecraft:" + name;
+		return name;
 	}
 
 	private MinecraftRules() {}
