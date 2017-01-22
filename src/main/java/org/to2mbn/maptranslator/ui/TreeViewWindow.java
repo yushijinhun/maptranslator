@@ -78,72 +78,11 @@ class TreeViewWindow {
 		}, tree.getSelectionModel().selectedItemProperty(), tree.rootProperty()));
 		rootPane.setTop(lblPath);
 
+		tree.rootProperty().addListener(dummy -> updateContextMenu());
+		tree.getSelectionModel().selectedItemProperty().addListener(dummy -> updateContextMenu());
+		updateContextMenu();
+
 		tree.setContextMenu(popupMenu);
-		popupMenu.setOnShowing(event -> {
-			Node rootParent;
-			Node selected;
-			Node root;
-			if (tree.getRoot() != null) {
-				root = tree.getRoot().getValue();
-				rootParent = root.parent();
-				selected = Optional.ofNullable(tree.getSelectionModel().getSelectedItem()).map(item -> item.getValue()).orElse(null);
-			} else {
-				rootParent = selected = root = null;
-			}
-			if (rootParent == null) {
-				menuUpTo.setText("返回到...");
-				menuUpTo.setDisable(true);
-			} else {
-				menuUpTo.setText("返回到 " + rootParent);
-				menuUpTo.setDisable(false);
-			}
-			if (selected == null) {
-				menuGoInto.setText("进入到...");
-				menuGoInto.setDisable(true);
-			} else {
-				menuGoInto.setText("进入到 " + selected);
-				menuGoInto.setDisable(selected == root);
-			}
-			String text;
-			if (selected != null) {
-				text = TextNodeReplacer.getText(selected).orElse(null);
-			} else {
-				text = null;
-			}
-			if (selected == null || text == null) {
-				menuShowIn.setDisable(true);
-			} else {
-				menuShowIn.setDisable(!isStringInList.test(text));
-			}
-			menuCopyPath.setDisable(selected == null);
-			menuCopyValue.setDisable(selected == null);
-			menuUpTo.setOnAction(e -> {
-				if (rootParent != null) {
-					setRoot(rootParent);
-				}
-			});
-			menuGoInto.setOnAction(e -> {
-				if (selected != null) {
-					setRoot(selected);
-				}
-			});
-			menuShowIn.setOnAction(e -> {
-				if (text != null) {
-					showIn.accept(text);
-				}
-			});
-			menuCopyPath.setOnAction(e -> {
-				if (selected != null) {
-					copyToClipboard(selected.getPath());
-				}
-			});
-			menuCopyValue.setOnAction(e -> {
-				if (selected != null) {
-					copyToClipboard(selected.getStringValue());
-				}
-			});
-			popupMenu.getScene().getRoot().requestLayout();
-		});
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN), () -> switchAppearance(+1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN), () -> switchAppearance(-1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.SEMICOLON, KeyCombination.CONTROL_DOWN), () -> appearances.set(null));
@@ -246,6 +185,71 @@ class TreeViewWindow {
 		dialog.show();
 		dialog.setWidth(600);
 		dialog.getDialogPane().getScene().getWindow().centerOnScreen();
+	}
+
+	void updateContextMenu() {
+		Node rootParent;
+		Node selected;
+		Node root;
+		if (tree.getRoot() != null) {
+			root = tree.getRoot().getValue();
+			rootParent = root.parent();
+			selected = Optional.ofNullable(tree.getSelectionModel().getSelectedItem()).map(item -> item.getValue()).orElse(null);
+		} else {
+			rootParent = selected = root = null;
+		}
+		if (rootParent == null) {
+			menuUpTo.setText("返回到...");
+			menuUpTo.setDisable(true);
+		} else {
+			menuUpTo.setText("返回到 " + rootParent);
+			menuUpTo.setDisable(false);
+		}
+		if (selected == null) {
+			menuGoInto.setText("进入到...");
+			menuGoInto.setDisable(true);
+		} else {
+			menuGoInto.setText("进入到 " + selected);
+			menuGoInto.setDisable(selected == root);
+		}
+		String text;
+		if (selected != null) {
+			text = TextNodeReplacer.getText(selected).orElse(null);
+		} else {
+			text = null;
+		}
+		if (selected == null || text == null) {
+			menuShowIn.setDisable(true);
+		} else {
+			menuShowIn.setDisable(!isStringInList.test(text));
+		}
+		menuCopyPath.setDisable(selected == null);
+		menuCopyValue.setDisable(selected == null);
+		menuUpTo.setOnAction(e -> {
+			if (rootParent != null) {
+				setRoot(rootParent);
+			}
+		});
+		menuGoInto.setOnAction(e -> {
+			if (selected != null) {
+				setRoot(selected);
+			}
+		});
+		menuShowIn.setOnAction(e -> {
+			if (text != null) {
+				showIn.accept(text);
+			}
+		});
+		menuCopyPath.setOnAction(e -> {
+			if (selected != null) {
+				copyToClipboard(selected.getPath());
+			}
+		});
+		menuCopyValue.setOnAction(e -> {
+			if (selected != null) {
+				copyToClipboard(selected.getStringValue());
+			}
+		});
 	}
 
 }
