@@ -1295,7 +1295,6 @@ public class JSONObject implements Serializable {
 			return w;
 		}
 
-		char b;
 		char c = 0;
 		String hhhh;
 		int i;
@@ -1304,20 +1303,17 @@ public class JSONObject implements Serializable {
 		if (quoter != 0)
 			w.write(quoter);
 		for (i = 0; i < len; i += 1) {
-			b = c;
 			c = string.charAt(i);
 			switch (c) {
 				case '\'':
-					if (quoter != '\'') break;
+					if (quoter == '\'') {
+						w.write('\\');
+					}
+					w.write(c);
+					break;
 				case '\\':
 				case '"':
 					w.write('\\');
-					w.write(c);
-					break;
-				case '/':
-					if (b == '<') {
-						w.write('\\');
-					}
 					w.write(c);
 					break;
 				case '\b':
@@ -1336,8 +1332,7 @@ public class JSONObject implements Serializable {
 					w.write("\\r");
 					break;
 				default:
-					if (c < ' ' || (c >= '\u0080' && c < '\u00a0')
-							|| (c >= '\u2000' && c < '\u2100')) {
+					if (c <= '\u001f') {
 						w.write("\\u");
 						hhhh = Integer.toHexString(c);
 						w.write("0000", 0, 4 - hhhh.length());
