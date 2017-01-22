@@ -3,10 +3,60 @@ package org.to2mbn.maptranslator.tree;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 
 public class CommandReplacer extends AbstractReplacer {
+
+	private static class CommandHandler implements Supplier<String> {
+
+		Node commandNode;
+		String[] arguments;
+		String[] argumentNames;
+
+		public CommandHandler(String[] arguments, String[] argumentNames) {
+			this.arguments = arguments;
+			this.argumentNames = argumentNames;
+		}
+
+		@Override
+		public String get() {
+			if (commandNode == null) {
+				throw new IllegalStateException("Command handler hasn't been initialized");
+			}
+			boolean first = true;
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < arguments.length; i++) {
+				if (first) {
+					first = false;
+				} else {
+					sb.append(' ');
+				}
+				if (arguments[i] == null) {
+					String key = argumentNames[i];
+					Objects.requireNonNull(key);
+					String value = null;
+					for (Node child : commandNode.unmodifiableChildren()) {
+						if (child instanceof NodeArgument) {
+							NodeArgument casted = (NodeArgument) child;
+							if (key.equals(casted.argumentName)) {
+								value = casted.toArgumentString();
+								break;
+							}
+						}
+					}
+					if (value == null)
+						throw new IllegalStateException("Argument node " + key + " not found");
+					sb.append(value);
+				} else {
+					sb.append(arguments[i]);
+				}
+			}
+			return sb.toString();
+		}
+	}
 
 	public static NodeReplacer of(String expression, String arg, Function<Map<String, String>, Node> subtree) {
 		return of("command", expression, arg, subtree);
