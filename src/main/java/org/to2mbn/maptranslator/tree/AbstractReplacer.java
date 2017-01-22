@@ -34,11 +34,11 @@ public abstract class AbstractReplacer {
 	}
 
 	protected static void postResolveFailedWarning(ResolveFailedWarning post) {
-		LOGGER.log(Level.WARNING, String.format("Couldn't solve command node %s\nText: %s\nArguments: %s", post.path, post.text, post.arguments), post.exception);
 		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
 		stack.forEach(listener -> listener.accept(post));
 		if (stack.isEmpty()) {
 			resolvingFailedListeners.remove();
+			LOGGER.log(Level.WARNING, String.format("Couldn't solve command node %s\nText: %s\nArguments: %s", post.path, post.text, post.arguments), post.exception);
 		}
 	}
 

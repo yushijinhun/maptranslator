@@ -1,5 +1,7 @@
 package org.to2mbn.maptranslator.tree;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.to2mbn.maptranslator.internal.org.json.JSONArray;
 import org.to2mbn.maptranslator.internal.org.json.JSONException;
 import org.to2mbn.maptranslator.internal.org.json.JSONObject;
@@ -12,7 +14,9 @@ public final class TreeConstructor {
 
 	private static final boolean _TO_STRING_VERIFY = true;
 
-	private static final NBTCompound parseNBT(String nbt) {
+	private static final Logger LOGGER = Logger.getLogger(TreeConstructor.class.getCanonicalName());
+
+	private static NBTCompound parseNBT(String nbt) {
 		NBTCompound parsed = JsonNBTConverter.getTagFromJson(nbt);
 		if (_TO_STRING_VERIFY) {
 			try {
@@ -21,13 +25,13 @@ public final class TreeConstructor {
 					throw new IllegalStateException("Object mismatch, serialized: " + serialized);
 				}
 			} catch (Exception e) {
-				throw new ArgumentParseException("*** Parsing verify failed (nbt): " + nbt, e);
+				throwParsingVerifyFailedException("nbt", nbt, e);
 			}
 		}
 		return parsed;
 	}
 
-	private static final JSONArray parseJsonArray(String json) {
+	private static JSONArray parseJsonArray(String json) {
 		JSONArray parsed = new JSONArray(json);
 		if (_TO_STRING_VERIFY) {
 			try {
@@ -36,13 +40,13 @@ public final class TreeConstructor {
 					throw new IllegalStateException("Object mismatch, serialized: " + serialized);
 				}
 			} catch (Exception e) {
-				throw new ArgumentParseException("*** Parsing verify failed (json array): " + json, e);
+				throwParsingVerifyFailedException("json array", json, e);
 			}
 		}
 		return parsed;
 	}
 
-	private static final JSONObject parseJsonObject(String json) {
+	private static JSONObject parseJsonObject(String json) {
 		JSONObject parsed = new JSONObject(json);
 		if (_TO_STRING_VERIFY) {
 			try {
@@ -51,10 +55,16 @@ public final class TreeConstructor {
 					throw new IllegalStateException("Object mismatch, serialized: " + serialized);
 				}
 			} catch (Exception e) {
-				throw new ArgumentParseException("*** Parsing verify failed (json object): " + json, e);
+				throwParsingVerifyFailedException("json object", json, e);
 			}
 		}
 		return parsed;
+	}
+
+	private static void throwParsingVerifyFailedException(String type, String origin, Throwable cause) {
+		String msg = "*** Parsing verify failed (" + type + "): " + origin;
+		LOGGER.log(Level.WARNING, msg, cause);
+		throw new ArgumentParseException(msg, cause);
 	}
 
 	private TreeConstructor() {}
