@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import org.to2mbn.maptranslator.tree.Node;
-import org.to2mbn.maptranslator.tree.TextNodeReplacer;
+import org.to2mbn.maptranslator.tree.TextContext;
 import org.to2mbn.maptranslator.ui.TreeItemConstructor.XTreeCell;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -214,7 +214,7 @@ class TreeViewWindow {
 		}
 		String text;
 		if (selected != null) {
-			text = TextNodeReplacer.getText(selected).orElse(null);
+			text = TextContext.textFromNode(selected).orElse(null);
 		} else {
 			text = null;
 		}

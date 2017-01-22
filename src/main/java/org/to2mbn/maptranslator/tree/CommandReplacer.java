@@ -11,7 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 
-public class CommandReplacer extends TextNodeReplacer {
+public class CommandReplacer {
 
 	private static final Logger LOGGER = Logger.getLogger(CommandReplacer.class.getCanonicalName());
 
@@ -85,7 +85,7 @@ public class CommandReplacer extends TextNodeReplacer {
 
 	private boolean matches(Node node) {
 		if (node.unmodifiableChildren().isEmpty() && node.hasTag(tag)) {
-			TextContext ctx = getContext(node);
+			TextContext ctx = TextContext.getContext(node);
 			if (ctx == null) return false;
 			String command = ctx.getText(node);
 			if (command != null && !command.trim().isEmpty()) {
@@ -121,7 +121,7 @@ public class CommandReplacer extends TextNodeReplacer {
 	}
 
 	private Node replace(Node node) {
-		TextContext ctx = getContext(node);
+		TextContext ctx = TextContext.getContext(node);
 		String cmd = ctx.getText(node).trim();
 		String[] splited = cmd.split(" ", argumentNames.length + 1);
 		String[] n_argnames = new String[argumentNames.length + 1];
@@ -148,7 +148,6 @@ public class CommandReplacer extends TextNodeReplacer {
 		return replaced;
 	}
 
-	@Override
 	public NodeReplacer toNodeReplacer() {
 		return new NodeReplacer(this::matches, this::replace);
 	}

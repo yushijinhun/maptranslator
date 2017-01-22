@@ -4,7 +4,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class TextReplacer extends TextNodeReplacer {
+public class TextReplacer {
 
 	public static NodeReplacer of(Predicate<Node> nodeMatcher, Function<String, Node> subtreeBuilder) {
 		return of(nodeMatcher, (node, string) -> subtreeBuilder.apply(string));
@@ -29,7 +29,7 @@ public class TextReplacer extends TextNodeReplacer {
 	}
 
 	private Node replace(Node node) {
-		TextContext ctx = getContext(node);
+		TextContext ctx = TextContext.getContext(node);
 		String json = ctx.getText(node);
 		Node replacedNode = ctx.replaceNode(node, () -> {
 			if (node.unmodifiableChildren().size() == 1) {
@@ -43,10 +43,9 @@ public class TextReplacer extends TextNodeReplacer {
 		return replacedNode;
 	}
 
-	@Override
 	public NodeReplacer toNodeReplacer() {
 		return new NodeReplacer(nodeMatcher.and(node -> {
-			TextContext ctx = getContext(node);
+			TextContext ctx = TextContext.getContext(node);
 			if (ctx != null && node.unmodifiableChildren().isEmpty()) {
 				String text = ctx.getText(node);
 				if (text != null) {

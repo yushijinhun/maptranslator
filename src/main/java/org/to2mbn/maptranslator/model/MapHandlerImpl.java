@@ -22,7 +22,7 @@ import org.to2mbn.maptranslator.tree.MinecraftRules;
 import org.to2mbn.maptranslator.tree.NBTStoreNode;
 import org.to2mbn.maptranslator.tree.Node;
 import org.to2mbn.maptranslator.tree.NodeReplacer;
-import org.to2mbn.maptranslator.tree.TextNodeReplacer;
+import org.to2mbn.maptranslator.tree.TextContext;
 import org.to2mbn.maptranslator.tree.TreeIterator;
 import org.to2mbn.maptranslator.ui.TreeItemConstructor;
 
@@ -154,7 +154,7 @@ class MapHandlerImpl implements MapHandler {
 	private void computeStringMismatches(Node root) {
 		root.travel(node -> {
 			if (node.properties().containsKey("origin")) {
-				TextNodeReplacer.getText(node).ifPresent(current -> {
+				TextContext.textFromNode(node).ifPresent(current -> {
 					String origin = (String) node.properties().get("origin");
 					if (!origin.equals(current)) {
 						lastParsingWarnings.add(new StringMismatchWarning(node, origin, current));
@@ -168,7 +168,7 @@ class MapHandlerImpl implements MapHandler {
 		Map<String, List<String[]>> result = new LinkedHashMap<>();
 		root.travel(node -> {
 			if (node.hasTag(MinecraftRules.translatable)) {
-				TextNodeReplacer.getText(node).ifPresent(text -> {
+				TextContext.textFromNode(node).ifPresent(text -> {
 					if (!text.trim().isEmpty()) {
 						List<String[]> g = result.get(text);
 						if (g != null) {
@@ -226,7 +226,7 @@ class MapHandlerImpl implements MapHandler {
 		arg.replacers.add(new NodeReplacer(
 				node -> {
 					if (node.hasTag(MinecraftRules.translatable)) {
-						Optional<String> optionalText = TextNodeReplacer.getText(node);
+						Optional<String> optionalText = TextContext.textFromNode(node);
 						if (optionalText.isPresent()) {
 							String text = optionalText.get();
 							return table.containsKey(text) && !excluder.test(text);
@@ -235,8 +235,8 @@ class MapHandlerImpl implements MapHandler {
 					return false;
 				},
 				node -> {
-					String replacement = table.get(TextNodeReplacer.getText(node).get());
-					return TextNodeReplacer.getContext(node).replaceNode(node, () -> replacement);
+					String replacement = table.get(TextContext.textFromNode(node).get());
+					return TextContext.getContext(node).replaceNode(node, () -> replacement);
 				}));
 		return arg;
 	}

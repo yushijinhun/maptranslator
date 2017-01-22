@@ -74,7 +74,7 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text2"), "text"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text3"), "text"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text4"), "text"),
-			new TagMarker(NodeMatcher.of("(text)").and(node -> TextNodeReplacer.getText(node).map(text -> {
+			new TagMarker(NodeMatcher.of("(text)").and(node -> TextContext.textFromNode(node).map(text -> {
 				if (text.trim().isEmpty() ||
 						text.equals("\"\"") ||
 						text.equals("null"))
@@ -82,7 +82,7 @@ public final class MinecraftRules {
 				else
 					return true;
 			}).orElse(false)), node -> {
-				String txt = TextNodeReplacer.getText(node).get();
+				String txt = TextContext.textFromNode(node).get();
 				boolean isJson;
 				try {
 					constructJson(txt);
@@ -150,7 +150,7 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(msg.obj)/extra/*"), "msg"),
 			new TagMarker(NodeMatcher.of("(msg.obj)/clickEvent"), toJson(json -> "click_event." + json.get("action")).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(msg.obj)/hoverEvent"), toJson(json -> "hover_event." + json.get("action")).andThen(Collections::singleton)),
-			new TagMarker(NodeMatcher.of("(click_event.run_command)/value").and(node -> TextNodeReplacer.getText(node).map(text -> !text.trim().isEmpty()).orElse(false)), node -> Collections.singleton(TextNodeReplacer.getText(node).get().startsWith("/") ? "command" : translatable)),
+			new TagMarker(NodeMatcher.of("(click_event.run_command)/value").and(node -> TextContext.textFromNode(node).map(text -> !text.trim().isEmpty()).orElse(false)), node -> Collections.singleton(TextContext.textFromNode(node).get().startsWith("/") ? "command" : translatable)),
 			new TagMarker(NodeMatcher.of("(click_event.suggest_command)/value"), "suggest_command", translatable),
 			new TagMarker(NodeMatcher.of("(hover_event.show_text)/value"), "hover_text", "msg"),
 

@@ -1,8 +1,6 @@
 package org.to2mbn.maptranslator.tree;
 
 import java.util.Map;
-import java.util.Optional;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import org.to2mbn.maptranslator.internal.org.json.JSONObject;
@@ -10,12 +8,16 @@ import org.to2mbn.maptranslator.internal.org.json.JSONString;
 import org.to2mbn.maptranslator.nbt.NBT;
 import org.to2mbn.maptranslator.nbt.NBTString;
 
-abstract public class TextNodeReplacer {
+class TextContextImpl {
 
-	public static final Map<Class<?>, TextContext> CTXS = new ConcurrentHashMap<>();
+	static Map<Class<?>, TextContext> createRegistry() {
+		Map<Class<?>, TextContext> ctxs = new ConcurrentHashMap<>();
+		initContexts(ctxs);
+		return ctxs;
+	}
 
-	static {
-		CTXS.put(NBTNode.class, new TextContext() {
+	private static void initContexts(Map<Class<?>, TextContext> ctxs) {
+		ctxs.put(NBTNode.class, new TextContext() {
 
 			@Override
 			public String getText(Node node) {
@@ -34,7 +36,7 @@ abstract public class TextNodeReplacer {
 				return node;
 			}
 		});
-		CTXS.put(TextArgumentNode.class, new TextContext() {
+		ctxs.put(TextArgumentNode.class, new TextContext() {
 
 			@Override
 			public String getText(Node node) {
@@ -51,7 +53,7 @@ abstract public class TextNodeReplacer {
 				return clause;
 			}
 		});
-		CTXS.put(JsonNode.class, new TextContext() {
+		ctxs.put(JsonNode.class, new TextContext() {
 
 			@Override
 			public String getText(Node node) {
@@ -82,7 +84,7 @@ abstract public class TextNodeReplacer {
 			}
 
 		});
-		CTXS.put(ClauseNode.class, new TextContext() {
+		ctxs.put(ClauseNode.class, new TextContext() {
 
 			@Override
 			public String getText(Node node) {
@@ -100,30 +102,5 @@ abstract public class TextNodeReplacer {
 
 		});
 	}
-
-	public static interface TextContext {
-
-		String getText(Node node);
-
-		Node replaceNode(Node node, Supplier<String> proxyTarget);
-
-	}
-
-	public static TextContext getContext(Node node) {
-		for (Entry<Class<?>, TextContext> ety : CTXS.entrySet()) {
-			if (ety.getKey().isInstance(node)) return ety.getValue();
-		}
-		return null;
-	}
-
-	public static Optional<String> getText(Node node) {
-		TextContext ctx = getContext(node);
-		if (ctx == null) {
-			return Optional.empty();
-		}
-		return Optional.ofNullable(ctx.getText(node));
-	}
-
-	abstract public NodeReplacer toNodeReplacer();
 
 }
