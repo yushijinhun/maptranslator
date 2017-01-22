@@ -314,16 +314,8 @@ public final class MinecraftRules {
 							.withTag(translatable)),
 
 			CommandReplacer.of("tellraw <player> <message>", "message",
-					args -> {
-						String txt = args.get("message");
-						try {
-							return constructJson(txt)
-									.withTag("msg");
-						} catch (ArgumentParseException e) {
-							return new TextArgumentNode(txt)
-									.withTag(translatable);
-						}
-					}),
+					args -> new TextArgumentNode(args.get("message"))
+							.withTag("text")),
 
 			CommandReplacer.of("testfor <player> <dataTag>", "dataTag",
 					args -> constructNBT(args.get("dataTag"))
