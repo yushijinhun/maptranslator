@@ -40,7 +40,7 @@ public final class MinecraftRules {
 
 			new TagMarker(NodeMatcher.of("(itemtag.minecraft:written_book)"), "book.itemtag"),
 			new TagMarker(NodeMatcher.of("(itemtag.minecraft:writable_book)"), "book.itemtag"),
-			new TagMarker(NodeMatcher.of("(book.itemtag)/pages/*"), "book.page", translatable),
+			new TagMarker(NodeMatcher.of("(book.itemtag)/pages/*"), "book.page", "text"),
 			new TagMarker(NodeMatcher.of("(itemtag.minecraft:written_book)/author"), "book.author", translatable),
 			new TagMarker(NodeMatcher.of("(itemtag.minecraft:written_book)/title"), "book.title", translatable),
 
@@ -69,12 +69,12 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(tileentity)/CustomName"), "blockdisplay.name", translatable),
 			new TagMarker(NodeMatcher.of("(tileentity)/Lock"), translatable),
 
-			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/(tileentity.minecraft:sign)/(sign.text)"), "sign.text.auto_generated"),
-			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text1"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text2"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text3"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text4"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(sign.text)").and(node -> TextNodeReplacer.getText(node).map(text -> {
+			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/(tileentity.minecraft:sign)/(text)"), "sign.text.auto_generated"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text1"), "text"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text2"), "text"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text3"), "text"),
+			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text4"), "text"),
+			new TagMarker(NodeMatcher.of("(text)").and(node -> TextNodeReplacer.getText(node).map(text -> {
 				if (text.trim().isEmpty() ||
 						text.equals("\"\"") ||
 						text.equals("null"))
