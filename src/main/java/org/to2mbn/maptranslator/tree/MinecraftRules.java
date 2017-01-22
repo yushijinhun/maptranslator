@@ -5,6 +5,7 @@ import static org.to2mbn.maptranslator.tree.TreeConstructor.constructNBT;
 import java.util.Collections;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.to2mbn.maptranslator.internal.org.json.JSONArray;
 import org.to2mbn.maptranslator.internal.org.json.JSONObject;
 import org.to2mbn.maptranslator.nbt.NBT;
@@ -73,15 +74,25 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text2"), "sign.text"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text3"), "sign.text"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text4"), "sign.text"),
-			new TagMarker(NodeMatcher.of("(sign.text)"), "formattable_string"),
-			new TagMarker(NodeMatcher.of("(formattable_string)").and(node -> TextNodeReplacer.getText(node).isPresent()), node -> {
-				boolean isJson = true;
+			new TagMarker(NodeMatcher.of("(sign.text)").and(node -> TextNodeReplacer.getText(node).map(text -> {
+				if (text.trim().isEmpty() ||
+						text.equals("\"\"") ||
+						text.equals("null"))
+					return false;
+				else
+					return true;
+			}).orElse(false)), node -> {
+				String txt = TextNodeReplacer.getText(node).get();
+				boolean isJson;
 				try {
-					TreeConstructor.constructJson(TextNodeReplacer.getText(node).get());
-				} catch (ArgumentParseException e2) {
+					constructJson(txt);
+					isJson = true;
+				} catch (ArgumentParseException e) {
 					isJson = false;
 				}
-				return Collections.singleton(isJson ? "rawmsg" : translatable);
+				if (isJson) return Collections.singleton("rawmsg");
+				if (txt.startsWith("\"") && txt.endsWith("\"")) return Collections.singleton("quoted_msg");
+				return Collections.singleton(translatable);
 			}),
 
 			new TagMarker(NodeMatcher.of("(entity)/DeathLootTable"), "loottable"),
@@ -387,8 +398,7 @@ public final class MinecraftRules {
 					(origin, json) -> {
 						Node node = TreeConstructor.constructJson(json)
 								.withTag("msg");
-						if (origin.hasTag("sign.text.auto_generated"))
-							node.properties().put("json.to_string.algorithm", "gson");
+						configureToStringAlgorithm(origin, node);
 						return node;
 					}),
 
@@ -399,6 +409,22 @@ public final class MinecraftRules {
 			TextReplacer.of(NodeMatcher.of("(hover_event.show_entity)/value"),
 					json -> TreeConstructor.constructNBT(json)
 							.withTag("entity")),
+
+			TextReplacer.of(NodeMatcher.of("(quoted_msg)"),
+					(origin, quoted) -> {
+						String text = StringEscapeUtils.unescapeJson(quoted.substring(1, quoted.length() - 1));
+						Node node = new TextArgumentNode(text)
+								.withTag(translatable);
+						configureToStringAlgorithm(origin, node);
+						return node;
+					},
+					node -> {
+						String text = ((ArgumentNode) node).toArgumentString();
+						if ("gson".equals(node.properties().get("json.to_string.algorithm"))) {
+							return JSONObject._use_gson_toString(() -> JSONObject.quote(text));
+						}
+						return JSONObject.quote(text);
+					}),
 
 	};
 
@@ -434,6 +460,11 @@ public final class MinecraftRules {
 		name = name.toLowerCase();
 		if (name.indexOf(':') == -1) name = "minecraft:" + name;
 		return name;
+	}
+
+	private static void configureToStringAlgorithm(Node origin, Node node) {
+		if (origin.hasTag("sign.text.auto_generated"))
+			node.properties().put("json.to_string.algorithm", "gson");
 	}
 
 	private MinecraftRules() {}

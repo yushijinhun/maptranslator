@@ -11,15 +11,21 @@ public class TextReplacer extends TextNodeReplacer {
 	}
 
 	public static NodeReplacer of(Predicate<Node> nodeMatcher, BiFunction<Node, String, Node> subtreeBuilder) {
-		return new TextReplacer(nodeMatcher, subtreeBuilder).toNodeReplacer();
+		return of(nodeMatcher, subtreeBuilder, node -> ((ArgumentNode) node).toArgumentString());
+	}
+
+	public static NodeReplacer of(Predicate<Node> nodeMatcher, BiFunction<Node, String, Node> subtreeBuilder, Function<Node, String> reverseMapper) {
+		return new TextReplacer(nodeMatcher, subtreeBuilder, reverseMapper).toNodeReplacer();
 	}
 
 	private Predicate<Node> nodeMatcher;
 	private BiFunction<Node, String, Node> subtreeBuilder;
+	private Function<Node, String> reverseMapper;
 
-	public TextReplacer(Predicate<Node> nodeMatcher, BiFunction<Node, String, Node> subtreeBuilder) {
+	public TextReplacer(Predicate<Node> nodeMatcher, BiFunction<Node, String, Node> subtreeBuilder, Function<Node, String> reverseMapper) {
 		this.nodeMatcher = nodeMatcher;
 		this.subtreeBuilder = subtreeBuilder;
+		this.reverseMapper = reverseMapper;
 	}
 
 	private Node replace(Node node) {
@@ -28,9 +34,7 @@ public class TextReplacer extends TextNodeReplacer {
 		Node replacedNode = ctx.replaceNode(node, () -> {
 			if (node.unmodifiableChildren().size() == 1) {
 				Node child = node.unmodifiableChildren().iterator().next();
-				if (child instanceof ArgumentNode) {
-					return ((ArgumentNode) child).toArgumentString();
-				}
+				return reverseMapper.apply(child);
 			}
 			throw new IllegalStateException("Child node is missing");
 		});
