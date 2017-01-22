@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import org.to2mbn.maptranslator.core.NBTDescriptor;
 import org.to2mbn.maptranslator.core.NBTDescriptorFactory;
 import org.to2mbn.maptranslator.core.NBTDescriptorGroup;
+import org.to2mbn.maptranslator.tree.AbstractReplacer;
 import org.to2mbn.maptranslator.tree.CommandReplacer;
 import org.to2mbn.maptranslator.tree.IteratorArgument;
 import org.to2mbn.maptranslator.tree.MinecraftRules;
@@ -69,7 +70,7 @@ class MapHandlerImpl implements MapHandler {
 			};
 			clearLastWarnings();
 			return desGroup.read(node -> {
-				CommandReplacer.redirectResolvingFailures(() -> resolveMap(node), failure -> resolveFailures.put(failure.path, failure));
+				AbstractReplacer.redirectResolvingFailures(() -> resolveMap(node), failure -> resolveFailures.put(failure.path, failure));
 				computeStringMismatches(node);
 
 				// === Test code

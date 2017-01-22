@@ -1,10 +1,12 @@
 package org.to2mbn.maptranslator.tree;
 
+import java.util.Collections;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 
-public class TextReplacer {
+public class TextReplacer extends AbstractReplacer {
 
 	public static NodeReplacer of(Predicate<Node> nodeMatcher, Function<String, Node> subtreeBuilder) {
 		return of(nodeMatcher, (node, string) -> subtreeBuilder.apply(string));
@@ -52,6 +54,7 @@ public class TextReplacer {
 					try {
 						subtreeBuilder.apply(node, text);
 					} catch (ArgumentParseException e) {
+						postResolveFailedWarning(new ResolveFailedWarning(node, text, Collections.emptyMap(), e));
 						return false;
 					}
 					return true;

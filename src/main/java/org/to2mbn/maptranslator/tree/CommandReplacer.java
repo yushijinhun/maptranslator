@@ -3,17 +3,10 @@ package org.to2mbn.maptranslator.tree;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Stack;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 
-public class CommandReplacer {
-
-	private static final Logger LOGGER = Logger.getLogger(CommandReplacer.class.getCanonicalName());
+public class CommandReplacer extends AbstractReplacer {
 
 	public static NodeReplacer of(String expression, String arg, Function<Map<String, String>, Node> subtree) {
 		return of("command", expression, arg, subtree);
@@ -23,37 +16,6 @@ public class CommandReplacer {
 		Map<String, Function<Map<String, String>, Node>> subtrees = new HashMap<>();
 		subtrees.put(arg, subtree);
 		return new CommandReplacer(tag, expression, subtrees).toNodeReplacer();
-	}
-
-	private static ThreadLocal<Stack<Consumer<ResolveFailedWarning>>> resolvingFailedListeners = ThreadLocal.withInitial(Stack::new);
-
-	public static void redirectResolvingFailures(Runnable action, Consumer<ResolveFailedWarning> handler) {
-		redirectResolvingFailures(() -> {
-			action.run();
-			return null;
-		}, handler);
-	}
-
-	public static <T> T redirectResolvingFailures(Supplier<T> action, Consumer<ResolveFailedWarning> handler) {
-		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
-		stack.push(handler);
-		try {
-			return action.get();
-		} finally {
-			stack.pop();
-			if (stack.isEmpty()) {
-				resolvingFailedListeners.remove();
-			}
-		}
-	}
-
-	private static void postResolveFailedWarning(ResolveFailedWarning post) {
-		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
-		stack.forEach(listener -> listener.accept(post));
-		if (stack.isEmpty()) {
-			resolvingFailedListeners.remove();
-			LOGGER.log(Level.WARNING, String.format("Couldn't solve command node %s\nText: %s\nArguments: %s", post.path, post.text, post.arguments), post.exception);
-		}
 	}
 
 	private String commandName;

@@ -1574,11 +1574,7 @@ public class JSONObject implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		try {
-			return this.toString(0);
-		} catch (Exception e) {
-			return null;
-		}
+		return this.toString(0);
 	}
 
 	/**

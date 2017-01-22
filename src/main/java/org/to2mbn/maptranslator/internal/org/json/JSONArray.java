@@ -992,11 +992,7 @@ public class JSONArray implements Iterable<Object>, Serializable {
 	 */
 	@Override
 	public String toString() {
-		try {
-			return this.toString(0);
-		} catch (Exception e) {
-			return null;
-		}
+		return this.toString(0);
 	}
 
 	/**
