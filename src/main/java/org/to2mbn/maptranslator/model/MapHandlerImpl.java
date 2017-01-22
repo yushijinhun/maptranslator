@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -35,7 +36,8 @@ class MapHandlerImpl implements MapHandler {
 	private File dir;
 	private NBTDescriptorGroup desGroup;
 	private List<String> excludes = new Vector<>();
-	private List<ParsingWarning> lastParsingWarnings = new Vector<>();
+	private Map<String, StringMismatchWarning> stringMismatches = new ConcurrentSkipListMap<>();
+	private Map<String, ResolveFailedWarning> resolveFailures = new ConcurrentSkipListMap<>();
 	private IteratorArgument mapResolvingArgument;
 	private ForkJoinPool pool = new ForkJoinPool(4 * Runtime.getRuntime().availableProcessors());
 
@@ -65,9 +67,9 @@ class MapHandlerImpl implements MapHandler {
 					}
 				});
 			};
-			lastParsingWarnings.clear();
+			clearLastWarnings();
 			return desGroup.read(node -> {
-				CommandReplacer.redirectResolvingFailures(() -> resolveMap(node), lastParsingWarnings::add);
+				CommandReplacer.redirectResolvingFailures(() -> resolveMap(node), failure -> resolveFailures.put(failure.path, failure));
 				computeStringMismatches(node);
 
 				// === Test code
@@ -157,7 +159,8 @@ class MapHandlerImpl implements MapHandler {
 				TextContext.textFromNode(node).ifPresent(current -> {
 					String origin = (String) node.properties().get("origin");
 					if (!origin.equals(current)) {
-						lastParsingWarnings.add(new StringMismatchWarning(node, origin, current));
+						StringMismatchWarning mismatch = new StringMismatchWarning(node, origin, current);
+						stringMismatches.put(mismatch.path, mismatch);
 					}
 				});
 			}
@@ -268,7 +271,15 @@ class MapHandlerImpl implements MapHandler {
 
 	@Override
 	public List<ParsingWarning> lastParsingWarnings() {
-		return lastParsingWarnings;
+		List<ParsingWarning> result = new ArrayList<>();
+		result.addAll(resolveFailures.values());
+		result.addAll(stringMismatches.values());
+		return result;
+	}
+
+	private void clearLastWarnings() {
+		stringMismatches.clear();
+		resolveFailures.clear();
 	}
 
 	@Override
