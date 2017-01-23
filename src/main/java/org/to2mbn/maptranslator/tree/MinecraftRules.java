@@ -25,6 +25,7 @@ public final class MinecraftRules {
 
 	public static final TagMarker[] MARKERS = {
 			new TagMarker(NodeMatcher.of("(store.level)/Data/LevelName"), "level.name", translatable),
+			new TagMarker(NodeMatcher.of("(store.level)/Data/Player"), "store.player"),
 
 			new TagMarker(NodeMatcher.of("(store.scoreboard)/data/Objectives/*/DisplayName"), "objective.displayname", translatable),
 			new TagMarker(NodeMatcher.of("(store.scoreboard)/data/Teams/*/DisplayName"), "team.displayname", translatable),
