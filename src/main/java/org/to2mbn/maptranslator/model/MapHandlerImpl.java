@@ -18,7 +18,6 @@ import org.to2mbn.maptranslator.core.NBTDescriptor;
 import org.to2mbn.maptranslator.core.NBTDescriptorFactory;
 import org.to2mbn.maptranslator.core.NBTDescriptorGroup;
 import org.to2mbn.maptranslator.tree.AbstractReplacer;
-import org.to2mbn.maptranslator.tree.CommandReplacer;
 import org.to2mbn.maptranslator.tree.IteratorArgument;
 import org.to2mbn.maptranslator.tree.MinecraftRules;
 import org.to2mbn.maptranslator.tree.NBTStoreNode;
