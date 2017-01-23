@@ -32,6 +32,10 @@ abstract class NBTDescriptorFile implements NBTDescriptor {
 			if ("scoreboard.dat".equals(filename)) {
 				return Collections.singleton("store.scoreboard");
 			}
+		} else if ("structures".equals(parentname)) {
+			if (filename.endsWith(".nbt")) {
+				return Collections.singleton("store.structure");
+			}
 		}
 		return Collections.emptySet();
 	}

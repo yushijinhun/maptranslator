@@ -41,7 +41,7 @@ public final class NBTDescriptorFactory {
 	private static void getDescriptorsFromFile(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
 		if (file.getName().endsWith(".mca")) {
 			getDescriptorsFromMcaFile(root, file, result, closeables);
-		} else if (file.getName().endsWith(".dat")) {
+		} else if (file.getName().endsWith(".dat") || file.getName().endsWith(".nbt")) {
 			getDescriptorsFromNBTFile(root, file, result);
 		}
 	}

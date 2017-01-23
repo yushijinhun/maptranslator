@@ -155,6 +155,9 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(click_event.suggest_command)/value"), "suggest_command", translatable),
 			new TagMarker(NodeMatcher.of("(hover_event.show_text)/value"), "hover_text", "msg"),
 
+			new TagMarker(NodeMatcher.of("(store.structure)/entities/*/nbt"), "entity"),
+			new TagMarker(NodeMatcher.of("(store.structure)/blocks/*/nbt"), "tileentity"),
+
 			entityAlias("mushroomcow", "mooshroom"),
 			entityAlias("ozelot", "ocelot"),
 			entityAlias("leashknot", "leash_knot"),
