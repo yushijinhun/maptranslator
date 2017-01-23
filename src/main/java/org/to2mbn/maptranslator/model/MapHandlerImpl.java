@@ -3,10 +3,11 @@ package org.to2mbn.maptranslator.model;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -81,7 +82,7 @@ class MapHandlerImpl implements MapHandler {
 				// ===
 
 				return extractStrings(node, excluder);
-			}).collect(LinkedHashMap<String, List<String[]>>::new, merger, merger);
+			}).collect(TreeMap<String, List<String[]>>::new, merger, merger);
 		}, pool);
 	}
 
@@ -168,7 +169,7 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	private Map<String, List<String[]>> extractStrings(Node root, Predicate<String> excluder) {
-		Map<String, List<String[]>> result = new LinkedHashMap<>();
+		Map<String, List<String[]>> result = new HashMap<>();
 		root.travel(node -> {
 			if (node.hasTag(MinecraftRules.translatable)) {
 				TextContext.textFromNode(node).ifPresent(text -> {
