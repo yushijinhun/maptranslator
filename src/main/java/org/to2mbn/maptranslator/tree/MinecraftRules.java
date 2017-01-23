@@ -386,6 +386,22 @@ public final class MinecraftRules {
 					args -> new TextArgumentNode(args.get("display_name"))
 							.withTag(translatable)),
 
+			CommandReplacer.of("scoreboard.clause.players", "tag <player> <clause>", "clause",
+					args -> new TextArgumentNode(args.get("clause"))
+							.withTag("scoreboard.clause.players.tag")),
+
+			CommandReplacer.of("scoreboard.clause.players.tag", "add <tagName> <dataTag>", "dataTag",
+					args -> constructNBT(args.get("dataTag"))
+							.withTag("entity")
+							.withTag("entity.*")
+							.withTag("store.player")),
+
+			CommandReplacer.of("scoreboard.clause.players.tag", "remove <tagName> <dataTag>", "dataTag",
+					args -> constructNBT(args.get("dataTag"))
+							.withTag("entity")
+							.withTag("entity.*")
+							.withTag("store.player")),
+
 			TextReplacer.of(NodeMatcher.of("(rawmsg)"),
 					(origin, json) -> {
 						Node node = TreeConstructor.constructJson(json)
