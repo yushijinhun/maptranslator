@@ -108,8 +108,8 @@ public final class MinecraftRules {
 			new TagMarker(NodeMatcher.of("(entity.minecraft:commandblock_minecart)/Command"), "command"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:command_block)/Command"), "command"),
 
-			new TagMarker(NodeMatcher.of("(item.minecraft:armor_stand.tag)/EntityTag"), "entity"),
-			new TagMarker(NodeMatcher.of("(item.minecraft:spawn_egg.tag)/EntityTag"), "entity"),
+			new TagMarker(NodeMatcher.of("(itemtag.minecraft:armor_stand)/EntityTag"), "entity"),
+			new TagMarker(NodeMatcher.of("(itemtag.minecraft:spawn_egg)/EntityTag"), "entity"),
 			new TagMarker(NodeMatcher.of("(store.player)/RootVehicle/Entity"), "entity"),
 			new TagMarker(NodeMatcher.of("(store.chunk)/Level/Entities/*"), "entity"),
 			new TagMarker(NodeMatcher.of("(entity)/Riding"), "entity"),
