@@ -89,19 +89,11 @@ public class DataDescriptorGroup implements Closeable {
 				.forEach(desp -> {
 					try {
 						DataStoreNode root = new DataStoreNode(desp);
-						try {
-							root.read();
-						} catch (UncheckedIOException e) {
-							LOGGER.log(Level.WARNING, "Couldn't read " + desp, e);
-							return;
-						}
+						root.read();
 						mapper.accept(root);
-						try {
-							root.write();
-						} catch (UncheckedIOException e) {
-							LOGGER.log(Level.WARNING, "Couldn't read " + desp, e);
-							return;
-						}
+						root.write();
+					} catch (Exception e) {
+						LOGGER.log(Level.WARNING, "Couldn't handle " + desp, e);
 					} finally {
 						processed.getAndIncrement();
 					}

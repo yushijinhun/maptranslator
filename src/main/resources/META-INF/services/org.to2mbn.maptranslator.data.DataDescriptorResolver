@@ -1,2 +1,3 @@
 org.to2mbn.maptranslator.impl.nbt.data.NBTFileResolver
 org.to2mbn.maptranslator.impl.nbt.data.RegionResolver
+org.to2mbn.maptranslator.impl.json.data.LootTableFileResolver

@@ -155,14 +155,19 @@ public class MinecraftRules implements RulesProvider {
 			new TagMarker(NodeMatcher.of("(msg.array)/*"), "msg"),
 			new TagMarker(NodeMatcher.of("(msg.obj)/text"), translatable),
 			new TagMarker(NodeMatcher.of("(msg.obj)/extra/*"), "msg"),
-			new TagMarker(NodeMatcher.of("(msg.obj)/clickEvent"), toJson(json -> "click_event." + json.get("action")).andThen(Collections::singleton)),
-			new TagMarker(NodeMatcher.of("(msg.obj)/hoverEvent"), toJson(json -> "hover_event." + json.get("action")).andThen(Collections::singleton)),
+			new TagMarker(NodeMatcher.of("(msg.obj)/clickEvent").and(jsonObjectMatches(json -> json.has("action"))), toJson(json -> "click_event." + json.get("action")).andThen(Collections::singleton)),
+			new TagMarker(NodeMatcher.of("(msg.obj)/hoverEvent").and(jsonObjectMatches(json -> json.has("action"))), toJson(json -> "hover_event." + json.get("action")).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(click_event.run_command)/value").and(node -> node.getText().map(text -> !text.trim().isEmpty()).orElse(false)), node -> singleton(node.getText().get().startsWith("/") ? "command" : translatable)),
 			new TagMarker(NodeMatcher.of("(click_event.suggest_command)/value"), "suggest_command", translatable),
 			new TagMarker(NodeMatcher.of("(hover_event.show_text)/value"), "hover_text", "msg"),
 
 			new TagMarker(NodeMatcher.of("(store.structure)/entities/*/nbt"), "entity"),
 			new TagMarker(NodeMatcher.of("(store.structure)/blocks/*/nbt"), "tileentity"),
+
+			new TagMarker(NodeMatcher.of("(store.loottable)/pools/*"), "lt.pool"),
+			new TagMarker(NodeMatcher.of("(lt.pool)/entries/*"), "lt.entry"),
+			new TagMarker(NodeMatcher.of("(lt.entry)/functions/*"), "lt.function"),
+			new TagMarker(NodeMatcher.of("(lt.function)").and(jsonObjectMatches(json -> json.has("function"))), toJson(json -> "lt.function." + toUniqueName(json.get("function").toString())).andThen(Collections::singleton)),
 
 			entityAlias("mushroomcow", "mooshroom"),
 			entityAlias("ozelot", "ocelot"),
@@ -421,11 +426,11 @@ public class MinecraftRules implements RulesProvider {
 					}),
 
 			TextReplacer.of(NodeMatcher.of("(hover_event.show_item)/value"),
-					json -> constructNBT(json)
+					nbt -> constructNBT(nbt)
 							.withTag("item")),
 
 			TextReplacer.of(NodeMatcher.of("(hover_event.show_entity)/value"),
-					json -> constructNBT(json)
+					nbt -> constructNBT(nbt)
 							.withTag("entity")),
 
 			TextReplacer.of(NodeMatcher.of("(quoted_msg)"),
@@ -444,6 +449,10 @@ public class MinecraftRules implements RulesProvider {
 						return JSONObject.quote(text);
 					}),
 
+			TextReplacer.of(NodeMatcher.of("(lt.function.minecraft:set_nbt)/tag"),
+					nbt -> constructNBT(nbt)
+							.withTag("itemtag")
+							.withTag("itemtag.*")),
 	};
 
 	private static Predicate<Node> compoundMatches(Predicate<NBTCompound> condition) {
@@ -452,6 +461,18 @@ public class MinecraftRules implements RulesProvider {
 				NBT nbt = ((NBTNode) node).nbt;
 				if (nbt instanceof NBTCompound) {
 					return condition.test((NBTCompound) nbt);
+				}
+			}
+			return false;
+		};
+	}
+
+	private static Predicate<Node> jsonObjectMatches(Predicate<JSONObject> condition) {
+		return node -> {
+			if (node instanceof JsonNode) {
+				Object json = ((JsonNode) node).json;
+				if (json instanceof JSONObject) {
+					return condition.test((JSONObject) json);
 				}
 			}
 			return false;

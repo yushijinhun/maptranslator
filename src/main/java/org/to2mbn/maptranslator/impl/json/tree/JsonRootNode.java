@@ -18,8 +18,21 @@ public class JsonRootNode extends JsonNode implements ArgumentNode {
 
 	@Override
 	public String toArgumentString() {
-		if ("gson".equals(properties().get("json.to_string.algorithm"))) {
-			return gsonToString();
+		String algorithm = (String) properties().get("json.to_string.algorithm");
+		if (algorithm != null) {
+			switch (algorithm) {
+				case "gson":
+					return gsonToString();
+
+				case "format":
+					if (json instanceof JSONObject) {
+						return ((JSONObject) json).toString(4);
+					} else if (json instanceof JSONArray) {
+						return ((JSONArray) json).toString(4);
+					} else {
+						return json.toString();
+					}
+			}
 		}
 		return json.toString();
 	}

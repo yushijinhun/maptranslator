@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.to2mbn.maptranslator.data.DataDescriptor;
 import org.to2mbn.maptranslator.data.DataDescriptorGroup;
@@ -28,6 +30,8 @@ import org.to2mbn.maptranslator.tree.Node;
 import org.to2mbn.maptranslator.tree.TextNode;
 
 class MapHandlerImpl implements MapHandler {
+
+	private static final Logger LOGGER = Logger.getLogger(MapHandlerImpl.class.getCanonicalName());
 
 	public static CompletableFuture<MapHandler> create(Path dir) {
 		return new MapHandlerImpl(dir).init();
@@ -129,7 +133,12 @@ class MapHandlerImpl implements MapHandler {
 
 	private Optional<Node> resolveNode(String[] path, DataDescriptor desp) {
 		DataStoreNode root = desp.createNode();
-		root.read();
+		try {
+			root.read();
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Couldn't read " + desp, e);
+			return Optional.empty();
+		}
 		resolveMap(root);
 		Optional<Node> result = root.resolve(path, 1);
 		if (result.isPresent()) {
