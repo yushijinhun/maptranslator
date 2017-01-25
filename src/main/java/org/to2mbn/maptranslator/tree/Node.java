@@ -54,17 +54,39 @@ public abstract class Node {
 		if (tags.contains(str)) return true;
 		for (String pattern : tags) {
 			if (pattern.indexOf('*') != -1) {
-				int r = -1;
-				int n = 0;
+				int segmentBegin = 0;
+				int segmentEnd;
+				int strIdx = 0;
+				String segment;
+				boolean match = true;
+				int lenPattern = pattern.length();
+				int appearanceIdx;
 				do {
-					int l = r + 1;
-					r = pattern.indexOf('*', l);
-					if (r == -1) r = pattern.length();
-					n = str.indexOf(pattern.substring(l, r), n);
-					if (n == -1) break;
-					n += r - l;
-				} while (r < pattern.length());
-				if (n != -1) return true;
+					segmentEnd = pattern.indexOf('*', segmentBegin);
+					if (segmentEnd == -1) segmentEnd = lenPattern;
+					segment = pattern.substring(segmentBegin, segmentEnd);
+					if (segmentBegin == 0) {
+						if (!str.startsWith(segment)) {
+							match = false;
+							break;
+						}
+						strIdx = segmentEnd;
+					} else if (segmentEnd == lenPattern) {
+						if (segment.length() + strIdx > str.length() || !str.endsWith(segment)) {
+							match = false;
+							break;
+						}
+					} else {
+						appearanceIdx = str.indexOf(segment, strIdx);
+						if (appearanceIdx == -1) {
+							match = false;
+							break;
+						}
+						strIdx = appearanceIdx + segment.length();
+					}
+					segmentBegin = segmentEnd + 1;
+				} while (segmentEnd < lenPattern);
+				if (match) return true;
 			}
 		}
 		return false;
