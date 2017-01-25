@@ -78,11 +78,20 @@ public class MinecraftRules implements RulesProvider {
 			new TagMarker(NodeMatcher.of("(tileentity)/CustomName"), "blockdisplay.name", translatable),
 			new TagMarker(NodeMatcher.of("(tileentity)/Lock"), translatable),
 
-			new TagMarker(NodeMatcher.of("(store.chunk)/Level/TileEntities/(tileentity.minecraft:sign)/(text)"), "sign.text.auto_generated"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text1"), "text"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text2"), "text"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text3"), "text"),
 			new TagMarker(NodeMatcher.of("(tileentity.minecraft:sign)/Text4"), "text"),
+
+			new TagMarker(NodeMatcher.of("(text)").and(node -> {
+				while (node != null) {
+					if (!(node instanceof NBTNode) && node.parent() != null)
+						return false;
+					node = node.parent();
+				}
+				return true;
+			}), "text.auto_generated"),
+
 			new TagMarker(NodeMatcher.of("(text)").and(node -> node.getText().map(text -> {
 				if (text.trim().isEmpty() ||
 						text.equals("\"\"") ||
@@ -507,7 +516,7 @@ public class MinecraftRules implements RulesProvider {
 	}
 
 	private static void configureToStringAlgorithm(Node origin, Node node) {
-		if (origin.hasTag("sign.text.auto_generated"))
+		if (origin.hasTag("text.auto_generated"))
 			node.properties().put("json.to_string.algorithm", "gson");
 	}
 
