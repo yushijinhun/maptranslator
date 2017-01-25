@@ -33,7 +33,7 @@ import javafx.stage.Stage;
 
 class StringDisplayWindow {
 
-	static final String DEFAULT_IGNORE = "@";
+	static final String DEFAULT_IGNORE = "@\n\\(\\+NBT\\)";
 
 	Stage stage;
 	ListView<String> list;
