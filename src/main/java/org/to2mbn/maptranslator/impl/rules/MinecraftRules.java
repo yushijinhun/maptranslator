@@ -159,7 +159,12 @@ public class MinecraftRules implements RulesProvider {
 			new TagMarker(NodeMatcher.of("(msg.obj)/hoverEvent").and(jsonObjectMatches(json -> json.has("action"))), toJson(json -> "hover_event." + json.get("action")).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(click_event.run_command)/value").and(node -> node.getText().map(text -> !text.trim().isEmpty()).orElse(false)), node -> singleton(node.getText().get().startsWith("/") ? "command" : translatable)),
 			new TagMarker(NodeMatcher.of("(click_event.suggest_command)/value"), "suggest_command", translatable),
+			new TagMarker(NodeMatcher.of("(click_event.open_url)/value"), "url", translatable),
+			new TagMarker(NodeMatcher.of("(click_event.open_file)/value"), "file", translatable),
 			new TagMarker(NodeMatcher.of("(hover_event.show_text)/value"), "hover_text", "msg"),
+			new TagMarker(NodeMatcher.of("(hover_event.show_entity.entity)/id"), translatable),
+			new TagMarker(NodeMatcher.of("(hover_event.show_entity.entity)/name"), translatable),
+			new TagMarker(NodeMatcher.of("(hover_event.show_entity.entity)/type"), translatable),
 
 			new TagMarker(NodeMatcher.of("(store.structure)/entities/*/nbt"), "entity"),
 			new TagMarker(NodeMatcher.of("(store.structure)/blocks/*/nbt"), "tileentity"),
@@ -431,7 +436,7 @@ public class MinecraftRules implements RulesProvider {
 
 			TextReplacer.of(NodeMatcher.of("(hover_event.show_entity)/value"),
 					nbt -> constructNBT(nbt)
-							.withTag("entity")),
+							.withTag("hover_event.show_entity.entity")),
 
 			TextReplacer.of(NodeMatcher.of("(quoted_msg)"),
 					(origin, quoted) -> {
