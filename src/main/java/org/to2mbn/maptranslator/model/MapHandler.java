@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import org.to2mbn.maptranslator.tree.Node;
+import org.to2mbn.maptranslator.core.tree.Node;
 
 public interface MapHandler {
 

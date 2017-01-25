@@ -15,17 +15,17 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import org.to2mbn.maptranslator.core.DataDescriptor;
-import org.to2mbn.maptranslator.core.DataDescriptorFactory;
-import org.to2mbn.maptranslator.core.DataDescriptorGroup;
-import org.to2mbn.maptranslator.tree.AbstractReplacer;
-import org.to2mbn.maptranslator.tree.DataStoreNode;
-import org.to2mbn.maptranslator.tree.IteratorArgument;
-import org.to2mbn.maptranslator.tree.MinecraftRules;
-import org.to2mbn.maptranslator.tree.Node;
-import org.to2mbn.maptranslator.tree.NodeReplacer;
-import org.to2mbn.maptranslator.tree.TextContext;
-import org.to2mbn.maptranslator.tree.TreeIterator;
+import org.to2mbn.maptranslator.core.MinecraftRules;
+import org.to2mbn.maptranslator.core.data.DataDescriptor;
+import org.to2mbn.maptranslator.core.data.DataDescriptorFactory;
+import org.to2mbn.maptranslator.core.data.DataDescriptorGroup;
+import org.to2mbn.maptranslator.core.process.AbstractReplacer;
+import org.to2mbn.maptranslator.core.process.IteratorArgument;
+import org.to2mbn.maptranslator.core.process.NodeReplacer;
+import org.to2mbn.maptranslator.core.process.TextContext;
+import org.to2mbn.maptranslator.core.process.TreeIterator;
+import org.to2mbn.maptranslator.core.tree.DataStoreNode;
+import org.to2mbn.maptranslator.core.tree.Node;
 import org.to2mbn.maptranslator.ui.TreeItemConstructor;
 
 class MapHandlerImpl implements MapHandler {

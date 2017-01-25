@@ -1,7 +1,7 @@
 package org.to2mbn.maptranslator.model;
 
 import java.util.Map;
-import org.to2mbn.maptranslator.tree.Node;
+import org.to2mbn.maptranslator.core.tree.Node;
 
 public class ResolveFailedWarning extends ParsingWarning {
 
