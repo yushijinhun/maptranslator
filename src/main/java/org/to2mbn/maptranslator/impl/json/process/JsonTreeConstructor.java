@@ -50,11 +50,13 @@ public final class JsonTreeConstructor {
 		Object json = node.json;
 		if (json instanceof JSONObject) {
 			JSONObject casted = (JSONObject) json;
-			for (String key : casted.keySet()) {
-				JsonMapNode child = new JsonMapNode(casted.get(key), key);
-				constructSubtree(child);
-				node.addChild(child);
-			}
+			casted.keySet().stream()
+					.sorted()
+					.forEach(key -> {
+						JsonMapNode child = new JsonMapNode(casted.get(key), key);
+						constructSubtree(child);
+						node.addChild(child);
+					});
 		} else if (json instanceof JSONArray) {
 			JSONArray casted = (JSONArray) json;
 			for (int i = 0; i < casted.length(); i++) {

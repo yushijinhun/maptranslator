@@ -32,11 +32,13 @@ public final class NBTTreeConstructor {
 		NBT nbt = node.nbt;
 		if (nbt instanceof NBTCompound) {
 			NBTCompound casted = ((NBTCompound) nbt);
-			casted.tags().forEach((key, childnbt) -> {
-				NBTMapNode child = new NBTMapNode(childnbt, key);
-				constructSubtree(child);
-				node.addChild(child);
-			});
+			casted.tags().keySet().stream()
+					.sorted()
+					.forEach(key -> {
+						NBTMapNode child = new NBTMapNode(casted.get(key), key);
+						constructSubtree(child);
+						node.addChild(child);
+					});
 		} else if (nbt instanceof NBTList) {
 			NBTList casted = (NBTList) nbt;
 			for (int i = 0; i < casted.size(); i++) {
