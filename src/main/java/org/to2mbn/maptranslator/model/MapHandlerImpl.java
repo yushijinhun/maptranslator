@@ -1,8 +1,7 @@
 package org.to2mbn.maptranslator.model;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,26 +14,26 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import org.to2mbn.maptranslator.core.MinecraftRules;
-import org.to2mbn.maptranslator.core.data.DataDescriptor;
-import org.to2mbn.maptranslator.core.data.DataDescriptorFactory;
-import org.to2mbn.maptranslator.core.data.DataDescriptorGroup;
-import org.to2mbn.maptranslator.core.process.AbstractReplacer;
-import org.to2mbn.maptranslator.core.process.IteratorArgument;
-import org.to2mbn.maptranslator.core.process.NodeReplacer;
-import org.to2mbn.maptranslator.core.process.TextContext;
-import org.to2mbn.maptranslator.core.process.TreeIterator;
-import org.to2mbn.maptranslator.core.tree.DataStoreNode;
-import org.to2mbn.maptranslator.core.tree.Node;
-import org.to2mbn.maptranslator.ui.TreeItemConstructor;
+import org.to2mbn.maptranslator.data.DataDescriptor;
+import org.to2mbn.maptranslator.data.DataDescriptorGroup;
+import org.to2mbn.maptranslator.process.AbstractReplacer;
+import org.to2mbn.maptranslator.process.IteratorArgument;
+import org.to2mbn.maptranslator.process.NodeReplacer;
+import org.to2mbn.maptranslator.process.TreeIterator;
+import org.to2mbn.maptranslator.rules.RulesConstants;
+import org.to2mbn.maptranslator.rules.RulesFactory;
+import org.to2mbn.maptranslator.rules.RulesProvider;
+import org.to2mbn.maptranslator.tree.DataStoreNode;
+import org.to2mbn.maptranslator.tree.Node;
+import org.to2mbn.maptranslator.tree.TextNode;
 
 class MapHandlerImpl implements MapHandler {
 
-	public static CompletableFuture<MapHandler> create(File dir) {
+	public static CompletableFuture<MapHandler> create(Path dir) {
 		return new MapHandlerImpl(dir).init();
 	}
 
-	private File dir;
+	private Path dir;
 	private DataDescriptorGroup desGroup;
 	private List<String> excludes = new Vector<>();
 	private Map<String, StringMismatchWarning> stringMismatches = new ConcurrentSkipListMap<>();
@@ -42,15 +41,16 @@ class MapHandlerImpl implements MapHandler {
 	private IteratorArgument mapResolvingArgument;
 	private ForkJoinPool pool = new ForkJoinPool(4 * Runtime.getRuntime().availableProcessors());
 
-	public MapHandlerImpl(File dir) {
+	public MapHandlerImpl(Path dir) {
 		this.dir = dir;
+		RulesProvider rules = RulesFactory.getGlobalProvider();
 		mapResolvingArgument = new IteratorArgument();
-		mapResolvingArgument.markers.addAll(Arrays.asList(MinecraftRules.MARKERS));
-		mapResolvingArgument.replacers.addAll(Arrays.asList(MinecraftRules.REPLACERS));
+		mapResolvingArgument.markers.addAll(rules.getTagMarkers());
+		mapResolvingArgument.replacers.addAll(rules.getNodeReplacers());
 	}
 
 	private CompletableFuture<MapHandler> init() {
-		return CompletableFuture.runAsync(() -> desGroup = DataDescriptorFactory.getDescriptors(dir))
+		return CompletableFuture.runAsync(() -> desGroup = DataDescriptorGroup.createFromFiles(dir))
 				.thenApply(dummy -> this);
 	}
 
@@ -72,15 +72,6 @@ class MapHandlerImpl implements MapHandler {
 			return desGroup.read(node -> {
 				AbstractReplacer.redirectResolvingFailures(() -> resolveMap(node), failure -> resolveFailures.put(failure.path, failure));
 				computeStringMismatches(node);
-
-				// === Test code
-				// For languages which have non-unicode characters,
-				// we can easily test if the strings we need to translate are all found, 
-				// by comparing our outputs to the strings that contain non-unicode characters.
-				//
-				// test(node);
-				// ===
-
 				return extractStrings(node, excluder);
 			}).collect(TreeMap<String, List<String[]>>::new, merger, merger);
 		}, pool);
@@ -142,7 +133,6 @@ class MapHandlerImpl implements MapHandler {
 		resolveMap(root);
 		Optional<Node> result = root.resolve(path, 1);
 		if (result.isPresent()) {
-			TreeItemConstructor.construct(root);
 			return result;
 		} else {
 			root.close();
@@ -157,7 +147,7 @@ class MapHandlerImpl implements MapHandler {
 	private void computeStringMismatches(Node root) {
 		root.travel(node -> {
 			if (node.properties().containsKey("origin")) {
-				TextContext.textFromNode(node).ifPresent(current -> {
+				node.getText().ifPresent(current -> {
 					String origin = (String) node.properties().get("origin");
 					if (!origin.equals(current)) {
 						StringMismatchWarning mismatch = new StringMismatchWarning(node, origin, current);
@@ -171,8 +161,8 @@ class MapHandlerImpl implements MapHandler {
 	private Map<String, List<String[]>> extractStrings(Node root, Predicate<String> excluder) {
 		Map<String, List<String[]>> result = new HashMap<>();
 		root.travel(node -> {
-			if (node.hasTag(MinecraftRules.translatable)) {
-				TextContext.textFromNode(node).ifPresent(text -> {
+			if (node.hasTag(RulesConstants.translatable)) {
+				node.getText().ifPresent(text -> {
 					if (!text.trim().isEmpty()) {
 						List<String[]> g = result.get(text);
 						if (g != null) {
@@ -191,46 +181,14 @@ class MapHandlerImpl implements MapHandler {
 		return result;
 	}
 
-	// === Test code
-	/*
-	private void test(Node root) {
-		root.travel(node -> {
-			if (node.hasTag(MinecraftRules.translatable)) {
-				while (node != null) {
-					node.tags().add("_tc");
-					node = node.parent();
-				}
-			}
-		});
-		root.travel(node -> {
-			if (node instanceof NBTMapNode && ((NBTMapNode) node).key().equals("LastOutput")) return;
-			TextNodeReplacer.getText(node).ifPresent(text -> {
-				boolean ta = false;
-				for (int i = 0; i < text.length(); i++) {
-					if (text.charAt(i) > '\u00ff') {
-						ta = true;
-						break;
-					}
-				}
-				if (ta) {
-					if (!node.hasTag("_tc")) {
-						System.out.printf("%s\n%s\n\n", node.getPath(), text);
-					}
-				}
-			});
-		});
-	}
-	*/
-	// ===
-
 	private IteratorArgument createReplacingArgument(Map<String, String> table) {
 		Predicate<String> excluder = createTextExcluder();
 		IteratorArgument arg = new IteratorArgument();
 		arg.maxIterations = 1;
 		arg.replacers.add(new NodeReplacer(
 				node -> {
-					if (node.hasTag(MinecraftRules.translatable)) {
-						Optional<String> optionalText = TextContext.textFromNode(node);
+					if (node.hasTag(RulesConstants.translatable)) {
+						Optional<String> optionalText = node.getText();
 						if (optionalText.isPresent()) {
 							String text = optionalText.get();
 							return table.containsKey(text) && !excluder.test(text);
@@ -239,8 +197,8 @@ class MapHandlerImpl implements MapHandler {
 					return false;
 				},
 				node -> {
-					String replacement = table.get(TextContext.textFromNode(node).get());
-					return TextContext.getContext(node).replaceNode(node, () -> replacement);
+					String replacement = table.get(node.getText().get());
+					return ((TextNode) node).replaceNodeText(() -> replacement);
 				}));
 		return arg;
 	}

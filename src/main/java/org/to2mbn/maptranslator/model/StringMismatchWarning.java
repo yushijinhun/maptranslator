@@ -1,6 +1,6 @@
 package org.to2mbn.maptranslator.model;
 
-import org.to2mbn.maptranslator.core.tree.Node;
+import org.to2mbn.maptranslator.tree.Node;
 
 public class StringMismatchWarning extends ParsingWarning {
 

@@ -1,15 +1,15 @@
 package org.to2mbn.maptranslator.model;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import org.to2mbn.maptranslator.core.tree.Node;
+import org.to2mbn.maptranslator.tree.Node;
 
 public interface MapHandler {
 
-	public static CompletableFuture<MapHandler> create(File mapFolder) {
+	public static CompletableFuture<MapHandler> create(Path mapFolder) {
 		return MapHandlerImpl.create(mapFolder);
 	}
 

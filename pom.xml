@@ -32,7 +32,7 @@
 					<archive>
 						<manifest>
 							<mainClass>
-								org.to2mbn.maptranslator.ui.MainApplication
+								org.to2mbn.maptranslator.impl.ui.MainApplication
 							</mainClass>
 						</manifest>
 					</archive>
