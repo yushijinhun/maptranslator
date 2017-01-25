@@ -16,7 +16,7 @@ class NBTDescriptorGzipFile extends NBTDescriptorFile {
 	}
 
 	@Override
-	public NBTCompound read() {
+	public NBTCompound readNBT() {
 		try (FileInputStream in = new FileInputStream(file)) {
 			return NBTIO.readCompressed(in);
 		} catch (IOException e) {
@@ -25,7 +25,7 @@ class NBTDescriptorGzipFile extends NBTDescriptorFile {
 	}
 
 	@Override
-	public void write(NBTCompound nbt) {
+	public void writeNBT(NBTCompound nbt) {
 		try (FileOutputStream out = new FileOutputStream(file)) {
 			NBTIO.writeCompressed(nbt, out);
 		} catch (IOException e) {

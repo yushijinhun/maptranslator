@@ -14,7 +14,7 @@ class NBTDescriptorPlainFile extends NBTDescriptorFile {
 	}
 
 	@Override
-	public NBTCompound read() {
+	public NBTCompound readNBT() {
 		try {
 			return NBTIO.read(file);
 		} catch (IOException e) {
@@ -23,7 +23,7 @@ class NBTDescriptorPlainFile extends NBTDescriptorFile {
 	}
 
 	@Override
-	public void write(NBTCompound nbt) {
+	public void writeNBT(NBTCompound nbt) {
 		try {
 			NBTIO.write(nbt, file);
 		} catch (IOException e) {

@@ -15,13 +15,13 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import org.to2mbn.maptranslator.core.NBTDescriptor;
-import org.to2mbn.maptranslator.core.NBTDescriptorFactory;
-import org.to2mbn.maptranslator.core.NBTDescriptorGroup;
+import org.to2mbn.maptranslator.core.DataDescriptor;
+import org.to2mbn.maptranslator.core.DataDescriptorFactory;
+import org.to2mbn.maptranslator.core.DataDescriptorGroup;
 import org.to2mbn.maptranslator.tree.AbstractReplacer;
+import org.to2mbn.maptranslator.tree.DataStoreNode;
 import org.to2mbn.maptranslator.tree.IteratorArgument;
 import org.to2mbn.maptranslator.tree.MinecraftRules;
-import org.to2mbn.maptranslator.tree.NBTStoreNode;
 import org.to2mbn.maptranslator.tree.Node;
 import org.to2mbn.maptranslator.tree.NodeReplacer;
 import org.to2mbn.maptranslator.tree.TextContext;
@@ -35,7 +35,7 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	private File dir;
-	private NBTDescriptorGroup desGroup;
+	private DataDescriptorGroup desGroup;
 	private List<String> excludes = new Vector<>();
 	private Map<String, StringMismatchWarning> stringMismatches = new ConcurrentSkipListMap<>();
 	private Map<String, ResolveFailedWarning> resolveFailures = new ConcurrentSkipListMap<>();
@@ -50,7 +50,7 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	private CompletableFuture<MapHandler> init() {
-		return CompletableFuture.runAsync(() -> desGroup = NBTDescriptorFactory.getDescriptors(dir))
+		return CompletableFuture.runAsync(() -> desGroup = DataDescriptorFactory.getDescriptors(dir))
 				.thenApply(dummy -> this);
 	}
 
@@ -101,7 +101,7 @@ class MapHandlerImpl implements MapHandler {
 	public CompletableFuture<Optional<Node>> resolveNode(String[] path) {
 		return CompletableFuture.supplyAsync(() -> {
 			String despName = path[0];
-			for (NBTDescriptor desp : desGroup.descriptors) {
+			for (DataDescriptor desp : desGroup.descriptors) {
 				if (desp.toString().equals(despName)) {
 					return resolveNode(path, desp);
 				}
@@ -115,7 +115,7 @@ class MapHandlerImpl implements MapHandler {
 		return CompletableFuture.supplyAsync(() -> {
 			String path = argPath.trim();
 			if (path.startsWith("/")) path = path.substring(1);
-			for (NBTDescriptor desp : desGroup.descriptors) {
+			for (DataDescriptor desp : desGroup.descriptors) {
 				String despName = desp.toString();
 				if (path.startsWith(despName)) {
 					String[] split = path.substring(despName.length()).split("/");
@@ -136,8 +136,8 @@ class MapHandlerImpl implements MapHandler {
 		});
 	}
 
-	private Optional<Node> resolveNode(String[] path, NBTDescriptor desp) {
-		NBTStoreNode root = new NBTStoreNode(desp);
+	private Optional<Node> resolveNode(String[] path, DataDescriptor desp) {
+		DataStoreNode root = desp.createNode();
 		root.read();
 		resolveMap(root);
 		Optional<Node> result = root.resolve(path, 1);

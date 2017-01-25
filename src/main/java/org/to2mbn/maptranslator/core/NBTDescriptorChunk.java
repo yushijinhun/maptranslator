@@ -26,7 +26,7 @@ class NBTDescriptorChunk implements NBTDescriptor {
 	}
 
 	@Override
-	public NBTCompound read() {
+	public NBTCompound readNBT() {
 		try (DataInputStream in = file.getChunkDataInputStream(x, y)) {
 			return NBTIO.read(in);
 		} catch (IOException e) {
@@ -35,7 +35,7 @@ class NBTDescriptorChunk implements NBTDescriptor {
 	}
 
 	@Override
-	public void write(NBTCompound nbt) {
+	public void writeNBT(NBTCompound nbt) {
 		try (DataOutputStream out = file.getChunkDataOutputStream(x, y)) {
 			NBTIO.write(nbt, out);
 		} catch (IOException e) {

@@ -11,18 +11,18 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import org.to2mbn.maptranslator.tree.NBTStoreNode;
+import org.to2mbn.maptranslator.tree.DataStoreNode;
 import org.to2mbn.maptranslator.tree.Node;
 
-public class NBTDescriptorGroup implements Closeable {
+public class DataDescriptorGroup implements Closeable {
 
 	private Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
 	private final Set<Closeable> closeables;
-	public final Set<NBTDescriptor> descriptors;
+	public final Set<DataDescriptor> descriptors;
 	public final AtomicInteger processed = new AtomicInteger();
 
-	public NBTDescriptorGroup(Set<NBTDescriptor> descriptors, Set<Closeable> closeables) {
+	public DataDescriptorGroup(Set<DataDescriptor> descriptors, Set<Closeable> closeables) {
 		this.closeables = closeables;
 		this.descriptors = descriptors;
 	}
@@ -32,7 +32,7 @@ public class NBTDescriptorGroup implements Closeable {
 		return descriptors.parallelStream()
 				.map(desp -> {
 					try {
-						NBTStoreNode root = new NBTStoreNode(desp);
+						DataStoreNode root = desp.createNode();
 						root.read();
 						Optional<T> result = Optional.of(mapper.apply(root));
 						root.close();
@@ -53,7 +53,7 @@ public class NBTDescriptorGroup implements Closeable {
 		descriptors.parallelStream()
 				.forEach(desp -> {
 					try {
-						NBTStoreNode root = new NBTStoreNode(desp);
+						DataStoreNode root = new DataStoreNode(desp);
 						try {
 							root.read();
 						} catch (UncheckedIOException e) {

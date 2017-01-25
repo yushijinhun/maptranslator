@@ -15,10 +15,10 @@ import org.to2mbn.maptranslator.nbt.NBTLong;
 import org.to2mbn.maptranslator.nbt.NBTShort;
 import org.to2mbn.maptranslator.nbt.NBTString;
 import org.to2mbn.maptranslator.tree.ClauseNode;
+import org.to2mbn.maptranslator.tree.DataStoreNode;
 import org.to2mbn.maptranslator.tree.JsonNode;
 import org.to2mbn.maptranslator.tree.MinecraftRules;
 import org.to2mbn.maptranslator.tree.NBTNode;
-import org.to2mbn.maptranslator.tree.NBTStoreNode;
 import org.to2mbn.maptranslator.tree.Node;
 import org.to2mbn.maptranslator.tree.NodeArgument;
 import org.to2mbn.maptranslator.tree.TextArgumentNode;
@@ -74,7 +74,7 @@ public class TreeItemConstructor {
 			} else if (nbt instanceof NBTString) {
 				icon = img_string;
 			}
-		} else if (value instanceof NBTStoreNode) {
+		} else if (value instanceof DataStoreNode) {
 			icon = img_file;
 		} else if (value instanceof ClauseNode || value instanceof TextArgumentNode) {
 			icon = img_string;

@@ -20,12 +20,12 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import org.to2mbn.maptranslator.nbt.RegionFile;
 
-public final class NBTDescriptorFactory {
+public final class DataDescriptorFactory {
 
-	private static Logger logger = Logger.getLogger(NBTDescriptorFactory.class.getCanonicalName());
+	private static Logger logger = Logger.getLogger(DataDescriptorFactory.class.getCanonicalName());
 
-	public static NBTDescriptorGroup getDescriptors(File file) {
-		Set<NBTDescriptor> descriptors = new ConcurrentSkipListSet<>(Comparator.comparing(obj -> obj.toString()));
+	public static DataDescriptorGroup getDescriptors(File file) {
+		Set<DataDescriptor> descriptors = new ConcurrentSkipListSet<>(Comparator.comparing(obj -> obj.toString()));
 		Set<Closeable> closeables = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		Path root = file.toPath();
 		List<Path> files;
@@ -35,10 +35,10 @@ public final class NBTDescriptorFactory {
 			throw new UncheckedIOException(e);
 		}
 		files.parallelStream().map(path -> path.toFile()).forEach(f -> getDescriptorsFromFile(root, f, descriptors, closeables));
-		return new NBTDescriptorGroup(descriptors, closeables);
+		return new DataDescriptorGroup(descriptors, closeables);
 	}
 
-	private static void getDescriptorsFromFile(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
+	private static void getDescriptorsFromFile(Path root, File file, Set<DataDescriptor> result, Set<Closeable> closeables) {
 		if (file.getName().endsWith(".mca")) {
 			getDescriptorsFromMcaFile(root, file, result, closeables);
 		} else if (file.getName().endsWith(".dat") || file.getName().endsWith(".nbt")) {
@@ -46,7 +46,7 @@ public final class NBTDescriptorFactory {
 		}
 	}
 
-	private static void getDescriptorsFromMcaFile(Path root, File file, Set<NBTDescriptor> result, Set<Closeable> closeables) {
+	private static void getDescriptorsFromMcaFile(Path root, File file, Set<DataDescriptor> result, Set<Closeable> closeables) {
 		RegionFile region;
 		try {
 			region = new RegionFile(file);
@@ -58,17 +58,17 @@ public final class NBTDescriptorFactory {
 		for (int x = 0; x < 32; x++) {
 			for (int z = 0; z < 32; z++) {
 				if (region.isChunkSaved(x, z)) {
-					result.add(new SyncNBTDescriptor(new NBTDescriptorChunk(root, region, x, z)));
+					result.add(new SyncDataDescriptor(new NBTDescriptorChunk(root, region, x, z)));
 				}
 			}
 		}
 	}
 
-	private static void getDescriptorsFromNBTFile(Path root, File file, Set<NBTDescriptor> result) {
+	private static void getDescriptorsFromNBTFile(Path root, File file, Set<DataDescriptor> result) {
 		if (isInGzip(file)) {
-			result.add(new SyncNBTDescriptor(new NBTDescriptorGzipFile(root, file)));
+			result.add(new SyncDataDescriptor(new NBTDescriptorGzipFile(root, file)));
 		} else {
-			result.add(new SyncNBTDescriptor(new NBTDescriptorPlainFile(root, file)));
+			result.add(new SyncDataDescriptor(new NBTDescriptorPlainFile(root, file)));
 		}
 	}
 
@@ -82,6 +82,6 @@ public final class NBTDescriptorFactory {
 		}
 	}
 
-	private NBTDescriptorFactory() {
+	private DataDescriptorFactory() {
 	}
 }
