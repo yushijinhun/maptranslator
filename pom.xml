@@ -6,8 +6,8 @@
 	<groupId>org.to2mbn.maptranslator</groupId>
 	<artifactId>maptranslator</artifactId>
 	<version>${deploy_version_prefix}${TRAVIS_BUILD_NUMBER}</version>
-	<name>MapTranslator</name>
-	<description>Minecraft地图翻译器</description>
+	<name>maptranslator</name>
+	<description>Minecraft Map Translator</description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jar.source>1.8</jar.source>

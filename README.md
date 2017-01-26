@@ -1,15 +1,15 @@
 # maptranslator
-Minecraft地图翻译器
+Minecraft Map Translator
 
-## 下载
+## Download
 GitHub Releases: https://github.com/to2mbn/maptranslator/releases
 
-要求Java1.8+，需要JavaFX。
+Requires Java1.8+, JavaFX
 
-## 构建
+## Build
 ```
 mvn clean package
 ```
 
-## 文档
+## Documentation
 Wiki: https://github.com/to2mbn/maptranslator/wiki
