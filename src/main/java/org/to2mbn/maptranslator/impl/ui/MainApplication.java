@@ -1,6 +1,7 @@
 package org.to2mbn.maptranslator.impl.ui;
 
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.alert;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,7 +24,6 @@ import org.to2mbn.maptranslator.model.ParsingWarning;
 import org.to2mbn.maptranslator.tree.Node;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -50,7 +50,7 @@ class MainApplication {
 		chooser.setTitle(translate("load_save.title"));
 		File selected = chooser.showDialog(null);
 		if (selected == null) {
-			new Alert(AlertType.ERROR, translate("load_save.no_chosen")).show();
+			alert(AlertType.ERROR, "load_save.no_chosen");
 			return;
 		}
 		folder = selected.toPath();
@@ -183,7 +183,7 @@ class MainApplication {
 					.handleAsync((result, err) -> {
 						hideProgressWindow();
 						if (err == null) {
-							new Alert(AlertType.INFORMATION, translate("translate.apply.success.message")).show();
+							alert(AlertType.INFORMATION, "translate.apply.success.message");
 						} else {
 							reportException(err);
 						}

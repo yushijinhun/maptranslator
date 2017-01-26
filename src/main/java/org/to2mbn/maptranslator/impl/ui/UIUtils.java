@@ -10,11 +10,18 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 class UIUtils {
 
 	static final ResourceBundle bundle = ResourceBundle.getBundle("org.to2mbn.maptranslator.ui.lang");
+
+	static final void alert(AlertType type, String format, Object... args) {
+		Alert alert = new Alert(type);
+		alert.getDialogPane().setContent(new Label(translate(format, args)));
+		alert.show();
+	}
 
 	static final String translate(String format, Object... args) {
 		try {
