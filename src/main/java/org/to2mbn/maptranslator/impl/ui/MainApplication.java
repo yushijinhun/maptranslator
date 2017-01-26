@@ -1,6 +1,7 @@
 package org.to2mbn.maptranslator.impl.ui;
 
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,10 +47,10 @@ class MainApplication {
 	void start() {
 		progressWin = new ProgressWindow();
 		DirectoryChooser chooser = new DirectoryChooser();
-		chooser.setTitle("选择要翻译的存档");
+		chooser.setTitle(translate("load_save.title"));
 		File selected = chooser.showDialog(null);
 		if (selected == null) {
-			new Alert(AlertType.ERROR, "没有选择存档！").show();
+			new Alert(AlertType.ERROR, translate("load_save.no_chosen")).show();
 			return;
 		}
 		folder = selected.toPath();
@@ -120,7 +121,7 @@ class MainApplication {
 
 		traWin.btnExport.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
-			chooser.setTitle("导出");
+			chooser.setTitle(translate("translate.export"));
 			chooser.setSelectedExtensionFilter(new ExtensionFilter("*.json", "*.json"));
 			File target = chooser.showSaveDialog(traWin.stage);
 			if (target == null) return;
@@ -146,7 +147,7 @@ class MainApplication {
 
 		traWin.btnImport.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
-			chooser.setTitle("导入");
+			chooser.setTitle(translate("translate.import"));
 			chooser.setSelectedExtensionFilter(new ExtensionFilter("*.json", "*.json"));
 			File target = chooser.showOpenDialog(traWin.stage);
 			if (target == null) return;
@@ -182,7 +183,7 @@ class MainApplication {
 					.handleAsync((result, err) -> {
 						hideProgressWindow();
 						if (err == null) {
-							new Alert(AlertType.INFORMATION, "应用成功，您可能需要重新载入").show();
+							new Alert(AlertType.INFORMATION, translate("translate.apply.success.message")).show();
 						} else {
 							reportException(err);
 						}
@@ -213,7 +214,7 @@ class MainApplication {
 	void showParseWarnings() {
 		List<ParsingWarning> warnings = handler.lastParsingWarnings();
 		if (!warnings.isEmpty()) {
-			new ReportWindow(ParsingResultGenerator.warningsToHtml(warnings), "解析错误报告").stage.show();
+			new ReportWindow(ParsingResultGenerator.warningsToHtml(warnings), translate("report.title")).stage.show();
 		}
 	}
 }

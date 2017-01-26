@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,7 @@ class StringDisplayWindow {
 	Button btnLoad;
 	Set<String> stringsSet = new HashSet<>();
 	Map<String, ListCell<String>> cellsMapping = new WeakHashMap<>();
-	MenuItem menuShowIn = new MenuItem("查找出现");
+	MenuItem menuShowIn = new MenuItem(translate("strings.menu.lookup_appearances"));
 	ContextMenu popupMenu = new ContextMenu(menuShowIn);
 	TextField txtFilter;
 
@@ -55,15 +56,15 @@ class StringDisplayWindow {
 
 	StringDisplayWindow() {
 		stage = new Stage();
-		stage.setTitle("原文列表");
+		stage.setTitle(translate("strings.title"));
 		list = new ListView<>();
 		txtIgnore = new TextArea(DEFAULT_IGNORE);
-		btnLoad = new Button("读取");
+		btnLoad = new Button(translate("strings.load"));
 		txtFilter = new TextField();
 
 		BorderPane ignorePane = new BorderPane();
 		ignorePane.setCenter(txtIgnore);
-		ignorePane.setTop(new Label("忽略的字符串(Regex)："));
+		ignorePane.setTop(new Label(translate("strings.ignored_strings")));
 
 		BorderPane underPane = new BorderPane();
 		underPane.setCenter(ignorePane);
@@ -199,5 +200,4 @@ class StringDisplayWindow {
 	boolean stringExists(String str) {
 		return stringsSet.contains(str);
 	}
-
 }

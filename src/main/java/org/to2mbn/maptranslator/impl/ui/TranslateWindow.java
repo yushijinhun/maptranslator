@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -44,17 +45,17 @@ class TranslateWindow {
 
 	TranslateWindow() {
 		stage = new Stage();
-		stage.setTitle("翻译对照");
-		btnImport = new Button("导入");
-		btnExport = new Button("导出");
-		btnApply = new Button("应用");
+		stage.setTitle(translate("translate.title"));
+		btnImport = new Button(translate("translate.import"));
+		btnExport = new Button(translate("translate.export"));
+		btnApply = new Button(translate("translate.apply"));
 		table = new TableView<>(entries);
 		BorderPane rootPane = new BorderPane();
 		rootPane.setCenter(table);
 		rootPane.setBottom(new FlowPane(btnImport, btnExport, btnApply));
 		stage.setScene(new Scene(rootPane));
 
-		colOrigin = new TableColumn<>("原文");
+		colOrigin = new TableColumn<>(translate("tranalate.origin"));
 		colOrigin.setEditable(false);
 		colOrigin.setCellValueFactory(entry -> entry.getValue().originProperty);
 		colOrigin.setCellFactory(param -> {
@@ -70,7 +71,7 @@ class TranslateWindow {
 			return cell;
 		});
 
-		colTarget = new TableColumn<>("译文");
+		colTarget = new TableColumn<>(translate("tranalate.translated"));
 		colTarget.setCellValueFactory(entry -> entry.getValue().targetProperty);
 		colTarget.setCellFactory(param -> new TextFieldTableCell<TranslateEntry, String>(new DefaultStringConverter()));
 		table.getColumns().add(colOrigin);

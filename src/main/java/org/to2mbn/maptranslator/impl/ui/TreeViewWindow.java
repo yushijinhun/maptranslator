@@ -1,6 +1,8 @@
 package org.to2mbn.maptranslator.impl.ui;
 
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translateRaw;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -37,9 +39,9 @@ class TreeViewWindow {
 	TreeView<Node> tree;
 	MenuItem menuGoInto = new MenuItem();
 	MenuItem menuUpTo = new MenuItem();
-	MenuItem menuShowIn = new MenuItem("在原文列表中显示");
-	MenuItem menuCopyPath = new MenuItem("复制路径");
-	MenuItem menuCopyValue = new MenuItem("复制值");
+	MenuItem menuShowIn = new MenuItem(translate("nbt_view.menu.show_in_strings"));
+	MenuItem menuCopyPath = new MenuItem(translate("nbt_view.menu.copy_path"));
+	MenuItem menuCopyValue = new MenuItem(translate("nbt_view.menu.copy_value"));
 	ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowIn, new SeparatorMenuItem(), menuCopyPath, menuCopyValue);
 	IntegerProperty currentAppearance = new SimpleIntegerProperty();
 	IntegerProperty totalAppearance = new SimpleIntegerProperty();
@@ -52,7 +54,7 @@ class TreeViewWindow {
 
 	TreeViewWindow() {
 		stage = new Stage();
-		stage.setTitle("NBT树浏览器");
+		stage.setTitle(translate("nbt_view.title"));
 		tree = new TreeView<>();
 		tree.setCellFactory(param -> new XTreeCell());
 
@@ -62,7 +64,7 @@ class TreeViewWindow {
 		tree.setShowRoot(true);
 
 		Label lblAppearanceCount = new Label();
-		lblAppearanceCount.textProperty().bind(Bindings.concat("第", currentAppearance.add(1), "个匹配，共", totalAppearance, "个 (Ctrl+N 下一个，Ctrl+P 上一个，Ctrl+; 清除)"));
+		lblAppearanceCount.textProperty().bind(Bindings.format(translateRaw("nbt_view.find.tip"), currentAppearance.add(1), totalAppearance));
 		rootPane.setBottom(lblAppearanceCount);
 		lblAppearanceCount.visibleProperty().bind(appearances.isNotNull());
 
@@ -73,7 +75,7 @@ class TreeViewWindow {
 			if (item != null) {
 				return item.getValue().getPath();
 			} else {
-				return "没有选中节点";
+				return translate("nbt_view.path.no_selected");
 			}
 		}, tree.getSelectionModel().selectedItemProperty(), tree.rootProperty()));
 		rootPane.setTop(lblPath);
@@ -181,9 +183,9 @@ class TreeViewWindow {
 
 	void showGoTo() {
 		TextInputDialog dialog = new TextInputDialog();
-		dialog.setTitle("切换节点");
-		dialog.setHeaderText("切换节点");
-		dialog.setContentText("要切换到的节点的路径：");
+		dialog.setTitle(translate("nbt_view.goto"));
+		dialog.setHeaderText(translate("nbt_view.goto"));
+		dialog.setContentText(translate("nbt_view.goto.message"));
 		dialog.setOnHidden(event -> {
 			String result = dialog.getResult();
 			if (result != null && !result.trim().isEmpty()) switchNode(result);
@@ -223,17 +225,17 @@ class TreeViewWindow {
 			rootParent = selected = root = null;
 		}
 		if (rootParent == null) {
-			menuUpTo.setText("返回到...");
+			menuUpTo.setText(translate("nbt_view.menu.back.invalid"));
 			menuUpTo.setDisable(true);
 		} else {
-			menuUpTo.setText("返回到 " + rootParent);
+			menuUpTo.setText(translate("nbt_view.menu.back.available", rootParent));
 			menuUpTo.setDisable(false);
 		}
 		if (selected == null) {
-			menuGoInto.setText("进入到...");
+			menuGoInto.setText(translate("nbt_view.menu.enter.invalid"));
 			menuGoInto.setDisable(true);
 		} else {
-			menuGoInto.setText("进入到 " + selected);
+			menuGoInto.setText(translate("nbt_view.menu.enter.available", selected));
 			menuGoInto.setDisable(selected == root);
 		}
 		String text;

@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Supplier;
@@ -26,13 +27,13 @@ class ProgressWindow {
 
 	ProgressWindow() {
 		stage = new Stage(StageStyle.UTILITY);
-		stage.setTitle("进度");
+		stage.setTitle(translate("progress.title"));
 		Label lbl = new Label();
 		lbl.textProperty().bind(Bindings.createStringBinding(() -> {
 			if (!showProgress.get()) {
-				return "处理中...";
+				return translate("progress.processing.message.no_progress");
 			} else {
-				return String.format("处理中(%.1f%%)...", progress.get() * 100d);
+				return translate("progress.processing.message.with_progress", progress.get() * 100d);
 			}
 		}, progress, showProgress));
 		stage.setScene(new Scene(lbl));

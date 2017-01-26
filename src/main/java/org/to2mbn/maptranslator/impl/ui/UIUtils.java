@@ -2,6 +2,8 @@ package org.to2mbn.maptranslator.impl.ui;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -11,6 +13,26 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 
 class UIUtils {
+
+	static final ResourceBundle bundle = ResourceBundle.getBundle("org.to2mbn.maptranslator.ui.lang");
+
+	static final String translate(String format, Object... args) {
+		try {
+			return String.format(bundle.getString(format), args);
+		} catch (MissingResourceException e) {
+			e.printStackTrace();
+			return format;
+		}
+	}
+
+	static final String translateRaw(String key) {
+		try {
+			return bundle.getString(key);
+		} catch (MissingResourceException e) {
+			e.printStackTrace();
+			return key;
+		}
+	}
 
 	static final Function<Throwable, Void> reportException = e -> {
 		reportException(e);

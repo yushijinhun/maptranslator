@@ -1,6 +1,7 @@
 package org.to2mbn.maptranslator.impl.ui;
 
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -30,7 +31,7 @@ class ReportWindow {
 		stage = new Stage();
 		stage.setTitle(title);
 		webview = new WebView();
-		btnExport = new Button("导出为HTML");
+		btnExport = new Button(translate("report.export"));
 
 		HBox btnPane = new HBox(btnExport);
 		BorderPane rootPane = new BorderPane();
@@ -42,7 +43,7 @@ class ReportWindow {
 
 		btnExport.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
-			chooser.setTitle("导出为HTML");
+			chooser.setTitle(translate("report.export"));
 			chooser.setSelectedExtensionFilter(new ExtensionFilter("*.html", "*.html"));
 			chooser.setInitialFileName(title + ".html");
 			File target = chooser.showSaveDialog(stage);

@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import org.to2mbn.maptranslator.impl.ui.TranslateWindow.TranslateEntry;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -30,10 +31,10 @@ class TranslateEditWindow {
 
 	TranslateEditWindow(TranslateEntry entry) {
 		stage = new Stage(StageStyle.UTILITY);
-		stage.setTitle("翻译...");
+		stage.setTitle(translate("translate_edit.title"));
 		txt = new TextArea(entry.targetProperty.get());
-		btnRestore = new Button("重置为原文");
-		btnOk = new Button("确定");
+		btnRestore = new Button(translate("translate_edit.reset"));
+		btnOk = new Button(translate("translate_edit.submit"));
 		this.entry = entry;
 
 		HBox btnBox = new HBox(btnRestore, btnOk);
@@ -58,5 +59,4 @@ class TranslateEditWindow {
 	void restore() {
 		txt.setText(entry.origin);
 	}
-
 }

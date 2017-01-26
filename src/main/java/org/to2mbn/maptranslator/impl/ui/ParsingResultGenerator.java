@@ -1,6 +1,7 @@
 package org.to2mbn.maptranslator.impl.ui;
 
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -25,12 +26,13 @@ class ParsingResultGenerator {
 				stringMismatches.add((StringMismatchWarning) element);
 		});
 // @formatter:off
-		StringBuilder sb = new StringBuilder(
+		StringBuilder sb = new StringBuilder();
+		sb.append(
 "<!DOCTYPE html>\n" +
-"<html lang=\"zh-cn\">\n" +
+"<html>\n" +
 "	<head>\n" +
 "		<meta charset=\"utf-8\"/>\n" +
-"		<title>解析错误报告</title>\n" +
+"		<title>").append(translate("report.title")).append("</title>\n" +
 "		<link href=\"https://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css\" rel=\"stylesheet\"/>\n" +
 "	</head>\n" +
 "	<body>\n" +
@@ -38,7 +40,7 @@ class ParsingResultGenerator {
 		if (!resolveFailures.isEmpty()) {
 			sb.append(
 "			<div>\n" +
-"				<h2 class=\"page-header\">无法解析的命令</h2>\n" +
+"				<h2 class=\"page-header\">").append(translate("report.resolve_failure.title")).append("</h2>\n" +
 "				<div>\n");
 			resolveFailures.forEach(failure->{
 				sb.append(
@@ -46,11 +48,11 @@ class ParsingResultGenerator {
 "						<div class=\"panel-heading\">").append(escapeHtml4(failure.path)).append("</div>\n" +
 "						<div class=\"panel-body\">\n" +
 "							<p>\n" +
-"								<label>命令</label>\n" +
+"								<label>").append(translate("report.resolve_failure.command")).append("</label>\n" +
 "								<pre><code>").append(escapeHtml4(failure.text)).append("</code></pre>\n" +
 "							</p>\n" +
 "							<p>\n" +
-"								<label>参数</label>\n" +
+"								<label>").append(translate("report.resolve_failure.arguments")).append("</label>\n" +
 "								<table class=\"table table-condensed table-hover\">\n");
 				failure.arguments.forEach((k,v)->sb.append(
 "									<tr>\n" +
@@ -62,7 +64,7 @@ class ParsingResultGenerator {
 "								</table>\n" +
 "							</p>\n" +
 "							<p>\n" +
-"								<label>堆栈跟踪</label><br/>\n" +
+"								<label>").append(translate("report.resolve_failure.stacktrace")).append("</label><br/>\n" +
 "								<pre><code>").append(escapeHtml4(throwableToString(failure.exception))).append("</code></pre>\n" +
 "							</p>\n" +
 "						</div>\n" +
@@ -75,14 +77,14 @@ class ParsingResultGenerator {
 		if(!stringMismatches.isEmpty()){
 			sb.append(
 "			<div>\n" + 
-"				<h2 class=\"page-header\">不能保证输出时与原格式相同的字符串</h2>\n" + 
+"				<h2 class=\"page-header\">").append(translate("report.string_mismatch.title")).append("</h2>\n" + 
 "				<div>");
 			stringMismatches.forEach(mismatch->sb.append(
 "					<div class=\"panel panel-default\">\n" + 
 "						<div class=\"panel-heading\">").append(escapeHtml4(mismatch.path)).append("</div>\n" + 
 "						<div class=\"panel-body\">\n" + 
 "							<p>\n" + 
-"								<label>对比</label><br/>\n" + 
+"								<label>").append(translate("report.string_mismatch.comparing")).append("</label><br/>\n" + 
 "								<p><pre><code>").append(diff_prettyHtml(differ.diff_main(mismatch.origin, mismatch.current))).append("</code></pre></p>\n" + 
 "						</div>\n" + 
 "					</div>"));
