@@ -101,7 +101,7 @@ public class CommandReplacer extends AbstractReplacer {
 
 	private boolean matches(Node node) {
 		if (node.unmodifiableChildren().isEmpty() && node.hasTag(tag)) {
-			Optional<String> optional = node.getText();
+			Optional<String> optional = getNodeText(node);
 			if (optional.isPresent()) {
 				String command = optional.get();
 				if (!command.trim().isEmpty()) {
@@ -138,7 +138,7 @@ public class CommandReplacer extends AbstractReplacer {
 	}
 
 	private Node replace(Node node) {
-		String cmd = node.getText().get().trim();
+		String cmd = getNodeText(node).get().trim();
 		String[] splited = cmd.split(" ", argumentNames.length + 1);
 		String[] n_argnames = new String[argumentNames.length + 1];
 		System.arraycopy(argumentNames, 0, n_argnames, 1, argumentNames.length);

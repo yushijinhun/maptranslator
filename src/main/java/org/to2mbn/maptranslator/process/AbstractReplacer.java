@@ -1,11 +1,15 @@
 package org.to2mbn.maptranslator.process;
 
+import java.util.Optional;
 import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
 import org.to2mbn.maptranslator.model.ResolveFailedWarning;
+import org.to2mbn.maptranslator.rules.RulesConstants;
+import org.to2mbn.maptranslator.tree.Node;
 
 public abstract class AbstractReplacer {
 
@@ -40,6 +44,16 @@ public abstract class AbstractReplacer {
 			resolvingFailedListeners.remove();
 			LOGGER.log(Level.WARNING, String.format("Couldn't solve command node %s\nText: %s\nArguments: %s", post.path, post.text, post.arguments), post.exception);
 		}
+	}
+
+	protected static Optional<String> getNodeText(Node node) {
+		return node.getText().map(text -> {
+			if (node.hasTag(RulesConstants.normalize_space)) {
+				return StringUtils.normalizeSpace(text);
+			} else {
+				return text;
+			}
+		});
 	}
 
 }

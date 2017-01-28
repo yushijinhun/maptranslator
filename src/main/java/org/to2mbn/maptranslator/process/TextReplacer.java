@@ -56,18 +56,18 @@ public class TextReplacer extends AbstractReplacer {
 	}
 
 	private Node replace(Node node) {
-		String json = node.getText().get();
+		String text = getNodeText(node).get();
 		TextHandler handler = new TextHandler(reverseMapper);
 		Node replacedNode = ((TextNode) node).replaceNodeText(handler);
 		handler.node = replacedNode;
-		replacedNode.properties().put("origin", json);
-		replacedNode.addChild(subtreeBuilder.apply(node, json));
+		replacedNode.properties().put("origin", text);
+		replacedNode.addChild(subtreeBuilder.apply(node, text));
 		return replacedNode;
 	}
 
 	public NodeReplacer toNodeReplacer() {
 		return new NodeReplacer(nodeMatcher.and(node -> {
-			Optional<String> optional = node.getText();
+			Optional<String> optional = getNodeText(node);
 			if (optional.isPresent()) {
 				if (node.unmodifiableChildren().isEmpty()) {
 					String text = optional.get();

@@ -7,6 +7,7 @@ import static org.apache.commons.lang3.StringEscapeUtils.unescapeJson;
 import static org.to2mbn.maptranslator.impl.json.process.JsonTreeConstructor.constructJson;
 import static org.to2mbn.maptranslator.impl.nbt.process.NBTTreeConstructor.constructNBT;
 import static org.to2mbn.maptranslator.rules.RulesConstants.translatable;
+import static org.to2mbn.maptranslator.rules.RulesConstants.normalize_space;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
@@ -167,6 +168,7 @@ public class MinecraftRules implements RulesProvider {
 			new TagMarker(NodeMatcher.of("(msg.obj)/clickEvent").and(jsonObjectMatches(json -> json.has("action"))), toJson(json -> "click_event." + json.get("action")).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(msg.obj)/hoverEvent").and(jsonObjectMatches(json -> json.has("action"))), toJson(json -> "hover_event." + json.get("action")).andThen(Collections::singleton)),
 			new TagMarker(NodeMatcher.of("(click_event.run_command)/value").and(node -> node.getText().map(text -> !text.trim().isEmpty()).orElse(false)), node -> singleton(node.getText().get().startsWith("/") ? "command" : translatable)),
+			new TagMarker(NodeMatcher.of("(click_event.run_command)/value(command)"), normalize_space),
 			new TagMarker(NodeMatcher.of("(click_event.suggest_command)/value"), "suggest_command", translatable),
 			new TagMarker(NodeMatcher.of("(click_event.open_url)/value"), "url", translatable),
 			new TagMarker(NodeMatcher.of("(click_event.open_file)/value"), "file", translatable),
