@@ -89,7 +89,7 @@ class OriginalTextsWindow {
 		};
 		hideFilter = () -> {
 			if (!txtFilter.getText().isEmpty())
-				txtFilter.setText(null);
+				txtFilter.setText("");
 			rootPane.setTop(null);
 		};
 
