@@ -30,7 +30,7 @@ class ParsingResultGenerator {
 		StringBuilder sb = new StringBuilder();
 		sb.append(
 "<!DOCTYPE html>\n" +
-"<html>\n" +
+"<html lang=\"").append(translate("report.lang")).append("\">\n" +
 "	<head>\n" +
 "		<meta charset=\"utf-8\"/>\n" +
 "		<title>").append(translate("report.title")).append("</title>\n" +
@@ -39,6 +39,12 @@ class ParsingResultGenerator {
 "			.normal-hyperlink{\n"+
 "				color:rgb(51,51,51) !important;\n"+
 "				text-decoration:none;\n"+
+"			}\n"+
+"			.diff-ins{\n"+
+"				background:#6fff6f;\n"+
+"			}\n"+
+"			.diff-del{\n"+
+"				background:#ff8080;\n"+
 "			}\n"+
 "		</style>\n"+
 "	</head>\n" +
@@ -83,20 +89,20 @@ class ParsingResultGenerator {
 				sb.append(
 "							<div>\n" +
 "								<label><a class=\"normal-hyperlink\" data-toggle=\"collapse\" data-parent=\"#accordion\" href=\"#collapse").append(idx).append("\"><span class=\"icon-collapse").append(idx).append(" glyphicon glyphicon-chevron-down\" aria-hidden=\"true\"></span> ").append(translate("report.resolve_failure.stacktrace")).append("</a></label><br/>\n" +
-"								<pre id=\"collapse").append(idx).append("\" class=\"collapse\" relatedIcon=\"").append(idx).append("\"><code>").append(escapeHtml4(throwableToString(failure.exception))).append("</code></pre>\n" +
+"								<pre id=\"collapse").append(idx).append("\" class=\"collapse\" data-relatedicon=\"").append(idx).append("\"><code>").append(escapeHtml4(throwableToString(failure.exception))).append("</code></pre>\n" +
 "							</div>\n" +
 "						</div>\n" +
-"					</div>");
+"					</div>\n");
 			};
 			sb.append(
 "				</div>\n" + 
-"			</div>");
+"			</div>\n");
 		}
 		if(!stringMismatches.isEmpty()){
 			sb.append(
 "			<div>\n" + 
 "				<h2 class=\"page-header\">").append(translate("report.string_mismatch.title")).append("</h2>\n" + 
-"				<div>");
+"				<div>\n");
 			for(StringMismatchWarning mismatch:stringMismatches){
 				sb.append(
 "					<div class=\"panel panel-default\">\n" + 
@@ -107,19 +113,19 @@ class ParsingResultGenerator {
 "								<pre><code>").append(diff_prettyHtml(differ.diff_main(mismatch.origin, mismatch.current))).append("</code></pre>\n"+
 "							</div>\n" + 
 "						</div>\n" + 
-"					</div>");
+"					</div>\n");
 			}
 			sb.append(
 "				</div>\n" + 
-"			</div>");
+"			</div>\n");
 		}
 		sb.append(
 "		</div>\n" +
-"		<script src=\"https://cdn.bootcss.com/jquery/1.11.1/jquery.min.js\"></script>\n" + 
-"		<script src=\"https://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js\"></script>\n" + 
+"		<script src=\"https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js\"></script>\n" + 
+"		<script src=\"https://cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js\"></script>\n" + 
 "		<script>\n"+
 "			function setCollapseIcon($this,status){\n"+
-"				var element=$('.icon-collapse'+$this.attr('relatedIcon'));\n"+
+"				var element=$('.icon-collapse'+$this.data('relatedicon'));\n"+
 "				if(status){\n"+
 "					element.addClass('glyphicon-chevron-up');\n"+
 "					element.removeClass('glyphicon-chevron-down');\n"+
@@ -156,11 +162,11 @@ class ParsingResultGenerator {
 			String text = escapeHtml4(aDiff.text);
 			switch (aDiff.operation) {
 				case INSERT:
-					html.append("<span style=\"background:#6fff6f;\">").append(text)
+					html.append("<span class=\"diff-ins\">").append(text)
 							.append("</span>");
 					break;
 				case DELETE:
-					html.append("<span style=\"background:#ff8080;\">").append(text)
+					html.append("<span class=\"diff-del\">").append(text)
 							.append("</span>");
 					break;
 				case EQUAL:
