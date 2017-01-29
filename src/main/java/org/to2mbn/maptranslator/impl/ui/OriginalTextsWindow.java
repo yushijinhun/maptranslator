@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.copyToClipboard;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.HashSet;
@@ -27,11 +28,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
@@ -46,8 +49,9 @@ class OriginalTextsWindow {
 	private Button btnLoad;
 	private Set<String> stringsSet = new HashSet<>();
 	private Map<String, ListCell<String>> cellsMapping = new WeakHashMap<>();
+	private MenuItem menuCopy = new MenuItem(translate("menu.copy"));
 	private MenuItem menuShowIn = new MenuItem(translate("strings.menu.lookup_appearances"));
-	private ContextMenu popupMenu = new ContextMenu(menuShowIn);
+	private ContextMenu popupMenu = new ContextMenu(menuShowIn, new SeparatorMenuItem(), menuCopy);
 	private TextField txtFilter;
 
 	private Runnable showFilter;
@@ -125,8 +129,10 @@ class OriginalTextsWindow {
 			}
 		});
 		list.setContextMenu(popupMenu);
-		popupMenu.setOnShowing(event -> menuShowIn.setDisable(list.getSelectionModel().isEmpty()));
 		menuShowIn.setOnAction(event -> showSelectedInNBTExplorer());
+		menuShowIn.disableProperty().bind(list.getSelectionModel().selectedItemProperty().isNull());
+		menuCopy.setOnAction(evemt -> copySelected());
+		menuCopy.disableProperty().bind(list.getSelectionModel().selectedItemProperty().isNull());
 
 		list.itemsProperty().bind(Bindings.createObjectBinding(() -> {
 			if (txtFilter.getText().isEmpty()) {
@@ -164,6 +170,11 @@ class OriginalTextsWindow {
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN), showFilter);
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.ESCAPE), hideFilter);
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), this::showSelectedInNBTExplorer);
+		list.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if (event.isControlDown() && event.getCode() == KeyCode.C) {
+				copySelected();
+			}
+		});
 	}
 
 	public void onStringAddedToTranslate(String origin) {
@@ -210,5 +221,10 @@ class OriginalTextsWindow {
 	private void showSelectedInNBTExplorer() {
 		String str = list.getSelectionModel().getSelectedItem();
 		if (str != null) showSelectedInNBTExplorer.accept(str);
+	}
+
+	private void copySelected() {
+		String str = list.getSelectionModel().getSelectedItem();
+		if (str != null) copyToClipboard(str);
 	}
 }
