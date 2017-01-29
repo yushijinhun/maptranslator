@@ -16,20 +16,20 @@ import javafx.stage.StageStyle;
 
 class TranslateEditWindow {
 
-	static void show(TranslateEntry entry) {
+	public static void show(TranslateEntry entry) {
 		TranslateEditWindow win = new TranslateEditWindow(entry);
 		win.stage.show();
 		win.stage.requestFocus();
 		win.txt.requestFocus();
 	}
 
-	Stage stage;
-	TextArea txt;
-	Button btnRestore;
-	Button btnOk;
-	TranslateEntry entry;
+	private Stage stage;
+	private TextArea txt;
+	private Button btnRestore;
+	private Button btnOk;
+	private TranslateEntry entry;
 
-	TranslateEditWindow(TranslateEntry entry) {
+	private TranslateEditWindow(TranslateEntry entry) {
 		stage = new Stage(StageStyle.UTILITY);
 		stage.setTitle(translate("translate_edit.title"));
 		txt = new TextArea(entry.targetProperty.get());
@@ -51,12 +51,12 @@ class TranslateEditWindow {
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN), this::restore);
 	}
 
-	void saveAndClose() {
+	private void saveAndClose() {
 		entry.targetProperty.set(txt.getText());
 		stage.close();
 	}
 
-	void restore() {
+	private void restore() {
 		txt.setText(entry.origin);
 	}
 }

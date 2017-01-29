@@ -1,9 +1,8 @@
 package org.to2mbn.maptranslator.impl.ui;
 
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.throwableToString;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import org.to2mbn.maptranslator.model.ParsingWarning;
@@ -14,9 +13,9 @@ import com.sksamuel.diffpatch.DiffMatchPatch.Diff;
 
 class ParsingResultGenerator {
 
-	static DiffMatchPatch differ = new DiffMatchPatch();
+	private static DiffMatchPatch differ = new DiffMatchPatch();
 
-	static String warningsToHtml(List<ParsingWarning> warnings) {
+	public static String warningsToHtml(List<ParsingWarning> warnings) {
 		List<ResolveFailedWarning> resolveFailures = new ArrayList<>();
 		List<StringMismatchWarning> stringMismatches = new ArrayList<>();
 		warnings.forEach(element -> {
@@ -149,14 +148,7 @@ class ParsingResultGenerator {
 		return sb.toString();
 	}
 
-	static String throwableToString(Throwable e) {
-		StringWriter writer = new StringWriter();
-		PrintWriter pw = new PrintWriter(writer);
-		e.printStackTrace(pw);
-		return writer.toString();
-	}
-
-	static String diff_prettyHtml(List<Diff> diffs) {
+	private static String diff_prettyHtml(List<Diff> diffs) {
 		StringBuilder html = new StringBuilder();
 		for (Diff aDiff : diffs) {
 			String text = escapeHtml4(aDiff.text);

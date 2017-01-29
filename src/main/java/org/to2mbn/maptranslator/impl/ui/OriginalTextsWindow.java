@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.HashSet;
 import java.util.List;
@@ -7,12 +8,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,33 +32,33 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
-class StringDisplayWindow {
+class OriginalTextsWindow {
 
-	static final String DEFAULT_IGNORE = "@\n\\(\\+NBT\\)";
+	private static final String DEFAULT_IGNORE = "@\n\\(\\+NBT\\)";
 
-	Stage stage;
-	ListView<String> list;
-	ObservableList<String> strings = FXCollections.observableArrayList();
-	TextArea txtIgnore;
-	Button btnLoad;
-	Set<String> stringsSet = new HashSet<>();
-	Map<String, ListCell<String>> cellsMapping = new WeakHashMap<>();
-	MenuItem menuShowIn = new MenuItem(translate("strings.menu.lookup_appearances"));
-	ContextMenu popupMenu = new ContextMenu(menuShowIn);
-	TextField txtFilter;
+	public Stage stage;
+	private ListView<String> list;
+	private ObservableList<String> strings = FXCollections.observableArrayList();
+	private TextArea txtIgnore;
+	private Button btnLoad;
+	private Set<String> stringsSet = new HashSet<>();
+	private Map<String, ListCell<String>> cellsMapping = new WeakHashMap<>();
+	private MenuItem menuShowIn = new MenuItem(translate("strings.menu.lookup_appearances"));
+	private ContextMenu popupMenu = new ContextMenu(menuShowIn);
+	private TextField txtFilter;
 
-	Runnable showFilter;
-	Runnable hideFilter;
+	private Runnable showFilter;
+	private Runnable hideFilter;
 
-	Consumer<String> onStringDbclick;
-	Predicate<String> isStringTranslated;
-	Consumer<String> showIn;
+	public Consumer<String> onStringDbclick;
+	public Predicate<String> isStringTranslated;
+	public Consumer<String> showIn;
+	public Supplier<CompletableFuture<Set<String>>> loader;
 
-	StringDisplayWindow() {
+	public OriginalTextsWindow() {
 		stage = new Stage();
 		stage.setTitle(translate("strings.title"));
 		list = new ListView<>();
@@ -77,7 +81,7 @@ class StringDisplayWindow {
 
 		Scene scene = new Scene(rootPane);
 		stage.setScene(scene);
-		scene.getStylesheets().add("/org/to2mbn/maptranslator/ui/StringDisplayWindow.css");
+		scene.getStylesheets().add("/org/to2mbn/maptranslator/ui/OriginalTextsWindow.css");
 
 		showFilter = () -> {
 			rootPane.setTop(txtFilter);
@@ -153,14 +157,18 @@ class StringDisplayWindow {
 			if (!newVal && txtFilter.getText().isEmpty())
 				hideFilter.run();
 		});
-		txtFilter.addEventHandler(KeyEvent.KEY_TYPED, event -> {
-			if (event.getCode() == KeyCode.ESCAPE)
-				hideFilter.run();
-		});
+		btnLoad.setOnAction(event -> loader.get()
+				.thenAcceptAsync(result -> {
+					if (result != null) {
+						setStrings(result);
+					}
+				}, Platform::runLater)
+				.exceptionally(reportException));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN), showFilter);
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.ESCAPE), hideFilter);
 	}
 
-	void onStringAddedToTranslate(String origin) {
+	public void onStringAddedToTranslate(String origin) {
 		Optional.ofNullable(cellsMapping.get(origin))
 				.ifPresent(cell -> {
 					if (!cell.getStyleClass().contains("translated"))
@@ -168,7 +176,7 @@ class StringDisplayWindow {
 				});
 	}
 
-	void onStringRemovedFromTranslate(String origin) {
+	public void onStringRemovedFromTranslate(String origin) {
 		Optional.ofNullable(cellsMapping.get(origin))
 				.ifPresent(cell -> {
 					if (cell.getStyleClass().contains("translated"))
@@ -176,13 +184,13 @@ class StringDisplayWindow {
 				});
 	}
 
-	List<String> getIgnores() {
+	public List<String> getIgnores() {
 		return Stream.of(txtIgnore.getText().split("\n"))
 				.filter(line -> !line.trim().isEmpty())
 				.collect(Collectors.toList());
 	}
 
-	void jumpToString(String origin) {
+	public void jumpToString(String origin) {
 		if (!txtFilter.getText().isEmpty() && !list.getItems().contains(origin)) {
 			hideFilter.run();
 		}
@@ -192,12 +200,12 @@ class StringDisplayWindow {
 		list.scrollTo(origin);
 	}
 
-	void setStrings(Set<String> newstrings) {
+	private void setStrings(Set<String> newstrings) {
 		strings.setAll(newstrings);
 		stringsSet = newstrings;
 	}
 
-	boolean stringExists(String str) {
+	public boolean stringExists(String str) {
 		return stringsSet.contains(str);
 	}
 }

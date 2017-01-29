@@ -1,9 +1,13 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -14,7 +18,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
@@ -22,7 +27,7 @@ import javafx.util.converter.DefaultStringConverter;
 
 class TranslateWindow {
 
-	static class TranslateEntry {
+	public static class TranslateEntry {
 
 		String origin;
 		SimpleStringProperty originProperty = new SimpleStringProperty();
@@ -30,20 +35,23 @@ class TranslateWindow {
 
 	}
 
-	Stage stage;
-	TableView<TranslateEntry> table;
-	ObservableList<TranslateEntry> entries = FXCollections.observableArrayList();
-	Button btnImport;
-	Button btnExport;
-	Button btnApply;
-	TableColumn<TranslateEntry, String> colOrigin;
-	TableColumn<TranslateEntry, String> colTarget;
+	public Stage stage;
+	private TableView<TranslateEntry> table;
+	private ObservableList<TranslateEntry> entries = FXCollections.observableArrayList();
+	private Button btnImport;
+	private Button btnExport;
+	private Button btnApply;
+	private TableColumn<TranslateEntry, String> colOrigin;
+	private TableColumn<TranslateEntry, String> colTarget;
 
-	Consumer<String> onTextDbclick;
-	Consumer<String> onAdded;
-	Consumer<String> onRemoved;
+	public Consumer<String> onTextDbclick;
+	public Consumer<String> onAdded;
+	public Consumer<String> onRemoved;
+	public Supplier<CompletableFuture<Map<String, String>>> importer;
+	public Consumer<Map<String, String>> exporter;
+	public Consumer<Map<String, String>> applier;
 
-	TranslateWindow() {
+	public TranslateWindow() {
 		stage = new Stage();
 		stage.setTitle(translate("translate.title"));
 		btnImport = new Button(translate("translate.import"));
@@ -76,32 +84,40 @@ class TranslateWindow {
 		colTarget.setCellFactory(param -> new TextFieldTableCell<TranslateEntry, String>(new DefaultStringConverter()));
 		table.getColumns().add(colOrigin);
 		table.getColumns().add(colTarget);
+		table.setEditable(true);
 
-		table.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-			if (event.getCode() == KeyCode.DELETE && !table.getSelectionModel().isEmpty()) {
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.CONTROL_DOWN), () -> {
+			if (!table.getSelectionModel().isEmpty()) {
 				String origin = table.getSelectionModel().getSelectedItem().origin;
 				entries.remove(table.getSelectionModel().getSelectedIndex());
 				onRemoved.accept(origin);
 			}
 		});
-		table.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-			if (event.getCode() == KeyCode.ENTER && event.isControlDown()) {
-				TranslateEntry entry = table.getSelectionModel().getSelectedItem();
-				if (entry != null) {
-					TranslateEditWindow.show(entry);
-				}
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.ENTER, KeyCombination.CONTROL_DOWN), () -> {
+			TranslateEntry entry = table.getSelectionModel().getSelectedItem();
+			if (entry != null) {
+				TranslateEditWindow.show(entry);
 			}
 		});
-		table.setEditable(true);
+
+		btnApply.setOnAction(event -> applier.accept(toTranslateTable()));
+		btnExport.setOnAction(event -> exporter.accept(toTranslateTable()));
+		btnImport.setOnAction(event -> importer.get()
+				.thenAcceptAsync(result -> {
+					if (result != null) {
+						result.forEach((k, v) -> importEntry(k, v));
+					}
+				}, Platform::runLater)
+				.exceptionally(reportException));
 	}
 
-	Map<String, String> toTranslateTable() {
+	private Map<String, String> toTranslateTable() {
 		Map<String, String> result = new LinkedHashMap<>();
 		entries.forEach(entry -> result.put(entry.origin, entry.targetProperty.get()));
 		return result;
 	}
 
-	void tryAddEntry(String origin) {
+	public void tryAddEntry(String origin) {
 		for (TranslateEntry entry : entries) {
 			if (entry.origin.equals(origin)) {
 				table.getSelectionModel().select(entry);
@@ -123,7 +139,7 @@ class TranslateWindow {
 		TranslateEditWindow.show(entry);
 	}
 
-	void importEntry(String origin, String target) {
+	private void importEntry(String origin, String target) {
 		for (TranslateEntry entry : entries) {
 			if (entry.origin.equals(origin)) {
 				entry.targetProperty.set(target);
@@ -139,7 +155,7 @@ class TranslateWindow {
 		onAdded.accept(origin);
 	}
 
-	boolean isStringTranslated(String str) {
+	public boolean isStringTranslated(String str) {
 		for (TranslateEntry entry : entries) {
 			if (entry.origin.equals(str))
 				return true;

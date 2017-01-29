@@ -23,17 +23,13 @@ import javafx.stage.Stage;
 
 class ReportWindow {
 
-	Stage stage;
-	WebView webview;
-	Button btnExport;
-	String report;
-	String title;
+	public Stage stage;
+	private WebView webview;
+	private Button btnExport;
 
-	Consumer<String> gotoNodeListener;
+	public Consumer<String> gotoNodeListener;
 
-	ReportWindow(String report, String title) {
-		this.report = report;
-		this.title = title;
+	public ReportWindow(String report, String title) {
 		stage = new Stage();
 		stage.setTitle(title);
 		webview = new WebView();
@@ -73,7 +69,7 @@ class ReportWindow {
 		});
 	}
 
-	String getSelectedNodePath() {
+	private String getSelectedNodePath() {
 		String text = (String) webview.getEngine().executeScript("window.getSelection().toString()");
 		if (text == null) return null;
 		text = text.replace("\n", "").trim();

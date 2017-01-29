@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import org.to2mbn.maptranslator.impl.ui.TreeItemConstructor.XTreeCell;
 import org.to2mbn.maptranslator.tree.Node;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -34,37 +33,37 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
-class TreeViewWindow {
+class NBTExplorerWindow {
 
-	Stage stage;
-	TreeView<Node> tree;
-	MenuItem menuGoInto = new MenuItem();
-	MenuItem menuUpTo = new MenuItem();
-	MenuItem menuShowInOriginalTexts = new MenuItem(translate("nbt_view.menu.show_in_strings"));
-	MenuItem menuCopyPath = new MenuItem(translate("nbt_view.menu.copy_path"));
-	MenuItem menuCopyValue = new MenuItem(translate("nbt_view.menu.copy_value"));
-	ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowInOriginalTexts, new SeparatorMenuItem(), menuCopyPath, menuCopyValue);
-	IntegerProperty currentAppearance = new SimpleIntegerProperty();
-	IntegerProperty totalAppearance = new SimpleIntegerProperty();
-	ObjectProperty<List<String[]>> appearances = new SimpleObjectProperty<>();
-	boolean loadingNode = false;
+	public Stage stage;
+	private TreeView<Node> tree;
+	private MenuItem menuGoInto = new MenuItem();
+	private MenuItem menuUpTo = new MenuItem();
+	private MenuItem menuShowInOriginalTexts = new MenuItem(translate("nbt_view.menu.show_in_strings"));
+	private MenuItem menuCopyPath = new MenuItem(translate("nbt_view.menu.copy_path"));
+	private MenuItem menuCopyValue = new MenuItem(translate("nbt_view.menu.copy_value"));
+	private ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowInOriginalTexts, new SeparatorMenuItem(), menuCopyPath, menuCopyValue);
+	private IntegerProperty currentAppearance = new SimpleIntegerProperty();
+	private IntegerProperty totalAppearance = new SimpleIntegerProperty();
+	public ObjectProperty<List<String[]>> appearances = new SimpleObjectProperty<>();
+	private boolean loadingNode = false;
 
-	ObjectProperty<Optional<Node>> rootNode = new SimpleObjectProperty<>(Optional.empty());
-	ObjectExpression<Optional<Node>> selectedNode;
-	ObjectExpression<Optional<Node>> rootParentNode;
-	BooleanExpression isNodeSelected;
-	ObjectExpression<Optional<String>> selectedText;
+	private ObjectProperty<Optional<Node>> rootNode = new SimpleObjectProperty<>(Optional.empty());
+	private ObjectExpression<Optional<Node>> selectedNode;
+	private ObjectExpression<Optional<Node>> rootParentNode;
+	private BooleanExpression isNodeSelected;
+	private ObjectExpression<Optional<String>> selectedText;
 
-	Consumer<String> showInOriginalTexts;
-	Predicate<String> isStringInList;
-	Function<Object, CompletableFuture<Optional<Node>>> nodeLoader;
+	public Consumer<String> showInOriginalTexts;
+	public Predicate<String> isStringInList;
+	public Function<Object, CompletableFuture<Optional<Node>>> nodeLoader;
 
-	TreeViewWindow() {
+	public NBTExplorerWindow() {
 		// UI
 		stage = new Stage();
 		stage.setTitle(translate("nbt_view.title"));
 		tree = new TreeView<>();
-		tree.setCellFactory(param -> new XTreeCell());
+		tree.setCellFactory(NodeTreeCells.cellFactory());
 
 		BorderPane rootPane = new BorderPane();
 		rootPane.setCenter(tree);
@@ -80,7 +79,7 @@ class TreeViewWindow {
 
 		// Databind
 		tree.rootProperty().bind(Bindings.createObjectBinding(
-				() -> rootNode.get().map(node -> TreeItemConstructor.getItem(node)).orElse(null),
+				() -> rootNode.get().map(node -> NodeTreeCells.getItem(node)).orElse(null),
 				rootNode));
 
 		selectedNode = Bindings.createObjectBinding(
@@ -164,14 +163,14 @@ class TreeViewWindow {
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), this::showGoTo);
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN), this::copySelectedOrigin);
 
-		stage.getScene().getStylesheets().add("/org/to2mbn/maptranslator/ui/TreeViewWindow.css");
+		stage.getScene().getStylesheets().add("/org/to2mbn/maptranslator/ui/NBTExplorerWindow.css");
 	}
 
-	void reload() {
+	public void reload() {
 		selectedNode.get().ifPresent(node -> loadAndSwitchNode(node.getPathArray()));
 	}
 
-	void selectNode(Node node) {
+	public void selectNode(Node node) {
 		boolean inViewport = false;
 		if (tree.getRoot() != null) {
 			Node root = tree.getRoot().getValue();
@@ -189,13 +188,13 @@ class TreeViewWindow {
 			if (newRoot == null) newRoot = node;
 			rootNode.set(Optional.of(newRoot));
 		}
-		tree.getSelectionModel().select(TreeItemConstructor.getItem(node));
+		tree.getSelectionModel().select(NodeTreeCells.getItem(node));
 		int idx = tree.getSelectionModel().getSelectedIndex();
 		tree.getTreeItem(idx).setExpanded(true);
 		tree.scrollTo(idx);
 	}
 
-	Optional<Optional<Node>> tryLoadFromCurrent(Object path) {
+	private Optional<Optional<Node>> tryLoadFromCurrent(Object path) {
 		if (tree.getRoot() != null && path instanceof String[]) {
 			Node root = tree.getRoot().getValue();
 			while (root.parent() != null)
@@ -208,7 +207,7 @@ class TreeViewWindow {
 		return Optional.empty();
 	}
 
-	void switchNode(Object path) {
+	public void switchNode(Object path) {
 		Optional<Optional<Node>> tryCurrent = tryLoadFromCurrent(path);
 		if (tryCurrent.isPresent()) {
 			tryCurrent.get().ifPresent(node -> selectNode(node));
@@ -217,7 +216,7 @@ class TreeViewWindow {
 		}
 	}
 
-	void loadAndSwitchNode(Object path) {
+	private void loadAndSwitchNode(Object path) {
 		loadingNode = true;
 		nodeLoader.apply(path)
 				.thenAcceptAsync(optional -> {
@@ -227,7 +226,7 @@ class TreeViewWindow {
 				.exceptionally(reportException);
 	}
 
-	void switchAppearance(int offset) {
+	private void switchAppearance(int offset) {
 		if (appearances.get() != null && !loadingNode) {
 			int newIdx = currentAppearance.get() + offset;
 			if (newIdx < 0) newIdx = totalAppearance.get() - 1;
@@ -239,7 +238,7 @@ class TreeViewWindow {
 	}
 
 	// Features
-	void showGoTo() {
+	private void showGoTo() {
 		TextInputDialog dialog = new TextInputDialog();
 		dialog.setTitle(translate("nbt_view.goto"));
 		dialog.setHeaderText(translate("nbt_view.goto"));
@@ -253,7 +252,7 @@ class TreeViewWindow {
 		dialog.getDialogPane().getScene().getWindow().centerOnScreen();
 	}
 
-	void copySelectedOrigin() {
+	private void copySelectedOrigin() {
 		selectedNode.get().ifPresent(node -> {
 			String origin = (String) node.properties().get("origin");
 			if (origin != null) {
@@ -262,23 +261,23 @@ class TreeViewWindow {
 		});
 	}
 
-	void copySelectedPath() {
+	private void copySelectedPath() {
 		selectedNode.get().ifPresent(node -> copyToClipboard(node.getPath()));
 	}
 
-	void copySelectedValue() {
+	private void copySelectedValue() {
 		selectedNode.get().ifPresent(node -> copyToClipboard(node.getStringValue()));
 	}
 
-	void goUp() {
+	private void goUp() {
 		rootParentNode.get().ifPresent(node -> rootNode.set(Optional.of(node)));
 	}
 
-	void goInto() {
+	private void goInto() {
 		selectedNode.get().ifPresent(node -> rootNode.set(Optional.of(node)));
 	}
 
-	void showInOriginalTexts() {
+	private void showInOriginalTexts() {
 		selectedText.get().ifPresent(text -> showInOriginalTexts.accept(text));
 	}
 

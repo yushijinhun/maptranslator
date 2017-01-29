@@ -25,25 +25,26 @@ import org.to2mbn.maptranslator.tree.TextArgumentNode;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.util.Callback;
 
-public class TreeItemConstructor {
+class NodeTreeCells {
 
-	static final Image img_boolean = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/boolean.png");
-	static final Image img_byte_array = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/byte_array.png");
-	static final Image img_byte = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/byte.png");
-	static final Image img_compound = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/compound.png");
-	static final Image img_double = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/double.png");
-	static final Image img_float = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/float.png");
-	static final Image img_int_array = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/int_array.png");
-	static final Image img_int = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/int.png");
-	static final Image img_list = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/list.png");
-	static final Image img_long = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/long.png");
-	static final Image img_short = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/short.png");
-	static final Image img_string = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/string.png");
-	static final Image img_file = new Image("/org/to2mbn/maptranslator/ui/icon/common/package-x-generic.png");
-	static final Image img_argument = new Image("/org/to2mbn/maptranslator/ui/icon/common/curly-brackets.png");
+	private static final Image img_byte_array = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/byte_array.png");
+	private static final Image img_byte = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/byte.png");
+	private static final Image img_compound = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/compound.png");
+	private static final Image img_double = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/double.png");
+	private static final Image img_float = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/float.png");
+	private static final Image img_int_array = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/int_array.png");
+	private static final Image img_int = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/int.png");
+	private static final Image img_list = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/list.png");
+	private static final Image img_long = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/long.png");
+	private static final Image img_short = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/short.png");
+	private static final Image img_string = new Image("/org/to2mbn/maptranslator/ui/icon/nbt/string.png");
+	private static final Image img_file = new Image("/org/to2mbn/maptranslator/ui/icon/common/package-x-generic.png");
+	private static final Image img_argument = new Image("/org/to2mbn/maptranslator/ui/icon/common/curly-brackets.png");
 
 	public static TreeItem<Node> construct(Node value) {
 		TreeItem<Node> node = new TreeItem<>(value);
@@ -99,7 +100,11 @@ public class TreeItemConstructor {
 		return node;
 	}
 
-	static class XTreeCell extends TreeCell<Node> {
+	public static Callback<TreeView<Node>, TreeCell<Node>> cellFactory() {
+		return param -> new NodeTreeCell();
+	}
+
+	private static class NodeTreeCell extends TreeCell<Node> {
 
 		@Override
 		protected void updateItem(Node item, boolean empty) {
@@ -107,7 +112,7 @@ public class TreeItemConstructor {
 			boolean translatable = false;
 			if (!empty) {
 				setText(item.getDisplayText());
-				setGraphic(TreeItemConstructor.getItem(item).getGraphic());
+				setGraphic(NodeTreeCells.getItem(item).getGraphic());
 				if (item.hasTag(RulesConstants.translatable)) {
 					translatable = true;
 				}
@@ -129,7 +134,7 @@ public class TreeItemConstructor {
 	}
 
 	@SuppressWarnings("unchecked")
-	static TreeItem<Node> getItem(Node node) {
+	public static TreeItem<Node> getItem(Node node) {
 		return (TreeItem<Node>) node.properties().get("javafx.treeitem");
 	}
 

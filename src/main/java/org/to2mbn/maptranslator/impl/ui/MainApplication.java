@@ -12,8 +12,8 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -36,16 +36,15 @@ class MainApplication {
 		Platform.runLater(() -> new MainApplication().start());
 	}
 
-	Path folder;
-	MapHandler handler;
-	StringDisplayWindow strDisWin;
-	TranslateWindow traWin;
-	TreeViewWindow treeWin;
-	ProgressWindow progressWin;
-	Map<String, List<String[]>> mapping;
+	private MapHandler handler;
+	private OriginalTextsWindow originalTextsWindow;
+	private TranslateWindow translateWindow;
+	private NBTExplorerWindow nbtWindow;
+	private ProgressWindow progressWinow;
+	private Map<String, List<String[]>> appearancesMapping;
 
-	void start() {
-		progressWin = new ProgressWindow();
+	private void start() {
+		progressWinow = new ProgressWindow();
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle(translate("load_save.title"));
 		File selected = chooser.showDialog(null);
@@ -53,42 +52,40 @@ class MainApplication {
 			alert(AlertType.ERROR, "load_save.no_chosen");
 			return;
 		}
-		folder = selected.toPath();
-		showProgressWindow(false);
-		MapHandler.create(folder)
+		progressWinow.show(false);
+		MapHandler.create(selected.toPath())
 				.thenAcceptAsync(createdHandler -> {
-					hideProgressWindow();
+					progressWinow.hide();
 					handler = createdHandler;
 					initUI();
 				}, Platform::runLater)
 				.exceptionally(reportException);
 	}
 
-	void initUI() {
-		progressWin.progressGetter = () -> ((double) handler.currentProgress()) / ((double) handler.totalProgress());
-		strDisWin = new StringDisplayWindow();
-		traWin = new TranslateWindow();
-		treeWin = new TreeViewWindow();
-		strDisWin.stage.setOnCloseRequest(event -> exit());
-		traWin.stage.setOnCloseRequest(event -> exit());
-		treeWin.stage.setOnCloseRequest(event -> exit());
+	private void initUI() {
+		progressWinow.progressGetter = () -> ((double) handler.currentProgress()) / ((double) handler.totalProgress());
+		originalTextsWindow = new OriginalTextsWindow();
+		translateWindow = new TranslateWindow();
+		nbtWindow = new NBTExplorerWindow();
+		originalTextsWindow.stage.setOnCloseRequest(event -> exit());
+		translateWindow.stage.setOnCloseRequest(event -> exit());
+		nbtWindow.stage.setOnCloseRequest(event -> exit());
 
-		traWin.onAdded = strDisWin::onStringAddedToTranslate;
-		traWin.onRemoved = strDisWin::onStringRemovedFromTranslate;
-		traWin.onTextDbclick = strDisWin::jumpToString;
-		strDisWin.onStringDbclick = traWin::tryAddEntry;
-		strDisWin.isStringTranslated = traWin::isStringTranslated;
-		treeWin.showInOriginalTexts = strDisWin::jumpToString;
-		treeWin.isStringInList = strDisWin::stringExists;
-		strDisWin.showIn = str -> {
-			if (mapping.containsKey(str)) {
-				treeWin.stage.requestFocus();
-				treeWin.tree.requestFocus();
-				treeWin.appearances.set(new ArrayList<>(mapping.get(str)));
+		translateWindow.onAdded = originalTextsWindow::onStringAddedToTranslate;
+		translateWindow.onRemoved = originalTextsWindow::onStringRemovedFromTranslate;
+		translateWindow.onTextDbclick = originalTextsWindow::jumpToString;
+		originalTextsWindow.onStringDbclick = translateWindow::tryAddEntry;
+		originalTextsWindow.isStringTranslated = translateWindow::isStringTranslated;
+		nbtWindow.showInOriginalTexts = originalTextsWindow::jumpToString;
+		nbtWindow.isStringInList = originalTextsWindow::stringExists;
+		originalTextsWindow.showIn = str -> {
+			if (appearancesMapping.containsKey(str)) {
+				nbtWindow.stage.requestFocus();
+				nbtWindow.appearances.set(new ArrayList<>(appearancesMapping.get(str)));
 			}
 		};
-		treeWin.nodeLoader = path -> {
-			showProgressWindow(false);
+		nbtWindow.nodeLoader = path -> {
+			progressWinow.show(false);
 			return ((path instanceof String)
 					? handler.resolveNode((String) path)
 					: handler.resolveNode((String[]) path))
@@ -97,39 +94,37 @@ class MainApplication {
 									Node root = node;
 									while (root.parent() != null)
 										root = root.parent();
-									TreeItemConstructor.construct(root);
+									NodeTreeCells.construct(root);
 								});
-								hideProgressWindow();
+								progressWinow.hide();
 								return result;
 							}, Platform::runLater);
 		};
 
-		strDisWin.btnLoad.setOnAction(event -> {
-			showProgressWindow(true);
+		originalTextsWindow.loader = () -> {
+			progressWinow.show(true);
 			handler.excludes().clear();
-			handler.excludes().addAll(strDisWin.getIgnores());
-			handler.extractStrings()
-					.thenAcceptAsync(param -> {
-						mapping = param;
-						strDisWin.setStrings(mapping.keySet());
-						hideProgressWindow();
-						treeWin.reload();
-						showParseWarnings();
-					}, Platform::runLater)
-					.exceptionally(reportException);
-		});
+			handler.excludes().addAll(originalTextsWindow.getIgnores());
+			return handler.extractStrings()
+					.thenApplyAsync(param -> {
+						appearancesMapping = param;
+						progressWinow.hide();
+						nbtWindow.reload();
+						showParsingWarnings();
+						return param.keySet();
+					}, Platform::runLater);
+		};
 
-		traWin.btnExport.setOnAction(event -> {
+		translateWindow.exporter = data -> {
 			FileChooser chooser = new FileChooser();
 			chooser.setTitle(translate("translate.export"));
 			chooser.setSelectedExtensionFilter(new ExtensionFilter("*.json", "*.json"));
-			File target = chooser.showSaveDialog(traWin.stage);
+			File target = chooser.showSaveDialog(translateWindow.stage);
 			if (target == null) return;
-			showProgressWindow(false);
-			Map<String, String> copy = traWin.toTranslateTable();
+			progressWinow.show(false);
 			CompletableFuture
 					.runAsync(() -> {
-						JSONObject json = new JSONObject(copy);
+						JSONObject json = new JSONObject(data);
 						try (Writer writer = new OutputStreamWriter(new FileOutputStream(target), "UTF-8")) {
 							writer.write(json.toString());
 						} catch (IOException e) {
@@ -137,22 +132,22 @@ class MainApplication {
 						}
 					})
 					.handleAsync((result, err) -> {
-						hideProgressWindow();
+						progressWinow.hide();
 						if (err != null) {
 							reportException(err);
 						}
 						return null;
 					}, Platform::runLater);
-		});
+		};
 
-		traWin.btnImport.setOnAction(event -> {
+		translateWindow.importer = () -> {
 			FileChooser chooser = new FileChooser();
 			chooser.setTitle(translate("translate.import"));
 			chooser.setSelectedExtensionFilter(new ExtensionFilter("*.json", "*.json"));
-			File target = chooser.showOpenDialog(traWin.stage);
-			if (target == null) return;
-			showProgressWindow(false);
-			CompletableFuture
+			File target = chooser.showOpenDialog(translateWindow.stage);
+			if (target == null) return CompletableFuture.completedFuture(null);
+			progressWinow.show(false);
+			return CompletableFuture
 					.supplyAsync(() -> {
 						try (Reader reader = new InputStreamReader(new FileInputStream(target), "UTF-8")) {
 							return new JSONObject(new JSONTokener(reader));
@@ -161,27 +156,28 @@ class MainApplication {
 						}
 					})
 					.handleAsync((result, err) -> {
-						hideProgressWindow();
+						progressWinow.hide();
 						if (err == null) {
-							for (String originStr : result.keySet()) {
-								String targetStr = result.getString(originStr);
-								traWin.importEntry(originStr, targetStr);
+							Map<String, String> mapping = new LinkedHashMap<>();
+							for (String key : result.keySet()) {
+								mapping.put(key, result.getString(key));
 							}
+							return mapping;
 						} else {
 							reportException(err);
+							return null;
 						}
-						return null;
 					}, Platform::runLater);
-		});
+		};
 
-		traWin.btnApply.setOnAction(event -> {
-			showProgressWindow(true);
+		translateWindow.applier = data -> {
+			progressWinow.show(true);
 			handler.excludes().clear();
-			handler.excludes().addAll(strDisWin.getIgnores());
+			handler.excludes().addAll(originalTextsWindow.getIgnores());
 			handler
-					.replace(traWin.toTranslateTable())
+					.replace(data)
 					.handleAsync((result, err) -> {
-						hideProgressWindow();
+						progressWinow.hide();
 						if (err == null) {
 							alert(AlertType.INFORMATION, "translate.apply.success.message");
 						} else {
@@ -189,35 +185,27 @@ class MainApplication {
 						}
 						return null;
 					}, Platform::runLater);
-		});
+		};
 
-		strDisWin.stage.show();
-		traWin.stage.show();
-		treeWin.stage.show();
+		originalTextsWindow.stage.show();
+		translateWindow.stage.show();
+		nbtWindow.stage.show();
 	}
 
-	void showProgressWindow(boolean progress) {
-		progressWin.show(progress);
-	}
-
-	void hideProgressWindow() {
-		progressWin.hide();
-	}
-
-	void exit() {
+	private void exit() {
 		handler.close();
-		traWin.stage.close();
-		strDisWin.stage.close();
-		treeWin.stage.close();
+		translateWindow.stage.close();
+		originalTextsWindow.stage.close();
+		nbtWindow.stage.close();
 	}
 
-	void showParseWarnings() {
+	private void showParsingWarnings() {
 		List<ParsingWarning> warnings = handler.lastParsingWarnings();
 		if (!warnings.isEmpty()) {
 			ReportWindow reportWindow = new ReportWindow(ParsingResultGenerator.warningsToHtml(warnings), translate("report.title"));
 			reportWindow.gotoNodeListener = path -> {
-				treeWin.switchNode(path);
-				treeWin.stage.requestFocus();
+				nbtWindow.switchNode(path);
+				nbtWindow.stage.requestFocus();
 			};
 			reportWindow.stage.show();
 		}

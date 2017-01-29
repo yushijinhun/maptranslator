@@ -17,15 +17,15 @@ import javafx.stage.StageStyle;
 
 class ProgressWindow {
 
-	Stage stage;
-	DoubleProperty progress = new SimpleDoubleProperty();
-	BooleanProperty showProgress = new SimpleBooleanProperty();
+	private Stage stage;
+	private DoubleProperty progress = new SimpleDoubleProperty();
+	private BooleanProperty showProgress = new SimpleBooleanProperty();
 
-	volatile Supplier<Double> progressGetter;
+	public volatile Supplier<Double> progressGetter;
 
-	Timer timer = new Timer(true);
+	private Timer timer = new Timer(true);
 
-	ProgressWindow() {
+	public ProgressWindow() {
 		stage = new Stage(StageStyle.UTILITY);
 		stage.setTitle(translate("progress.title"));
 		Label lbl = new Label();
@@ -50,14 +50,14 @@ class ProgressWindow {
 		}, 0, 100);
 	}
 
-	void show(boolean progress) {
+	public void show(boolean progress) {
 		showProgress.set(progress);
 		stage.setWidth(150);
 		stage.setHeight(50);
 		stage.show();
 	}
 
-	void hide() {
+	public void hide() {
 		showProgress.set(false);
 		stage.hide();
 	}

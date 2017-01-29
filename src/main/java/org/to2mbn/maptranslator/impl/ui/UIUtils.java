@@ -17,15 +17,15 @@ import javafx.stage.Stage;
 
 class UIUtils {
 
-	static final ResourceBundle bundle = ResourceBundle.getBundle("org.to2mbn.maptranslator.ui.lang");
+	public static final ResourceBundle bundle = ResourceBundle.getBundle("org.to2mbn.maptranslator.ui.lang");
 
-	static final void alert(AlertType type, String format, Object... args) {
+	public static final void alert(AlertType type, String format, Object... args) {
 		Alert alert = new Alert(type);
 		alert.getDialogPane().setContent(new Label(translate(format, args)));
 		alert.show();
 	}
 
-	static final String translate(String format, Object... args) {
+	public static final String translate(String format, Object... args) {
 		try {
 			return String.format(bundle.getString(format), args);
 		} catch (MissingResourceException e) {
@@ -34,7 +34,7 @@ class UIUtils {
 		}
 	}
 
-	static final String translateRaw(String key) {
+	public static final String translateRaw(String key) {
 		try {
 			return bundle.getString(key);
 		} catch (MissingResourceException e) {
@@ -43,12 +43,12 @@ class UIUtils {
 		}
 	}
 
-	static final Function<Throwable, Void> reportException = e -> {
+	public static final Function<Throwable, Void> reportException = e -> {
 		reportException(e);
 		return null;
 	};
 
-	static void reportException(Throwable e) {
+	public static void reportException(Throwable e) {
 		e.printStackTrace();
 		Platform.runLater(() -> {
 			Alert alert = new Alert(AlertType.ERROR);
@@ -72,14 +72,14 @@ class UIUtils {
 		});
 	}
 
-	static String throwableToString(Throwable e) {
+	public static String throwableToString(Throwable e) {
 		StringWriter writer = new StringWriter();
 		PrintWriter printWriter = new PrintWriter(writer);
 		e.printStackTrace(printWriter);
 		return writer.toString();
 	}
 
-	static void copyToClipboard(String string) {
+	public static void copyToClipboard(String string) {
 		ClipboardContent content = new ClipboardContent();
 		content.putString(string);
 		Clipboard.getSystemClipboard().setContent(content);
