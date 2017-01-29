@@ -214,7 +214,12 @@ class MainApplication {
 	void showParseWarnings() {
 		List<ParsingWarning> warnings = handler.lastParsingWarnings();
 		if (!warnings.isEmpty()) {
-			new ReportWindow(ParsingResultGenerator.warningsToHtml(warnings), translate("report.title")).stage.show();
+			ReportWindow reportWindow = new ReportWindow(ParsingResultGenerator.warningsToHtml(warnings), translate("report.title"));
+			reportWindow.gotoNodeListener = path -> {
+				treeWin.switchNode(path);
+				treeWin.stage.requestFocus();
+			};
+			reportWindow.stage.show();
 		}
 	}
 }

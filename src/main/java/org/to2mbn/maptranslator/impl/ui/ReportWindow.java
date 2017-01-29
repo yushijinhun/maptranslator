@@ -8,8 +8,12 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.WebView;
@@ -24,6 +28,8 @@ class ReportWindow {
 	Button btnExport;
 	String report;
 	String title;
+
+	Consumer<String> gotoNodeListener;
 
 	ReportWindow(String report, String title) {
 		this.report = report;
@@ -58,6 +64,21 @@ class ReportWindow {
 					})
 					.exceptionally(reportException);
 		});
+
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), () -> {
+			String path = getSelectedNodePath();
+			if (path != null) {
+				gotoNodeListener.accept(path);
+			}
+		});
+	}
+
+	String getSelectedNodePath() {
+		String text = (String) webview.getEngine().executeScript("window.getSelection().toString()");
+		if (text == null) return null;
+		text = text.replace("\n", "").trim();
+		if (text.isEmpty()) return null;
+		return text;
 	}
 
 }
