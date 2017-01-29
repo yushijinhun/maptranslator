@@ -55,7 +55,7 @@ class OriginalTextsWindow {
 
 	public Consumer<String> onStringDbclick;
 	public Predicate<String> isStringTranslated;
-	public Consumer<String> showIn;
+	public Consumer<String> showSelectedInNBTExplorer;
 	public Supplier<CompletableFuture<Set<String>>> loader;
 
 	public OriginalTextsWindow() {
@@ -126,10 +126,7 @@ class OriginalTextsWindow {
 		});
 		list.setContextMenu(popupMenu);
 		popupMenu.setOnShowing(event -> menuShowIn.setDisable(list.getSelectionModel().isEmpty()));
-		menuShowIn.setOnAction(event -> {
-			String str = list.getSelectionModel().getSelectedItem();
-			if (str != null) showIn.accept(str);
-		});
+		menuShowIn.setOnAction(event -> showSelectedInNBTExplorer());
 
 		list.itemsProperty().bind(Bindings.createObjectBinding(() -> {
 			if (txtFilter.getText().isEmpty()) {
@@ -166,6 +163,7 @@ class OriginalTextsWindow {
 				.exceptionally(reportException));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN), showFilter);
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.ESCAPE), hideFilter);
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), this::showSelectedInNBTExplorer);
 	}
 
 	public void onStringAddedToTranslate(String origin) {
@@ -207,5 +205,10 @@ class OriginalTextsWindow {
 
 	public boolean stringExists(String str) {
 		return stringsSet.contains(str);
+	}
+
+	private void showSelectedInNBTExplorer() {
+		String str = list.getSelectionModel().getSelectedItem();
+		if (str != null) showSelectedInNBTExplorer.accept(str);
 	}
 }

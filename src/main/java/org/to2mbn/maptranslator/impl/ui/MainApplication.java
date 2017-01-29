@@ -78,7 +78,7 @@ class MainApplication {
 		originalTextsWindow.isStringTranslated = translateWindow::isStringTranslated;
 		nbtWindow.showInOriginalTexts = originalTextsWindow::jumpToString;
 		nbtWindow.isStringInList = originalTextsWindow::stringExists;
-		originalTextsWindow.showIn = str -> {
+		originalTextsWindow.showSelectedInNBTExplorer = str -> {
 			if (appearancesMapping.containsKey(str)) {
 				nbtWindow.stage.requestFocus();
 				nbtWindow.appearances.set(new ArrayList<>(appearancesMapping.get(str)));
