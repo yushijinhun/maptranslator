@@ -10,6 +10,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
@@ -75,5 +77,11 @@ class UIUtils {
 		PrintWriter printWriter = new PrintWriter(writer);
 		e.printStackTrace(printWriter);
 		return writer.toString();
+	}
+
+	static void copyToClipboard(String string) {
+		ClipboardContent content = new ClipboardContent();
+		content.putString(string);
+		Clipboard.getSystemClipboard().setContent(content);
 	}
 }

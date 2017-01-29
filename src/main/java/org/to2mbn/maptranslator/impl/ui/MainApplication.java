@@ -78,13 +78,13 @@ class MainApplication {
 		traWin.onTextDbclick = strDisWin::jumpToString;
 		strDisWin.onStringDbclick = traWin::tryAddEntry;
 		strDisWin.isStringTranslated = traWin::isStringTranslated;
-		treeWin.showIn = strDisWin::jumpToString;
+		treeWin.showInOriginalTexts = strDisWin::jumpToString;
 		treeWin.isStringInList = strDisWin::stringExists;
 		strDisWin.showIn = str -> {
 			if (mapping.containsKey(str)) {
 				treeWin.stage.requestFocus();
 				treeWin.tree.requestFocus();
-				treeWin.setAppearances(new ArrayList<>(mapping.get(str)));
+				treeWin.appearances.set(new ArrayList<>(mapping.get(str)));
 			}
 		};
 		treeWin.nodeLoader = path -> {

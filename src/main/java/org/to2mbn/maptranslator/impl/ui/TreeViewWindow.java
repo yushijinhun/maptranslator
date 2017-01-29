@@ -1,5 +1,7 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.copyToClipboard;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translateRaw;
@@ -13,6 +15,8 @@ import org.to2mbn.maptranslator.impl.ui.TreeItemConstructor.XTreeCell;
 import org.to2mbn.maptranslator.tree.Node;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanExpression;
+import javafx.beans.binding.ObjectExpression;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -23,10 +27,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -39,20 +40,27 @@ class TreeViewWindow {
 	TreeView<Node> tree;
 	MenuItem menuGoInto = new MenuItem();
 	MenuItem menuUpTo = new MenuItem();
-	MenuItem menuShowIn = new MenuItem(translate("nbt_view.menu.show_in_strings"));
+	MenuItem menuShowInOriginalTexts = new MenuItem(translate("nbt_view.menu.show_in_strings"));
 	MenuItem menuCopyPath = new MenuItem(translate("nbt_view.menu.copy_path"));
 	MenuItem menuCopyValue = new MenuItem(translate("nbt_view.menu.copy_value"));
-	ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowIn, new SeparatorMenuItem(), menuCopyPath, menuCopyValue);
+	ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowInOriginalTexts, new SeparatorMenuItem(), menuCopyPath, menuCopyValue);
 	IntegerProperty currentAppearance = new SimpleIntegerProperty();
 	IntegerProperty totalAppearance = new SimpleIntegerProperty();
 	ObjectProperty<List<String[]>> appearances = new SimpleObjectProperty<>();
 	boolean loadingNode = false;
 
-	Consumer<String> showIn;
+	ObjectProperty<Optional<Node>> rootNode = new SimpleObjectProperty<>(Optional.empty());
+	ObjectExpression<Optional<Node>> selectedNode;
+	ObjectExpression<Optional<Node>> rootParentNode;
+	BooleanExpression isNodeSelected;
+	ObjectExpression<Optional<String>> selectedText;
+
+	Consumer<String> showInOriginalTexts;
 	Predicate<String> isStringInList;
 	Function<Object, CompletableFuture<Optional<Node>>> nodeLoader;
 
 	TreeViewWindow() {
+		// UI
 		stage = new Stage();
 		stage.setTitle(translate("nbt_view.title"));
 		tree = new TreeView<>();
@@ -64,45 +72,103 @@ class TreeViewWindow {
 		tree.setShowRoot(true);
 
 		Label lblAppearanceCount = new Label();
-		lblAppearanceCount.textProperty().bind(Bindings.format(translateRaw("nbt_view.find.tip"), currentAppearance.add(1), totalAppearance));
 		rootPane.setBottom(lblAppearanceCount);
 		lblAppearanceCount.visibleProperty().bind(appearances.isNotNull());
 
 		Label lblPath = new Label();
-		lblPath.textProperty().bind(Bindings.createStringBinding(() -> {
-			TreeItem<Node> item = tree.getSelectionModel().getSelectedItem();
-			if (item == null) item = tree.getRoot();
-			if (item != null) {
-				return item.getValue().getPath();
-			} else {
-				return translate("nbt_view.path.no_selected");
-			}
-		}, tree.getSelectionModel().selectedItemProperty(), tree.rootProperty()));
 		rootPane.setTop(lblPath);
 
-		tree.rootProperty().addListener(dummy -> updateContextMenu());
-		tree.getSelectionModel().selectedItemProperty().addListener(dummy -> updateContextMenu());
-		updateContextMenu();
+		// Databind
+		tree.rootProperty().bind(Bindings.createObjectBinding(
+				() -> rootNode.get().map(node -> TreeItemConstructor.getItem(node)).orElse(null),
+				rootNode));
 
+		selectedNode = Bindings.createObjectBinding(
+				() -> Optional.ofNullable(tree.getSelectionModel().getSelectedItem()).map(item -> item.getValue()),
+				tree.getSelectionModel().selectedItemProperty());
+
+		rootParentNode = Bindings.createObjectBinding(
+				() -> rootNode.get().map(Node::parent),
+				rootNode);
+
+		isNodeSelected = Bindings.createBooleanBinding(
+				() -> selectedNode.get().isPresent(),
+				selectedNode);
+
+		selectedText = Bindings.createObjectBinding(
+				() -> selectedNode.get()
+						.flatMap(Node::getText),
+				selectedNode);
+
+		lblAppearanceCount.textProperty().bind(Bindings.format(
+				translateRaw("nbt_view.find.tip"),
+				currentAppearance.add(1), totalAppearance));
+
+		lblPath.textProperty().bind(Bindings.createStringBinding(
+				() -> Optional.ofNullable(defaultIfNull(selectedNode.get().orElse(null), rootNode.get().orElse(null)))
+						.map(Node::getPath)
+						.orElse(translate("nbt_view.path.no_selected")),
+				selectedNode, rootNode));
+
+		menuUpTo.disableProperty().bind(Bindings.createBooleanBinding(
+				() -> !rootParentNode.get().isPresent(),
+				rootParentNode));
+
+		menuUpTo.textProperty().bind(Bindings.createStringBinding(
+				() -> rootParentNode.get()
+						.map(node -> translate("nbt_view.menu.back.available", node))
+						.orElse(translate("nbt_view.menu.back.invalid")),
+				rootParentNode));
+
+		menuGoInto.disableProperty().bind(Bindings.createBooleanBinding(
+				() -> selectedNode.get()
+						.map(node -> node == rootNode.get().orElse(null))
+						.orElse(true),
+				selectedNode, rootNode));
+
+		menuGoInto.textProperty().bind(Bindings.createStringBinding(
+				() -> selectedNode.get()
+						.map(node -> translate("nbt_view.menu.enter.available", node))
+						.orElse(translate("nbt_view.menu.enter.invalid")),
+				selectedNode));
+
+		menuCopyPath.disableProperty().bind(isNodeSelected.not());
+		menuCopyValue.disableProperty().bind(isNodeSelected.not());
+
+		menuShowInOriginalTexts.disableProperty().bind(Bindings.createBooleanBinding(
+				() -> selectedText.get()
+						.map(text -> !isStringInList.test(text))
+						.orElse(true),
+				selectedText));
+
+		appearances.addListener(dummy -> {
+			List<String[]> nodes = appearances.get();
+			if (nodes != null) {
+				currentAppearance.set(0);
+				totalAppearance.set(nodes.size());
+				switchAppearance(0);
+			}
+		});
+
+		// Event Handling
 		tree.setContextMenu(popupMenu);
+		menuUpTo.setOnAction(e -> goUp());
+		menuGoInto.setOnAction(e -> goInto());
+		menuShowInOriginalTexts.setOnAction(e -> showInOriginalTexts());
+		menuCopyPath.setOnAction(e -> copySelectedPath());
+		menuCopyValue.setOnAction(e -> copySelectedValue());
+
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN), () -> switchAppearance(+1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN), () -> switchAppearance(-1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.SEMICOLON, KeyCombination.CONTROL_DOWN), () -> appearances.set(null));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN), this::showGoTo);
-		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN), this::copyOrigin);
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN), this::copySelectedOrigin);
 
 		stage.getScene().getStylesheets().add("/org/to2mbn/maptranslator/ui/TreeViewWindow.css");
 	}
 
-	void copyToClipboard(String string) {
-		ClipboardContent content = new ClipboardContent();
-		content.putString(string);
-		Clipboard.getSystemClipboard().setContent(content);
-	}
-
-	void setRoot(Node node) {
-		tree.setRoot(TreeItemConstructor.getItem(node));
-		tree.refresh();
+	void reload() {
+		selectedNode.get().ifPresent(node -> loadAndSwitchNode(node.getPathArray()));
 	}
 
 	void selectNode(Node node) {
@@ -121,21 +187,12 @@ class TreeViewWindow {
 		if (!inViewport) {
 			Node newRoot = node.parent();
 			if (newRoot == null) newRoot = node;
-			setRoot(newRoot);
+			rootNode.set(Optional.of(newRoot));
 		}
 		tree.getSelectionModel().select(TreeItemConstructor.getItem(node));
 		int idx = tree.getSelectionModel().getSelectedIndex();
 		tree.getTreeItem(idx).setExpanded(true);
 		tree.scrollTo(idx);
-	}
-
-	void setAppearances(List<String[]> nodes) {
-		appearances.set(nodes);
-		if (nodes != null) {
-			currentAppearance.set(0);
-			totalAppearance.set(nodes.size());
-			switchAppearance(0);
-		}
 	}
 
 	Optional<Optional<Node>> tryLoadFromCurrent(Object path) {
@@ -181,6 +238,7 @@ class TreeViewWindow {
 		}
 	}
 
+	// Features
 	void showGoTo() {
 		TextInputDialog dialog = new TextInputDialog();
 		dialog.setTitle(translate("nbt_view.goto"));
@@ -195,87 +253,33 @@ class TreeViewWindow {
 		dialog.getDialogPane().getScene().getWindow().centerOnScreen();
 	}
 
-	void copyOrigin() {
-		TreeItem<Node> selected = tree.getSelectionModel().getSelectedItem();
-		if (selected != null) {
-			Node node = selected.getValue();
+	void copySelectedOrigin() {
+		selectedNode.get().ifPresent(node -> {
 			String origin = (String) node.properties().get("origin");
 			if (origin != null) {
 				copyToClipboard(origin);
 			}
-		}
+		});
 	}
 
-	void reload() {
-		TreeItem<Node> selected = tree.getSelectionModel().getSelectedItem();
-		if (selected != null) {
-			loadAndSwitchNode(selected.getValue().getPathArray());
-		}
+	void copySelectedPath() {
+		selectedNode.get().ifPresent(node -> copyToClipboard(node.getPath()));
 	}
 
-	void updateContextMenu() {
-		Node rootParent;
-		Node selected;
-		Node root;
-		if (tree.getRoot() != null) {
-			root = tree.getRoot().getValue();
-			rootParent = root.parent();
-			selected = Optional.ofNullable(tree.getSelectionModel().getSelectedItem()).map(item -> item.getValue()).orElse(null);
-		} else {
-			rootParent = selected = root = null;
-		}
-		if (rootParent == null) {
-			menuUpTo.setText(translate("nbt_view.menu.back.invalid"));
-			menuUpTo.setDisable(true);
-		} else {
-			menuUpTo.setText(translate("nbt_view.menu.back.available", rootParent));
-			menuUpTo.setDisable(false);
-		}
-		if (selected == null) {
-			menuGoInto.setText(translate("nbt_view.menu.enter.invalid"));
-			menuGoInto.setDisable(true);
-		} else {
-			menuGoInto.setText(translate("nbt_view.menu.enter.available", selected));
-			menuGoInto.setDisable(selected == root);
-		}
-		String text;
-		if (selected != null) {
-			text = selected.getText().orElse(null);
-		} else {
-			text = null;
-		}
-		if (selected == null || text == null) {
-			menuShowIn.setDisable(true);
-		} else {
-			menuShowIn.setDisable(!isStringInList.test(text));
-		}
-		menuCopyPath.setDisable(selected == null);
-		menuCopyValue.setDisable(selected == null);
-		menuUpTo.setOnAction(e -> {
-			if (rootParent != null) {
-				setRoot(rootParent);
-			}
-		});
-		menuGoInto.setOnAction(e -> {
-			if (selected != null) {
-				setRoot(selected);
-			}
-		});
-		menuShowIn.setOnAction(e -> {
-			if (text != null) {
-				showIn.accept(text);
-			}
-		});
-		menuCopyPath.setOnAction(e -> {
-			if (selected != null) {
-				copyToClipboard(selected.getPath());
-			}
-		});
-		menuCopyValue.setOnAction(e -> {
-			if (selected != null) {
-				copyToClipboard(selected.getStringValue());
-			}
-		});
+	void copySelectedValue() {
+		selectedNode.get().ifPresent(node -> copyToClipboard(node.getStringValue()));
+	}
+
+	void goUp() {
+		rootParentNode.get().ifPresent(node -> rootNode.set(Optional.of(node)));
+	}
+
+	void goInto() {
+		selectedNode.get().ifPresent(node -> rootNode.set(Optional.of(node)));
+	}
+
+	void showInOriginalTexts() {
+		selectedText.get().ifPresent(text -> showInOriginalTexts.accept(text));
 	}
 
 }
