@@ -24,11 +24,7 @@ public class TreeIterator {
 
 	@SuppressWarnings("deprecation")
 	private boolean tag(Node node) {
-		boolean changed = false;
-		for (TagMarker marker : argument.markers) {
-			changed |= node.impl_runTagMarking(marker, this::onTagMarked);
-		}
-		return changed;
+		return node.impl_runTagMarking(argument.markers, this::onTagMarked);
 	}
 
 	@SuppressWarnings("deprecation")

@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
@@ -173,24 +175,33 @@ public abstract class Node {
 	public abstract String getStringValue();
 
 	@Deprecated
-	public boolean impl_runTagMarking(TagMarker marker, BiConsumer<Node, Set<String>> listener) {
+	public boolean impl_runTagMarking(Iterable<TagMarker> markers, BiConsumer<Node, Set<String>> listener) {
 		boolean changed = false;
 		Set<String> addTags = new LinkedHashSet<>();
-		if (marker.condition.test(this)) {
-			addTags.clear();
-			for (String tag : marker.tags.apply(this)) {
-				if (!hasTag(tag)) {
-					tags.add(tag);
-					changed = true;
-					addTags.add(tag);
+
+		// bfs
+		Queue<Node> queue = new LinkedList<>();
+		queue.offer(this);
+		while (!queue.isEmpty()) {
+			Node node = queue.poll();
+
+			for (TagMarker marker : markers) {
+				if (marker.condition.test(node)) {
+					addTags.clear();
+					for (String tag : marker.tags.apply(node)) {
+						if (!node.hasTag(tag)) {
+							node.tags.add(tag);
+							changed = true;
+							addTags.add(tag);
+						}
+					}
+					if (!addTags.isEmpty()) listener.accept(node, addTags);
 				}
 			}
-			if (!addTags.isEmpty())
-				listener.accept(this, addTags);
+
+			queue.addAll(node.children);
 		}
-		for (Node child : children) {
-			changed |= child.impl_runTagMarking(marker, listener);
-		}
+
 		return changed;
 	}
 
