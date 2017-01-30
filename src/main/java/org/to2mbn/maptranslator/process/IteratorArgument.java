@@ -7,6 +7,5 @@ public class IteratorArgument {
 
 	public final Set<NodeReplacer> replacers = new LinkedHashSet<>();
 	public final Set<TagMarker> markers = new LinkedHashSet<>();
-	public int maxIterations = -1;
 
 }

@@ -65,23 +65,25 @@ public class TextReplacer extends AbstractReplacer {
 		return replacedNode;
 	}
 
-	public NodeReplacer toNodeReplacer() {
-		return new NodeReplacer(nodeMatcher.and(node -> {
+	private boolean matches(Node node) {
+		if (node.unmodifiableChildren().isEmpty() && nodeMatcher.test(node)) {
 			Optional<String> optional = getNodeText(node);
 			if (optional.isPresent()) {
-				if (node.unmodifiableChildren().isEmpty()) {
-					String text = optional.get();
-					try {
-						subtreeBuilder.apply(node, text);
-					} catch (ArgumentParseException e) {
-						postResolveFailedWarning(new ResolveFailedWarning(node, text, Collections.emptyMap(), e));
-						return false;
-					}
-					return true;
+				String text = optional.get();
+				try {
+					subtreeBuilder.apply(node, text);
+				} catch (ArgumentParseException e) {
+					postResolveFailedWarning(new ResolveFailedWarning(node, text, Collections.emptyMap(), e));
+					return false;
 				}
+				return true;
 			}
-			return false;
-		}), this::replace);
+		}
+		return false;
+	}
+
+	public NodeReplacer toNodeReplacer() {
+		return new NodeReplacer(this::matches, this::replace);
 	}
 
 }

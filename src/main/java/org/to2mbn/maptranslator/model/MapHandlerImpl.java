@@ -87,7 +87,7 @@ class MapHandlerImpl implements MapHandler {
 			IteratorArgument arg = createReplacingArgument(table);
 			desGroup.write(node -> {
 				resolveMap(node);
-				new TreeIterator(arg).iterate(node);
+				TreeIterator.iterate(arg, node);
 			});
 		}, pool);
 	}
@@ -150,7 +150,7 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	private void resolveMap(Node node) {
-		new TreeIterator(mapResolvingArgument).iterate(node);
+		TreeIterator.iterate(mapResolvingArgument, node);
 	}
 
 	private void computeStringMismatches(Node root) {
@@ -193,10 +193,9 @@ class MapHandlerImpl implements MapHandler {
 	private IteratorArgument createReplacingArgument(Map<String, String> table) {
 		Predicate<String> excluder = createTextExcluder();
 		IteratorArgument arg = new IteratorArgument();
-		arg.maxIterations = 1;
 		arg.replacers.add(new NodeReplacer(
 				node -> {
-					if (node.hasTag(RulesConstants.translatable)) {
+					if (node.unmodifiableChildren().isEmpty() && node.hasTag(RulesConstants.translatable)) {
 						Optional<String> optionalText = node.getText();
 						if (optionalText.isPresent()) {
 							String text = optionalText.get();

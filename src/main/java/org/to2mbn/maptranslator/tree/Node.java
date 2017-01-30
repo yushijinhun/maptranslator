@@ -206,30 +206,41 @@ public abstract class Node {
 	}
 
 	@Deprecated
-	public boolean impl_runNodeReplacing(NodeReplacer replacer, BiConsumer<Node, Node> listener) {
+	public void impl_runNodeReplacing(Iterable<NodeReplacer> replacers, Consumer<Node> tagMarker, BiConsumer<Node, Node> listener) {
+		Node[] childrenArray = children.toArray(new Node[children.size()]);
 		boolean changed = false;
-		for (Node child : children) {
-			if (replacer.condition.test(child)) {
-				changed = true;
-				Node newChild = replacer.replacer.apply(child);
-				if (newChild != child) {
+		for (int i = 0; i < childrenArray.length; i++) {
+			Node child = childrenArray[i];
+			boolean replaced = false;
+			for (NodeReplacer replacer : replacers) {
+				if (replacer.condition.test(child)) {
+					replaced = true;
+					changed = true;
+
+					Node newChild = replacer.replacer.apply(child);
+					for (String tag : child.tags)
+						if (!newChild.hasTag(tag))
+							newChild.tags.add(tag);
+					child.properties.forEach(
+							(k, v) -> newChild.properties.putIfAbsent(k, v));
 					child.parent = null;
 					newChild.parent = this;
+					childrenArray[i] = newChild;
 
-					// re-insert all nodes to ensure the order
-					Set<Node> copied = new LinkedHashSet<>(children);
-					children.clear();
-					for (Node ch : copied) {
-						if (ch == child) ch = newChild;
-						children.add(ch);
-					}
+					tagMarker.accept(newChild);
+					listener.accept(child, newChild);
+					break;
 				}
-				listener.accept(child, newChild);
-			} else {
-				changed |= child.impl_runNodeReplacing(replacer, listener);
+			}
+			if (!replaced) {
+				child.impl_runNodeReplacing(replacers, tagMarker, listener);
 			}
 		}
-		return changed;
+		if (changed) {
+			children.clear();
+			for (Node child : childrenArray)
+				children.add(child);
+		}
 	}
 
 }
