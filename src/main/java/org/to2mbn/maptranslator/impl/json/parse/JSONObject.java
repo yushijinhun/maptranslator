@@ -225,7 +225,12 @@ public class JSONObject implements Serializable {
 				throw x.syntaxError("Expected a ':' after a key");
 			}
 			Object val = x.nextValue();
-			this.putOnce(key, val);
+
+			// it's true that duplicate keys are not allowed in json
+			// but gson does parse json with duplicate keys
+			// so do we
+			this.put(key, val);
+
 			if (val instanceof String) {
 				_valMeta.put(key, new _ParseMetadata(val, x._quoter));
 			}
