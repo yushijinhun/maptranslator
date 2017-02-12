@@ -25,6 +25,8 @@ public interface MapHandler {
 
 	CompletableFuture<Optional<Node>> resolveNode(String path);
 
+	CompletableFuture<Void> saveNode(Node node);
+
 	CompletableFuture<Void> close();
 
 	long currentProgress();

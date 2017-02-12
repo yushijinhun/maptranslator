@@ -5,12 +5,13 @@ import static org.to2mbn.maptranslator.impl.ui.UIUtils.copyToClipboard;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translateRaw;
+import static org.to2mbn.maptranslator.impl.ui.ProgressWindow.progressWindow;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import org.to2mbn.maptranslator.model.MapHandler;
 import org.to2mbn.maptranslator.tree.Node;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -30,6 +31,7 @@ import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
@@ -42,7 +44,8 @@ class NBTExplorerWindow {
 	private MenuItem menuShowInOriginalTexts = new MenuItem(translate("nbt_view.menu.show_in_strings"));
 	private MenuItem menuCopyPath = new MenuItem(translate("nbt_view.menu.copy_path"));
 	private MenuItem menuCopyValue = new MenuItem(translate("nbt_view.menu.copy_value"));
-	private ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowInOriginalTexts, new SeparatorMenuItem(), menuCopyPath, menuCopyValue);
+	private MenuItem menuEdit = new MenuItem(translate("nbt_view.menu.edit"));
+	private ContextMenu popupMenu = new ContextMenu(menuGoInto, menuUpTo, menuShowInOriginalTexts, new SeparatorMenuItem(), menuCopyPath, menuCopyValue, new SeparatorMenuItem(), menuEdit);
 	private IntegerProperty currentAppearance = new SimpleIntegerProperty();
 	private IntegerProperty totalAppearance = new SimpleIntegerProperty();
 	public ObjectProperty<List<String[]>> appearances = new SimpleObjectProperty<>();
@@ -56,7 +59,7 @@ class NBTExplorerWindow {
 
 	public Consumer<String> showInOriginalTexts;
 	public Predicate<String> isStringInList;
-	public Function<Object, CompletableFuture<Optional<Node>>> nodeLoader;
+	public MapHandler mapHandler;
 
 	public NBTExplorerWindow() {
 		// UI
@@ -149,13 +152,28 @@ class NBTExplorerWindow {
 			}
 		});
 
+		menuEdit.disableProperty().bind(Bindings.createBooleanBinding(
+				() -> !selectedNode.get().map(node -> node.relatedTextNode().isPresent()).orElse(false),
+				selectedNode));
+
 		// Event Handling
+		tree.setOnMouseClicked(event -> {
+			if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+				selectedNode.get().ifPresent(node -> {
+					if (node.unmodifiableChildren().isEmpty()) {
+						editNode();
+					}
+				});
+			}
+		});
+
 		tree.setContextMenu(popupMenu);
 		menuUpTo.setOnAction(e -> goUp());
 		menuGoInto.setOnAction(e -> goInto());
 		menuShowInOriginalTexts.setOnAction(e -> showInOriginalTexts());
 		menuCopyPath.setOnAction(e -> copySelectedPath());
 		menuCopyValue.setOnAction(e -> copySelectedValue());
+		menuEdit.setOnAction(e -> editNode());
 
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN), () -> switchAppearance(+1));
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN), () -> switchAppearance(-1));
@@ -167,6 +185,7 @@ class NBTExplorerWindow {
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.U, KeyCombination.CONTROL_DOWN), this::goUp);
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.I, KeyCombination.CONTROL_DOWN), this::goInto);
 		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN), this::showInOriginalTexts);
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN), this::editNode);
 
 		stage.getScene().getStylesheets().add("/org/to2mbn/maptranslator/ui/NBTExplorerWindow.css");
 	}
@@ -226,9 +245,25 @@ class NBTExplorerWindow {
 		}
 	}
 
+	public void editNode() {
+		selectedNode.get().ifPresent(this::editNode);
+	}
+
+	public void editNode(Node node) {
+		node.relatedTextNode().ifPresent(n -> NodeEditWindow.show(n, mapHandler, this::onNodeEdited));
+	}
+
+	private void onNodeEdited(Node oldRoot, String[] path) {
+		rootNode.get().ifPresent(viewRoot -> {
+			if (viewRoot.root() == oldRoot) {
+				reload();
+			}
+		});
+	}
+
 	private CompletableFuture<Boolean> loadAndSwitchNode(Object path) {
 		loadingNode = true;
-		return nodeLoader.apply(path)
+		return loadNode(path)
 				.thenApplyAsync(optional -> {
 					loadingNode = false;
 					optional.ifPresent(node -> selectNode(node));
@@ -238,6 +273,18 @@ class NBTExplorerWindow {
 					reportException(e);
 					return false;
 				});
+	}
+
+	private CompletableFuture<Optional<Node>> loadNode(Object path) {
+		progressWindow().show(false);
+		return ((path instanceof String)
+				? mapHandler.resolveNode((String) path)
+				: mapHandler.resolveNode((String[]) path))
+						.thenApplyAsync(result -> {
+							result.ifPresent(node -> NodeTreeCells.construct(node.root()));
+							progressWindow().hide();
+							return result;
+						}, Platform::runLater);
 	}
 
 	private void switchAppearance(int offset) {

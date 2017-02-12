@@ -17,6 +17,25 @@ import javafx.stage.StageStyle;
 
 class ProgressWindow {
 
+	private static ProgressWindow progressWindow;
+
+	public static void initWindow() {
+		if (progressWindow != null) throw new IllegalStateException();
+		progressWindow = new ProgressWindow();
+	}
+
+	public static void destoryWindow() {
+		if (progressWindow != null) {
+			progressWindow.stage.close();
+			progressWindow = null;
+		}
+	}
+
+	public static ProgressWindow progressWindow() {
+		if (progressWindow == null) throw new IllegalStateException();
+		return progressWindow;
+	}
+
 	private Stage stage;
 	private DoubleProperty progress = new SimpleDoubleProperty();
 	private BooleanProperty showProgress = new SimpleBooleanProperty();

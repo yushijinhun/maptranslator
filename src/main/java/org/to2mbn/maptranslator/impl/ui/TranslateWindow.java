@@ -1,12 +1,23 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.ProgressWindow.progressWindow;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.reportException;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import org.to2mbn.maptranslator.impl.json.parse.JSONObject;
+import org.to2mbn.maptranslator.impl.json.parse.JSONTokener;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -22,6 +33,8 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.util.converter.DefaultStringConverter;
 
@@ -47,8 +60,6 @@ class TranslateWindow {
 	public Consumer<String> onTextDbclick;
 	public Consumer<String> onAdded;
 	public Consumer<String> onRemoved;
-	public Supplier<CompletableFuture<Map<String, String>>> importer;
-	public Consumer<Map<String, String>> exporter;
 	public Consumer<Map<String, String>> applier;
 
 	public TranslateWindow() {
@@ -86,7 +97,7 @@ class TranslateWindow {
 		table.getColumns().add(colTarget);
 		table.setEditable(true);
 
-		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.CONTROL_DOWN), () -> {
+		stage.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.DELETE), () -> {
 			if (!table.getSelectionModel().isEmpty()) {
 				String origin = table.getSelectionModel().getSelectedItem().origin;
 				entries.remove(table.getSelectionModel().getSelectedIndex());
@@ -101,8 +112,8 @@ class TranslateWindow {
 		});
 
 		btnApply.setOnAction(event -> applier.accept(toTranslateTable()));
-		btnExport.setOnAction(event -> exporter.accept(toTranslateTable()));
-		btnImport.setOnAction(event -> importer.get()
+		btnExport.setOnAction(event -> exportData(toTranslateTable()));
+		btnImport.setOnAction(event -> importData()
 				.thenAcceptAsync(result -> {
 					if (result != null) {
 						result.forEach((k, v) -> importEntry(k, v));
@@ -161,6 +172,61 @@ class TranslateWindow {
 				return true;
 		}
 		return false;
+	}
+
+	private void exportData(Map<String, String> data) {
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle(translate("translate.export"));
+		chooser.setSelectedExtensionFilter(new ExtensionFilter("*.json", "*.json"));
+		File target = chooser.showSaveDialog(stage);
+		if (target == null) return;
+		progressWindow().show(false);
+		CompletableFuture
+				.runAsync(() -> {
+					JSONObject json = new JSONObject(data);
+					try (Writer writer = new OutputStreamWriter(new FileOutputStream(target), "UTF-8")) {
+						writer.write(json.toString());
+					} catch (IOException e) {
+						throw new UncheckedIOException(e);
+					}
+				})
+				.handleAsync((result, err) -> {
+					progressWindow().hide();
+					if (err != null) {
+						reportException(err);
+					}
+					return null;
+				}, Platform::runLater);
+	}
+
+	private CompletableFuture<Map<String, String>> importData() {
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle(translate("translate.import"));
+		chooser.setSelectedExtensionFilter(new ExtensionFilter("*.json", "*.json"));
+		File target = chooser.showOpenDialog(stage);
+		if (target == null) return CompletableFuture.completedFuture(null);
+		progressWindow().show(false);
+		return CompletableFuture
+				.supplyAsync(() -> {
+					try (Reader reader = new InputStreamReader(new FileInputStream(target), "UTF-8")) {
+						return new JSONObject(new JSONTokener(reader));
+					} catch (IOException e) {
+						throw new UncheckedIOException(e);
+					}
+				})
+				.handleAsync((result, err) -> {
+					progressWindow().hide();
+					if (err == null) {
+						Map<String, String> mapping = new LinkedHashMap<>();
+						for (String key : result.keySet()) {
+							mapping.put(key, result.getString(key));
+						}
+						return mapping;
+					} else {
+						reportException(err);
+						return null;
+					}
+				}, Platform::runLater);
 	}
 
 }

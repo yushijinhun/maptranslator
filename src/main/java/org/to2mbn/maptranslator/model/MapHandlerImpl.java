@@ -131,6 +131,17 @@ class MapHandlerImpl implements MapHandler {
 		});
 	}
 
+	@Override
+	public CompletableFuture<Void> saveNode(Node node) {
+		return CompletableFuture.runAsync(() -> {
+			Node root = node.root();
+			if (!(root instanceof DataStoreNode)) {
+				throw new IllegalArgumentException("Unexpected root node: " + root);
+			}
+			((DataStoreNode) root).write();
+		});
+	}
+
 	private Optional<Node> resolveNode(String[] path, DataDescriptor desp) {
 		DataStoreNode root = desp.createNode();
 		try {

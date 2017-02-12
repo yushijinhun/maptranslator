@@ -105,6 +105,26 @@ public abstract class Node {
 		children.forEach(child -> child.travel(visitor));
 	}
 
+	public Node root() {
+		Node root = this;
+		while (root.parent != null)
+			root = root.parent;
+		return root;
+	}
+
+	public Optional<Node> relatedTextNode() {
+		Node node = this;
+		do {
+			if (node.getText().isPresent()) return Optional.ofNullable(node);
+			if (node.children.size() == 1) {
+				node = node.children.iterator().next();
+			} else {
+				break;
+			}
+		} while (!(node instanceof InPathNode));
+		return Optional.empty();
+	}
+
 	public String getDisplayText() {
 		return toString();
 	}
