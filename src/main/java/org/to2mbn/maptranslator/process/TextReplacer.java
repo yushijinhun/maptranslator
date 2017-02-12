@@ -6,7 +6,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 import org.to2mbn.maptranslator.tree.ArgumentNode;
 import org.to2mbn.maptranslator.tree.Node;
 import org.to2mbn.maptranslator.tree.TextNode;
@@ -73,7 +72,7 @@ public class TextReplacer extends AbstractReplacer {
 				try {
 					subtreeBuilder.apply(node, text);
 				} catch (ArgumentParseException e) {
-					postResolveFailedWarning(new ResolveFailedWarning(node, text, Collections.emptyMap(), e));
+					postResolveFailedWarning(node, text, Collections.emptyMap(), e);
 					return false;
 				}
 				return true;

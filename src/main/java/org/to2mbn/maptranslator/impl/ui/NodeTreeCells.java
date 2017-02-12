@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
+import static org.to2mbn.maptranslator.impl.ui.UIUtils.setCssClass;
 import org.to2mbn.maptranslator.impl.json.parse.JSONArray;
 import org.to2mbn.maptranslator.impl.json.parse.JSONObject;
 import org.to2mbn.maptranslator.impl.json.tree.JsonNode;
@@ -16,6 +17,7 @@ import org.to2mbn.maptranslator.impl.nbt.parse.NBTLong;
 import org.to2mbn.maptranslator.impl.nbt.parse.NBTShort;
 import org.to2mbn.maptranslator.impl.nbt.parse.NBTString;
 import org.to2mbn.maptranslator.impl.nbt.tree.NBTNode;
+import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 import org.to2mbn.maptranslator.rules.RulesConstants;
 import org.to2mbn.maptranslator.tree.ClauseNode;
 import org.to2mbn.maptranslator.tree.CommandArgumentNode;
@@ -109,26 +111,20 @@ class NodeTreeCells {
 		@Override
 		protected void updateItem(Node item, boolean empty) {
 			super.updateItem(item, empty);
-			boolean translatable = false;
 			if (!empty) {
 				setText(item.getDisplayText());
 				setGraphic(NodeTreeCells.getItem(item).getGraphic());
-				if (item.hasTag(RulesConstants.translatable)) {
-					translatable = true;
-				}
-				setTooltip(new Tooltip(item.tags().toString()));
+				setCssClass(this, "translatable", item.hasTag(RulesConstants.translatable));
+				setCssClass(this, "resolve-failed", item.properties().containsKey("resolve_failure.post"));
+				setTooltip(new Tooltip(tooltipFor(item)));
 			} else {
 				setText(null);
 				setGraphic(null);
+				setCssClass(this, "translatable", false);
+				setCssClass(this, "resolve-failed", false);
 				setTooltip(null);
 			}
-			if (translatable != getStyleClass().contains("translatable")) {
-				if (translatable) {
-					getStyleClass().add("translatable");
-				} else {
-					getStyleClass().remove("translatable");
-				}
-			}
+
 		}
 
 	}
@@ -136,6 +132,39 @@ class NodeTreeCells {
 	@SuppressWarnings("unchecked")
 	public static TreeItem<Node> getItem(Node node) {
 		return (TreeItem<Node>) node.properties().get("javafx.treeitem");
+	}
+
+	public static String tooltipFor(Node node) {
+		StringBuilder sb = new StringBuilder();
+		if (node.tags().isEmpty()) {
+			sb.append("No tags");
+		} else {
+			sb.append("Tag(s): ");
+			boolean first = true;
+			for (String tag : node.tags()) {
+				if (first) {
+					first = false;
+				} else {
+					sb.append(", ");
+				}
+				sb.append(tag);
+			}
+		}
+		ResolveFailedWarning failure = (ResolveFailedWarning) node.properties().get("resolve_failure.post");
+		if (failure != null) {
+			sb.append("\nError: ");
+			if (failure.exception == null) {
+				sb.append("(None)");
+			} else {
+				String message = failure.exception.getMessage();
+				if (message == null) {
+					sb.append(failure);
+				} else {
+					sb.append(message);
+				}
+			}
+		}
+		return sb.toString();
 	}
 
 }

@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 import org.to2mbn.maptranslator.tree.CommandArgumentNode;
 import org.to2mbn.maptranslator.tree.Node;
 import org.to2mbn.maptranslator.tree.TextNode;
@@ -123,7 +122,7 @@ public class CommandReplacer extends AbstractReplacer {
 									try {
 										func.apply(arguments);
 									} catch (ArgumentParseException e) {
-										postResolveFailedWarning(new ResolveFailedWarning(node, command, arguments, e));
+										postResolveFailedWarning(node, command, arguments, e);
 										return false;
 									}
 								}

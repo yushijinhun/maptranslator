@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.process;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.function.Consumer;
@@ -35,6 +36,12 @@ public abstract class AbstractReplacer {
 				resolvingFailedListeners.remove();
 			}
 		}
+	}
+
+	protected static void postResolveFailedWarning(Node node, String text, Map<String, String> arguments, Throwable exception) {
+		ResolveFailedWarning post = new ResolveFailedWarning(node, text, arguments, exception);
+		node.properties().put("resolve_failure.post", post);
+		postResolveFailedWarning(post);
 	}
 
 	protected static void postResolveFailedWarning(ResolveFailedWarning post) {

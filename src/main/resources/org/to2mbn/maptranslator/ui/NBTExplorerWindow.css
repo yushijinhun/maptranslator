@@ -5,3 +5,7 @@
 .translatable:selected {
 	-fx-background-color: #90eeff;
 }
+
+.resolve-failed {
+	-fx-background-color: #ff6347;
+}

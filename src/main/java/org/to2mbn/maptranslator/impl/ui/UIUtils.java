@@ -6,6 +6,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.function.Function;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
@@ -83,5 +84,13 @@ class UIUtils {
 		ClipboardContent content = new ClipboardContent();
 		content.putString(string);
 		Clipboard.getSystemClipboard().setContent(content);
+	}
+
+	public static void setCssClass(Node node, String cssClass, boolean enabled) {
+		if (enabled && !node.getStyleClass().contains(cssClass)) {
+			node.getStyleClass().add(cssClass);
+		} else if (!enabled && node.getStyleClass().contains(cssClass)) {
+			node.getStyleClass().removeAll(cssClass);
+		}
 	}
 }
