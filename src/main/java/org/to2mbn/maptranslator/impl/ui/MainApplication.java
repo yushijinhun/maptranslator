@@ -12,8 +12,13 @@ import org.to2mbn.maptranslator.model.MapHandler;
 import org.to2mbn.maptranslator.model.ParsingWarning;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.WindowEvent;
 
 class MainApplication {
 
@@ -52,9 +57,9 @@ class MainApplication {
 		originalTextsWindow = new OriginalTextsWindow();
 		translateWindow = new TranslateWindow();
 		nbtWindow = new NBTExplorerWindow();
-		originalTextsWindow.stage.setOnCloseRequest(event -> exit());
-		translateWindow.stage.setOnCloseRequest(event -> exit());
-		nbtWindow.stage.setOnCloseRequest(event -> exit());
+		originalTextsWindow.stage.setOnCloseRequest(this::exit);
+		translateWindow.stage.setOnCloseRequest(this::exit);
+		nbtWindow.stage.setOnCloseRequest(this::exit);
 
 		translateWindow.onAdded = originalTextsWindow::onStringAddedToTranslate;
 		translateWindow.onRemoved = originalTextsWindow::onStringRemovedFromTranslate;
@@ -107,11 +112,38 @@ class MainApplication {
 		nbtWindow.stage.show();
 	}
 
+	private void exit(WindowEvent e) {
+		e.consume();
+		exit();
+	}
+
 	private void exit() {
-		handler.close();
-		translateWindow.stage.close();
-		originalTextsWindow.stage.close();
-		nbtWindow.stage.close();
+		if (translateWindow.warnExit()) {
+			Alert alert = new Alert(AlertType.WARNING, "", ButtonType.NO, ButtonType.YES);
+			((Button) alert.getDialogPane().lookupButton(ButtonType.YES)).setDefaultButton(false);
+			((Button) alert.getDialogPane().lookupButton(ButtonType.NO)).setDefaultButton(true);
+			alert.setTitle(translate("exit_confirmation.title"));
+			alert.setHeaderText(translate("exit_confirmation.header"));
+			alert.getDialogPane().setContent(new Label(translate("exit_confirmation.content")));
+			alert.setOnHidden(event -> {
+				if (alert.getResult() == ButtonType.YES) {
+					doExit();
+				}
+			});
+			alert.show();
+		} else {
+			doExit();
+		}
+	}
+
+	private void doExit() {
+		Platform.runLater(() -> {
+			translateWindow.stage.close();
+			originalTextsWindow.stage.close();
+			nbtWindow.stage.close();
+			handler.close();
+			Platform.exit();
+		});
 	}
 
 	private void showParsingWarnings() {

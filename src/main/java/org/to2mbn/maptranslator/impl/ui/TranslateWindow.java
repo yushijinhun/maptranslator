@@ -12,6 +12,8 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -56,6 +58,7 @@ class TranslateWindow {
 	private Button btnApply;
 	private TableColumn<TranslateEntry, String> colOrigin;
 	private TableColumn<TranslateEntry, String> colTarget;
+	private volatile Map<String, String> lastStoredData = Collections.emptyMap();
 
 	public Consumer<String> onTextDbclick;
 	public Consumer<String> onAdded;
@@ -113,13 +116,7 @@ class TranslateWindow {
 
 		btnApply.setOnAction(event -> applier.accept(toTranslateTable()));
 		btnExport.setOnAction(event -> exportData(toTranslateTable()));
-		btnImport.setOnAction(event -> importData()
-				.thenAcceptAsync(result -> {
-					if (result != null) {
-						result.forEach((k, v) -> importEntry(k, v));
-					}
-				}, Platform::runLater)
-				.exceptionally(reportException));
+		btnImport.setOnAction(event -> importData());
 	}
 
 	private Map<String, String> toTranslateTable() {
@@ -174,6 +171,10 @@ class TranslateWindow {
 		return false;
 	}
 
+	public boolean warnExit(){
+		return !entries.isEmpty() && !toTranslateTable().equals(lastStoredData);
+	}
+
 	private void exportData(Map<String, String> data) {
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle(translate("translate.export"));
@@ -192,21 +193,23 @@ class TranslateWindow {
 				})
 				.handleAsync((result, err) -> {
 					progressWindow().hide();
-					if (err != null) {
+					if (err == null) {
+						lastStoredData = new HashMap<>(data);
+					} else {
 						reportException(err);
 					}
 					return null;
 				}, Platform::runLater);
 	}
 
-	private CompletableFuture<Map<String, String>> importData() {
+	private void importData() {
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle(translate("translate.import"));
 		chooser.setSelectedExtensionFilter(new ExtensionFilter("*.json", "*.json"));
 		File target = chooser.showOpenDialog(stage);
-		if (target == null) return CompletableFuture.completedFuture(null);
+		if (target == null) return;
 		progressWindow().show(false);
-		return CompletableFuture
+		CompletableFuture
 				.supplyAsync(() -> {
 					try (Reader reader = new InputStreamReader(new FileInputStream(target), "UTF-8")) {
 						return new JSONObject(new JSONTokener(reader));
@@ -217,16 +220,20 @@ class TranslateWindow {
 				.handleAsync((result, err) -> {
 					progressWindow().hide();
 					if (err == null) {
+
 						Map<String, String> mapping = new LinkedHashMap<>();
-						for (String key : result.keySet()) {
+						for (String key : result.keySet())
 							mapping.put(key, result.getString(key));
-						}
-						return mapping;
+						mapping.forEach((k, v) -> importEntry(k, v));
+						if (toTranslateTable().equals(mapping))
+							lastStoredData = new HashMap<>(mapping);
+
 					} else {
 						reportException(err);
-						return null;
 					}
-				}, Platform::runLater);
+					return null;
+				}, Platform::runLater)
+				.exceptionally(reportException);
 	}
 
 }
