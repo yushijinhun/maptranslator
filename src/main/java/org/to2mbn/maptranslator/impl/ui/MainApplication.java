@@ -204,8 +204,11 @@ class MainApplication {
 		if (!warnings.isEmpty()) {
 			ReportWindow reportWindow = new ReportWindow(ParsingResultGenerator.warningsToHtml(warnings), translate("report.title"));
 			reportWindow.gotoNodeListener = path -> {
-				nbtWindow.switchNode(path);
-				nbtWindow.stage.requestFocus();
+				nbtWindow.switchNode(path)
+						.thenAcceptAsync(found -> {
+							if (found) nbtWindow.stage.requestFocus();
+						}, Platform::runLater);
+
 			};
 			reportWindow.stage.show();
 		}

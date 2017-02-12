@@ -212,23 +212,32 @@ class NBTExplorerWindow {
 		return Optional.empty();
 	}
 
-	public void switchNode(Object path) {
+	public CompletableFuture<Boolean> switchNode(Object path) {
 		Optional<Optional<Node>> tryCurrent = tryLoadFromCurrent(path);
 		if (tryCurrent.isPresent()) {
-			tryCurrent.get().ifPresent(node -> selectNode(node));
+			if (tryCurrent.get().isPresent()) {
+				selectNode(tryCurrent.get().get());
+				return CompletableFuture.completedFuture(true);
+			} else {
+				return CompletableFuture.completedFuture(false);
+			}
 		} else {
-			loadAndSwitchNode(path);
+			return loadAndSwitchNode(path);
 		}
 	}
 
-	private void loadAndSwitchNode(Object path) {
+	private CompletableFuture<Boolean> loadAndSwitchNode(Object path) {
 		loadingNode = true;
-		nodeLoader.apply(path)
-				.thenAcceptAsync(optional -> {
+		return nodeLoader.apply(path)
+				.thenApplyAsync(optional -> {
 					loadingNode = false;
 					optional.ifPresent(node -> selectNode(node));
+					return optional.isPresent();
 				}, Platform::runLater)
-				.exceptionally(reportException);
+				.exceptionally(e -> {
+					reportException(e);
+					return false;
+				});
 	}
 
 	private void switchAppearance(int offset) {
