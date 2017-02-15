@@ -6,7 +6,18 @@ public class NBTException extends ArgumentParseException {
 
 	private static final long serialVersionUID = 1L;
 
+	public NBTException() {}
+
+	public NBTException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
 	public NBTException(String message) {
 		super(message);
 	}
+
+	public NBTException(Throwable cause) {
+		super(cause);
+	}
+
 }

@@ -319,7 +319,13 @@ public class JsonNBTConverter {
 
 			int i = 0;
 			for (JsonNBTConverter.Any child : this.tagList) {
-				nbttaglist.add(child.parse());
+				NBT parsed = child.parse();
+				try {
+					nbttaglist.add(parsed);
+				} catch (IllegalArgumentException e) {
+					// maybe the nbt's id doesn't match the list's
+					throw new NBTException(e);
+				}
 				if (child.json.isEmpty()) {
 					nbttaglist._noIndex.add(i);
 				}
