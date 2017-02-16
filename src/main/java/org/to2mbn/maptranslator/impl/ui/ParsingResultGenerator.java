@@ -64,19 +64,22 @@ class ParsingResultGenerator {
 "							<div>\n" +
 "								<label>").append(translate("report.resolve_failure.command")).append("</label>\n" +
 "								<pre><code>").append(escapeHtml4(failure.text)).append("</code></pre>\n" +
-"							</div>\n" +
+"							</div>\n");
+				if(failure.arguments!=null){
+					sb.append(
 "							<div>\n" +
 "								<label>").append(translate("report.resolve_failure.arguments")).append("</label>\n" +
 "								<table class=\"table table-condensed table-hover\">\n");
-				failure.arguments.forEach((k,v)->sb.append(
+					failure.arguments.forEach((k,v)->sb.append(
 "									<tr>\n" +
 "										<td>").append(escapeHtml4(k)).append("</td>\n" +
 "										<td><code>").append(escapeHtml4(v)).append("</code></td>\n" +
 "									</tr>\n" 
 						));
-				sb.append(
+					sb.append(
 "								</table>\n" +
 "							</div>\n");
+				}
 				String msg=failure.exception.getMessage();
 				if(msg!=null){
 					sb.append(

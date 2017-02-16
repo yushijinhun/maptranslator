@@ -234,22 +234,23 @@ public abstract class Node {
 			boolean replaced = false;
 			for (NodeReplacer replacer : replacers) {
 				if (replacer.condition.test(child)) {
-					replaced = true;
-					changed = true;
-
 					Node newChild = replacer.replacer.apply(child);
-					for (String tag : child.tags)
-						if (!newChild.hasTag(tag))
-							newChild.tags.add(tag);
-					child.properties.forEach(
-							(k, v) -> newChild.properties.putIfAbsent(k, v));
-					child.parent = null;
-					newChild.parent = this;
-					childrenArray[i] = newChild;
+					if (newChild != null) {
+						replaced = true;
+						changed = true;
+						for (String tag : child.tags)
+							if (!newChild.hasTag(tag))
+								newChild.tags.add(tag);
+						child.properties.forEach(
+								(k, v) -> newChild.properties.putIfAbsent(k, v));
+						child.parent = null;
+						newChild.parent = this;
+						childrenArray[i] = newChild;
 
-					tagMarker.accept(newChild);
-					listener.accept(child, newChild);
-					break;
+						tagMarker.accept(newChild);
+						listener.accept(child, newChild);
+						break;
+					}
 				}
 			}
 			if (!replaced) {

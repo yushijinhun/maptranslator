@@ -324,7 +324,7 @@ public class JsonNBTConverter {
 					nbttaglist.add(parsed);
 				} catch (IllegalArgumentException e) {
 					// maybe the nbt's id doesn't match the list's
-					throw new NBTException(e);
+					throw new NBTException("type of " + parsed + " is expected to be " + NBT.NBT_TYPES[nbttaglist.getTagType()] + ", but " + NBT.NBT_TYPES[parsed.getId()]);
 				}
 				if (child.json.isEmpty()) {
 					nbttaglist._noIndex.add(i);

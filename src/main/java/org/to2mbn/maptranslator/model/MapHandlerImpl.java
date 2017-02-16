@@ -19,8 +19,11 @@ import java.util.regex.Pattern;
 import org.to2mbn.maptranslator.data.DataDescriptor;
 import org.to2mbn.maptranslator.data.DataDescriptorGroup;
 import org.to2mbn.maptranslator.process.AbstractReplacer;
+import org.to2mbn.maptranslator.process.CommandParsingException;
 import org.to2mbn.maptranslator.process.IteratorArgument;
+import org.to2mbn.maptranslator.process.NodeParsingException;
 import org.to2mbn.maptranslator.process.NodeReplacer;
+import org.to2mbn.maptranslator.process.TextParsingException;
 import org.to2mbn.maptranslator.process.TreeIterator;
 import org.to2mbn.maptranslator.rules.RulesConstants;
 import org.to2mbn.maptranslator.rules.RulesFactory;
@@ -74,7 +77,8 @@ class MapHandlerImpl implements MapHandler {
 			};
 			clearLastWarnings();
 			return desGroup.read(node -> {
-				AbstractReplacer.redirectResolvingFailures(() -> resolveMap(node), failure -> resolveFailures.put(failure.path, failure));
+				AbstractReplacer.redirectParsingExceptions(() -> resolveMap(node),
+						failure -> createResolveFailedWarning(failure).ifPresent(warn -> resolveFailures.put(warn.path, warn)));
 				computeStringMismatches(node);
 				return extractStrings(node, excluder);
 			}).collect(TreeMap<String, List<String[]>>::new, merger, merger);
@@ -150,7 +154,8 @@ class MapHandlerImpl implements MapHandler {
 			LOGGER.log(Level.WARNING, "Couldn't read " + desp, e);
 			return Optional.empty();
 		}
-		resolveMap(root);
+		AbstractReplacer.redirectParsingExceptions(() -> resolveMap(root),
+				failure -> createResolveFailedWarning(failure).ifPresent(warn -> failure.getNode().properties().put("resolve_failure.post", warn)));
 		Optional<Node> result = root.resolve(path, 1);
 		if (result.isPresent()) {
 			return result;
@@ -235,6 +240,18 @@ class MapHandlerImpl implements MapHandler {
 			}
 			return false;
 		};
+	}
+
+	private Optional<ResolveFailedWarning> createResolveFailedWarning(NodeParsingException failure) {
+		if (failure instanceof TextParsingException) {
+			return Optional.of(new ResolveFailedWarning(
+					failure.getNode(),
+					((TextParsingException) failure).getText(),
+					failure instanceof CommandParsingException ? ((CommandParsingException) failure).getArguments() : null,
+					failure.getCause()));
+		} else {
+			return Optional.empty();
+		}
 	}
 
 	@Override

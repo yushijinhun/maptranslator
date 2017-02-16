@@ -98,7 +98,8 @@ public class CommandReplacer extends AbstractReplacer {
 		}
 	}
 
-	private boolean matches(Node node) {
+	@Override
+	protected boolean matches(Node node) throws CommandParsingException {
 		if (node.unmodifiableChildren().isEmpty() && node.hasTag(tag)) {
 			Optional<String> optional = getNodeText(node);
 			if (optional.isPresent()) {
@@ -122,8 +123,7 @@ public class CommandReplacer extends AbstractReplacer {
 									try {
 										func.apply(arguments);
 									} catch (ArgumentParseException e) {
-										postResolveFailedWarning(node, command, arguments, e);
-										return false;
+										throw new CommandParsingException(node, e, command, arguments);
 									}
 								}
 							}
@@ -136,7 +136,8 @@ public class CommandReplacer extends AbstractReplacer {
 		return false;
 	}
 
-	private Node replace(Node node) {
+	@Override
+	protected Node replace(Node node) {
 		String cmd = getNodeText(node).get().trim();
 		String[] splited = cmd.split(" ", argumentNames.length + 1);
 		String[] n_argnames = new String[argumentNames.length + 1];
@@ -161,10 +162,6 @@ public class CommandReplacer extends AbstractReplacer {
 		}
 		handler.commandNode = replaced;
 		return replaced;
-	}
-
-	public NodeReplacer toNodeReplacer() {
-		return new NodeReplacer(this::matches, this::replace);
 	}
 
 }

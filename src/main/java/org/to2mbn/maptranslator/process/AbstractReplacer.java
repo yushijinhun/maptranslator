@@ -1,14 +1,13 @@
 package org.to2mbn.maptranslator.process;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
-import org.to2mbn.maptranslator.model.ResolveFailedWarning;
 import org.to2mbn.maptranslator.rules.RulesConstants;
 import org.to2mbn.maptranslator.tree.Node;
 
@@ -16,40 +15,34 @@ public abstract class AbstractReplacer {
 
 	private static final Logger LOGGER = Logger.getLogger(CommandReplacer.class.getCanonicalName());
 
-	private static ThreadLocal<Stack<Consumer<ResolveFailedWarning>>> resolvingFailedListeners = ThreadLocal.withInitial(Stack::new);
+	private static ThreadLocal<Stack<Consumer<NodeParsingException>>> parsingExceptionListeners = ThreadLocal.withInitial(Stack::new);
 
-	public static void redirectResolvingFailures(Runnable action, Consumer<ResolveFailedWarning> handler) {
-		redirectResolvingFailures(() -> {
+	public static void redirectParsingExceptions(Runnable action, Consumer<NodeParsingException> handler) {
+		redirectParsingExceptions(() -> {
 			action.run();
 			return null;
 		}, handler);
 	}
 
-	public static <T> T redirectResolvingFailures(Supplier<T> action, Consumer<ResolveFailedWarning> handler) {
-		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
+	public static <T> T redirectParsingExceptions(Supplier<T> action, Consumer<NodeParsingException> handler) {
+		Stack<Consumer<NodeParsingException>> stack = parsingExceptionListeners.get();
 		stack.push(handler);
 		try {
 			return action.get();
 		} finally {
 			stack.pop();
 			if (stack.isEmpty()) {
-				resolvingFailedListeners.remove();
+				parsingExceptionListeners.remove();
 			}
 		}
 	}
 
-	protected static void postResolveFailedWarning(Node node, String text, Map<String, String> arguments, Throwable exception) {
-		ResolveFailedWarning post = new ResolveFailedWarning(node, text, arguments, exception);
-		node.properties().put("resolve_failure.post", post);
-		postResolveFailedWarning(post);
-	}
-
-	protected static void postResolveFailedWarning(ResolveFailedWarning post) {
-		Stack<Consumer<ResolveFailedWarning>> stack = resolvingFailedListeners.get();
-		stack.forEach(listener -> listener.accept(post));
+	private static void postNodeParsingException(NodeParsingException exception) {
+		LOGGER.log(Level.WARNING, "Couldn't parse node", exception);
+		Stack<Consumer<NodeParsingException>> stack = parsingExceptionListeners.get();
+		stack.forEach(listener -> listener.accept(exception));
 		if (stack.isEmpty()) {
-			resolvingFailedListeners.remove();
-			LOGGER.log(Level.WARNING, String.format("Couldn't solve command node %s\nText: %s\nArguments: %s", post.path, post.text, post.arguments), post.exception);
+			parsingExceptionListeners.remove();
 		}
 	}
 
@@ -62,5 +55,26 @@ public abstract class AbstractReplacer {
 			}
 		});
 	}
+
+	public NodeReplacer toNodeReplacer() {
+		return new NodeReplacer(
+				node -> defer(() -> matches(node), node, false),
+				node -> defer(() -> replace(node), node, null));
+	}
+
+	private <T> T defer(Callable<T> func, Node node, T defaultVal) {
+		try {
+			return func.call();
+		} catch (NodeParsingException e) {
+			postNodeParsingException(e);
+		} catch (Throwable e) {
+			postNodeParsingException(new NodeParsingException(node, e));
+		}
+		return defaultVal;
+	}
+
+	abstract protected boolean matches(Node node) throws NodeParsingException;
+
+	abstract protected Node replace(Node node) throws NodeParsingException;
 
 }

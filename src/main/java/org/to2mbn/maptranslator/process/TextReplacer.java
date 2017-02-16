@@ -1,6 +1,5 @@
 package org.to2mbn.maptranslator.process;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -54,7 +53,8 @@ public class TextReplacer extends AbstractReplacer {
 		this.reverseMapper = reverseMapper;
 	}
 
-	private Node replace(Node node) {
+	@Override
+	protected Node replace(Node node) {
 		String text = getNodeText(node).get();
 		TextHandler handler = new TextHandler(reverseMapper);
 		Node replacedNode = ((TextNode) node).replaceNodeText(handler);
@@ -64,7 +64,8 @@ public class TextReplacer extends AbstractReplacer {
 		return replacedNode;
 	}
 
-	private boolean matches(Node node) {
+	@Override
+	protected boolean matches(Node node) throws TextParsingException {
 		if (node.unmodifiableChildren().isEmpty() && nodeMatcher.test(node)) {
 			Optional<String> optional = getNodeText(node);
 			if (optional.isPresent()) {
@@ -72,17 +73,12 @@ public class TextReplacer extends AbstractReplacer {
 				try {
 					subtreeBuilder.apply(node, text);
 				} catch (ArgumentParseException e) {
-					postResolveFailedWarning(node, text, Collections.emptyMap(), e);
-					return false;
+					throw new TextParsingException(node, e, text);
 				}
 				return true;
 			}
 		}
 		return false;
-	}
-
-	public NodeReplacer toNodeReplacer() {
-		return new NodeReplacer(this::matches, this::replace);
 	}
 
 }
