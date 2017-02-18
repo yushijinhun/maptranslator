@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import org.to2mbn.maptranslator.model.MapHandler;
+import org.to2mbn.maptranslator.impl.model.MapHandler;
 import org.to2mbn.maptranslator.process.IteratorArgument;
 import org.to2mbn.maptranslator.process.NodeReplacer;
 import org.to2mbn.maptranslator.process.TreeIterator;

@@ -5,9 +5,9 @@ import static org.to2mbn.maptranslator.impl.ui.UIUtils.throwableToString;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.ArrayList;
 import java.util.List;
-import org.to2mbn.maptranslator.model.ParsingWarning;
-import org.to2mbn.maptranslator.model.ResolveFailedWarning;
-import org.to2mbn.maptranslator.model.StringMismatchWarning;
+import org.to2mbn.maptranslator.impl.model.ParsingWarning;
+import org.to2mbn.maptranslator.impl.model.ResolveFailedWarning;
+import org.to2mbn.maptranslator.impl.model.StringMismatchWarning;
 import com.sksamuel.diffpatch.DiffMatchPatch;
 import com.sksamuel.diffpatch.DiffMatchPatch.Diff;
 

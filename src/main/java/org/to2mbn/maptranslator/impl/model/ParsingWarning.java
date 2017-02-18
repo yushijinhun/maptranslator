@@ -1,4 +1,4 @@
-package org.to2mbn.maptranslator.model;
+package org.to2mbn.maptranslator.impl.model;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

@@ -1,4 +1,4 @@
-package org.to2mbn.maptranslator.model;
+package org.to2mbn.maptranslator.impl.model;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

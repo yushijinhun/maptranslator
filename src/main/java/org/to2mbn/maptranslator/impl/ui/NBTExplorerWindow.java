@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import org.to2mbn.maptranslator.model.MapHandler;
+import org.to2mbn.maptranslator.impl.model.MapHandler;
 import org.to2mbn.maptranslator.tree.Node;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
