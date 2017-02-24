@@ -4,7 +4,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import org.to2mbn.maptranslator.tree.Node;
 
 public interface MapHandler {
@@ -18,6 +20,8 @@ public interface MapHandler {
 	CompletableFuture<Map<String, List<String[]>>> extractStrings();
 
 	List<ParsingWarning> lastParsingWarnings();
+
+	Set<BiConsumer<Node, Map<String, Object>>> parsingWarningMetadataProviders();
 
 	CompletableFuture<Void> replace(Map<String, String> table);
 

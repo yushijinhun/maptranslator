@@ -156,7 +156,7 @@ class NodeTreeCells {
 			if (failure.exception == null) {
 				sb.append("(None)");
 			} else {
-				String message = failure.exception.getMessage();
+				String message = failure.exception.getDisplayMessage();
 				if (message == null) {
 					sb.append(failure);
 				} else {

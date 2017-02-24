@@ -1,7 +1,6 @@
 package org.to2mbn.maptranslator.impl.ui;
 
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
-import static org.to2mbn.maptranslator.impl.ui.UIUtils.throwableToString;
 import static org.to2mbn.maptranslator.impl.ui.UIUtils.translate;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +79,7 @@ class ParsingResultGenerator {
 "								</table>\n" +
 "							</div>\n");
 				}
-				String msg=failure.exception.getMessage();
+				String msg=failure.exception.getDisplayMessage();
 				if(msg!=null){
 					sb.append(
 "							<div>\n" +
@@ -91,7 +90,7 @@ class ParsingResultGenerator {
 				sb.append(
 "							<div>\n" +
 "								<label><a class=\"normal-hyperlink\" data-toggle=\"collapse\" data-parent=\"#accordion\" href=\"#collapse").append(idx).append("\"><span class=\"icon-collapse").append(idx).append(" glyphicon glyphicon-chevron-down\" aria-hidden=\"true\"></span> ").append(translate("report.resolve_failure.stacktrace")).append("</a></label><br/>\n" +
-"								<pre id=\"collapse").append(idx).append("\" class=\"collapse\" data-relatedicon=\"").append(idx).append("\"><code>").append(escapeHtml4(throwableToString(failure.exception))).append("</code></pre>\n" +
+"								<pre id=\"collapse").append(idx).append("\" class=\"collapse\" data-relatedicon=\"").append(idx).append("\"><code>").append(escapeHtml4(failure.exception.stacktrace)).append("</code></pre>\n" +
 "							</div>\n" +
 "						</div>\n" +
 "					</div>\n");

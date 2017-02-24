@@ -19,10 +19,10 @@ import org.to2mbn.maptranslator.process.TagMarker;
 public abstract class Node {
 
 	private Set<String> tags = new TreeSet<>();
-	private Set<Node> children = new LinkedHashSet<>();
+	private Set<Node> children = new LinkedHashSet<>(0);
 	private Set<Node> unmodifiableChildren = Collections.unmodifiableSet(children);
 	private Node parent;
-	private Map<String, Object> properties = new HashMap<>();
+	private Map<String, Object> properties = new HashMap<>(0);
 
 	public Set<String> tags() {
 		return tags;

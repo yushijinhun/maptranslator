@@ -1,10 +1,9 @@
 package org.to2mbn.maptranslator.impl.ui;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.function.Function;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -58,7 +57,7 @@ class UIUtils {
 			alert.setTitle("maptranslator");
 			alert.setHeaderText("An exception occurred.");
 			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
-			TextArea textArea = new TextArea(throwableToString(e));
+			TextArea textArea = new TextArea(ExceptionUtils.getStackTrace(e));
 			textArea.setEditable(false);
 			textArea.setWrapText(true);
 			textArea.setMaxWidth(Double.MAX_VALUE);
@@ -71,13 +70,6 @@ class UIUtils {
 			}));
 			alert.show();
 		});
-	}
-
-	public static String throwableToString(Throwable e) {
-		StringWriter writer = new StringWriter();
-		PrintWriter printWriter = new PrintWriter(writer);
-		e.printStackTrace(printWriter);
-		return writer.toString();
 	}
 
 	public static void copyToClipboard(String string) {

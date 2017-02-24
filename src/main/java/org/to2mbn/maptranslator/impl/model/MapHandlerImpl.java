@@ -2,10 +2,13 @@ package org.to2mbn.maptranslator.impl.model;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
@@ -47,6 +50,7 @@ class MapHandlerImpl implements MapHandler {
 	private Map<String, ResolveFailedWarning> resolveFailures = new ConcurrentSkipListMap<>();
 	private IteratorArgument mapResolvingArgument;
 	private ForkJoinPool pool = new ForkJoinPool(4 * Runtime.getRuntime().availableProcessors());
+	private Set<BiConsumer<Node, Map<String, Object>>> parsingWarningMetadataProviders = Collections.synchronizedSet(new LinkedHashSet<>());
 
 	public MapHandlerImpl(Path dir) {
 		this.dir = dir;
@@ -176,7 +180,7 @@ class MapHandlerImpl implements MapHandler {
 					String origin = (String) node.properties().get("origin");
 					if (!origin.equals(current)) {
 						StringMismatchWarning mismatch = new StringMismatchWarning(node, origin, current);
-						stringMismatches.put(mismatch.path, mismatch);
+						stringMismatches.put(mismatch.path, fillParsingWarning(mismatch, node));
 					}
 				});
 			}
@@ -244,14 +248,22 @@ class MapHandlerImpl implements MapHandler {
 
 	private Optional<ResolveFailedWarning> createResolveFailedWarning(NodeParsingException failure) {
 		if (failure instanceof TextParsingException) {
-			return Optional.of(new ResolveFailedWarning(
-					failure.getNode(),
-					((TextParsingException) failure).getText(),
-					failure instanceof CommandParsingException ? ((CommandParsingException) failure).getArguments() : null,
-					failure.getCause()));
+			return Optional.of(
+					fillParsingWarning(
+							new ResolveFailedWarning(
+									failure.getNode(),
+									((TextParsingException) failure).getText(),
+									failure instanceof CommandParsingException ? ((CommandParsingException) failure).getArguments() : null,
+									failure.getCause()),
+							failure.getNode()));
 		} else {
 			return Optional.empty();
 		}
+	}
+
+	private <T extends ParsingWarning> T fillParsingWarning(T in, Node node) {
+		parsingWarningMetadataProviders.forEach(handler -> handler.accept(node, in.metadata));
+		return in;
 	}
 
 	@Override
@@ -285,6 +297,11 @@ class MapHandlerImpl implements MapHandler {
 	@Override
 	public long totalProgress() {
 		return desGroup.descriptors.size();
+	}
+
+	@Override
+	public Set<BiConsumer<Node, Map<String, Object>>> parsingWarningMetadataProviders() {
+		return parsingWarningMetadataProviders;
 	}
 
 }
