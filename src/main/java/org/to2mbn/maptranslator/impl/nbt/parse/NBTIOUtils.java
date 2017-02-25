@@ -47,7 +47,7 @@ public final class NBTIOUtils {
 		if (!Files.exists(file)) {
 			return null;
 		}
-		try (DataInputStream in = new DataInputStream(Files.newInputStream(file))) {
+		try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
 			return readTag(in);
 		}
 	}
@@ -70,7 +70,7 @@ public final class NBTIOUtils {
 	}
 
 	public static void write(NBTCompound nbt, Path file) throws IOException {
-		try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(file))) {
+		try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
 			write(nbt, out);
 		}
 	}

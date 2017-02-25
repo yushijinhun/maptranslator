@@ -51,6 +51,7 @@ public final class JsonTreeConstructor {
 		if (json instanceof JSONObject) {
 			JSONObject casted = (JSONObject) json;
 			casted.keySet().stream()
+					.map(String::intern)
 					.sorted()
 					.forEach(key -> {
 						JsonMapNode child = new JsonMapNode(casted.get(key), key);

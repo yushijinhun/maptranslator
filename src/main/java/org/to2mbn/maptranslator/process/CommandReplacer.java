@@ -79,9 +79,9 @@ public class CommandReplacer extends AbstractReplacer {
 
 	@SuppressWarnings("unchecked")
 	public CommandReplacer(String tag, String expression, Map<String, Function<Map<String, String>, Node>> subtrees) {
-		this.tag = tag;
+		this.tag = tag.intern();
 		String[] splited = expression.split(" ");
-		commandName = splited[0];
+		commandName = splited[0].intern();
 		int len = splited.length - 1;
 		argumentsMatching = new String[len];
 		argumentNames = new String[len];
@@ -89,11 +89,11 @@ public class CommandReplacer extends AbstractReplacer {
 		for (int i = 0; i < len; i++) {
 			String s = splited[i + 1];
 			if (s.startsWith("<") && s.endsWith(">")) {
-				String name = s.substring(1, s.length() - 1);
+				String name = s.substring(1, s.length() - 1).intern();
 				argumentNames[i] = name;
 				subtreeBuilders[i] = subtrees.get(name);
 			} else {
-				argumentsMatching[i] = s;
+				argumentsMatching[i] = s.intern();
 			}
 		}
 	}

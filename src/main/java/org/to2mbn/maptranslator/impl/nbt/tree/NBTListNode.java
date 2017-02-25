@@ -16,7 +16,7 @@ public class NBTListNode extends NBTNode implements ListNode {
 
 	@Override
 	public String toString() {
-		return "[" + index + "]";
+		return getPathName();
 	}
 
 	@Override

@@ -15,7 +15,7 @@ public class JsonListNode extends JsonNode implements ListNode {
 
 	@Override
 	public String toString() {
-		return "[" + index + "]";
+		return getPathName();
 	}
 
 	@Override

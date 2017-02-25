@@ -33,6 +33,7 @@ public final class NBTTreeConstructor {
 		if (nbt instanceof NBTCompound) {
 			NBTCompound casted = ((NBTCompound) nbt);
 			casted.tags().keySet().stream()
+					.map(String::intern)
 					.sorted()
 					.forEach(key -> {
 						NBTMapNode child = new NBTMapNode(casted.get(key), key);

@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.process;
 
+import static org.to2mbn.maptranslator.util.StringUtils.stringEquals;
 import java.util.function.Predicate;
 import org.to2mbn.maptranslator.tree.ListNode;
 import org.to2mbn.maptranslator.tree.MapNode;
@@ -29,13 +30,16 @@ public class NodeMatcher implements Predicate<Node> {
 				}
 			} else {
 				tags[i] = path.substring(kuohao + 1, path.length() - 1).split(",");
+				for (int l = 0; l < tags[i].length; l++) {
+					tags[i][l] = tags[i][l].intern();
+				}
 				path = path.substring(0, kuohao);
 				if (path.length() == 0) {
 					path = null;
 				}
 			}
-			paths[i] = path;
 			if (path != null) {
+				paths[i] = path.intern();
 				try {
 					ints[i] = Integer.valueOf(path);
 				} catch (NumberFormatException e) {
@@ -51,7 +55,7 @@ public class NodeMatcher implements Predicate<Node> {
 			if (node == null)
 				return false;
 			if (paths[i] != null)
-				if ((node instanceof MapNode && !paths[i].equals(((MapNode) node).key())) ||
+				if ((node instanceof MapNode && !stringEquals(paths[i], ((MapNode) node).key())) ||
 						(node instanceof ListNode && (ints[i] == null || ints[i] != ((ListNode) node).index())))
 					return false;
 			if (tags[i] != null)

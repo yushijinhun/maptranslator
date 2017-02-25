@@ -136,12 +136,12 @@ class NodeTreeCells {
 
 	public static String tooltipFor(Node node) {
 		StringBuilder sb = new StringBuilder();
-		if (node.tags().isEmpty()) {
+		if (node.unmodifiableTags().isEmpty()) {
 			sb.append("No tags");
 		} else {
 			sb.append("Tag(s): ");
 			boolean first = true;
-			for (String tag : node.tags()) {
+			for (String tag : node.unmodifiableTags()) {
 				if (first) {
 					first = false;
 				} else {

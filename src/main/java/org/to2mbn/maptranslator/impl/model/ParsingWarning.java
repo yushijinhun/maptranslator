@@ -16,7 +16,7 @@ public abstract class ParsingWarning {
 	public ParsingWarning(Node node) {
 		pathArray = node.getPathArray();
 		path = node.getPath();
-		tags = new LinkedHashSet<>(node.tags());
+		tags = new LinkedHashSet<>(node.unmodifiableTags());
 	}
 
 }

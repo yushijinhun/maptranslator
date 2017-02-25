@@ -5,20 +5,22 @@ import org.to2mbn.maptranslator.data.DataDescriptor;
 public class DataStoreNode extends Node implements InPathNode {
 
 	protected final DataDescriptor store;
+	private final String pathName;
 
 	public DataStoreNode(DataDescriptor store) {
 		this.store = store;
+		pathName = store.toString().intern();
 	}
 
 	@Override
 	public String toString() {
-		return store.toString();
+		return pathName;
 	}
 
 	public void read() {
 		unmodifiableChildren().forEach(this::removeChild);
 		Node node = store.read();
-		node.tags().addAll(store.getTags());
+		store.getTags().forEach(tag -> node.addTag(tag.intern()));
 		addChild(node);
 	}
 

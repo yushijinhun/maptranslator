@@ -3,9 +3,11 @@ package org.to2mbn.maptranslator.tree;
 public class CommandArgumentNode extends Node implements InPathNode {
 
 	public final String argumentName;
+	private final String pathName;
 
 	public CommandArgumentNode(String argumentName) {
 		this.argumentName = argumentName;
+		pathName = ("<" + argumentName + ">").intern();
 	}
 
 	public String toArgumentString() {
@@ -20,7 +22,7 @@ public class CommandArgumentNode extends Node implements InPathNode {
 
 	@Override
 	public String toString() {
-		return "<" + argumentName + ">";
+		return pathName;
 	}
 
 	@Override

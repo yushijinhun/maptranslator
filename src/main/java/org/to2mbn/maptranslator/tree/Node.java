@@ -1,5 +1,6 @@
 package org.to2mbn.maptranslator.tree;
 
+import static org.to2mbn.maptranslator.util.StringUtils.stringEquals;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.to2mbn.maptranslator.process.NodeReplacer;
@@ -18,14 +18,16 @@ import org.to2mbn.maptranslator.process.TagMarker;
 
 public abstract class Node {
 
-	private Set<String> tags = new TreeSet<>();
+	private Set<String> allTags = new LinkedHashSet<>(0);
+	private Set<String> unmodifiableTags = Collections.unmodifiableSet(allTags);
+	private List<String> wildcardTags = null;
 	private Set<Node> children = new LinkedHashSet<>(0);
 	private Set<Node> unmodifiableChildren = Collections.unmodifiableSet(children);
 	private Node parent;
 	private Map<String, Object> properties = new HashMap<>(0);
 
-	public Set<String> tags() {
-		return tags;
+	public Set<String> unmodifiableTags() {
+		return unmodifiableTags;
 	}
 
 	public Set<Node> unmodifiableChildren() {
@@ -53,50 +55,35 @@ public abstract class Node {
 	}
 
 	public boolean hasTag(String str) {
-		if (tags.contains(str)) return true;
-		for (String pattern : tags) {
-			if (pattern.indexOf('*') != -1) {
-				int segmentBegin = 0;
-				int segmentEnd;
-				int strIdx = 0;
-				String segment;
-				boolean match = true;
-				int lenPattern = pattern.length();
-				int appearanceIdx;
-				do {
-					segmentEnd = pattern.indexOf('*', segmentBegin);
-					if (segmentEnd == -1) segmentEnd = lenPattern;
-					segment = pattern.substring(segmentBegin, segmentEnd);
-					if (segmentBegin == 0) {
-						if (!str.startsWith(segment)) {
-							match = false;
-							break;
-						}
-						strIdx = segmentEnd;
-					} else if (segmentEnd == lenPattern) {
-						if (segment.length() + strIdx > str.length() || !str.endsWith(segment)) {
-							match = false;
-							break;
-						}
-					} else {
-						appearanceIdx = str.indexOf(segment, strIdx);
-						if (appearanceIdx == -1) {
-							match = false;
-							break;
-						}
-						strIdx = appearanceIdx + segment.length();
-					}
-					segmentBegin = segmentEnd + 1;
-				} while (segmentEnd < lenPattern);
-				if (match) return true;
+		if (allTags.contains(str)) return true;
+		if (wildcardTags != null) {
+			for (int i = wildcardTags.size() - 1; i >= 0; i--) {
+				if (WildcardTagHandler.matchesWildcardTag(wildcardTags.get(i), str)) return true;
 			}
 		}
 		return false;
 	}
 
+	public boolean addTag(String tag) {
+		if (!hasTag(tag)) {
+			allTags.add(tag);
+			if (WildcardTagHandler.isWildcardTag(tag)) {
+				if (wildcardTags == null) wildcardTags = new ArrayList<>(1);
+				wildcardTags.add(tag);
+			}
+			return true;
+		}
+		return false;
+	}
+
+	public void removeTag(String tag) {
+		allTags.remove(tag);
+		if (wildcardTags != null) wildcardTags.remove(tag);
+	}
+
 	// for method-chain
 	public Node withTag(String tag) {
-		tags().add(tag);
+		addTag(tag.intern());
 		return this;
 	}
 
@@ -167,7 +154,7 @@ public abstract class Node {
 		while (i < path.length) {
 			String name = path[i];
 			for (Node child : node.children) {
-				if (child instanceof InPathNode && name.equals(((InPathNode) child).getPathName())) {
+				if (child instanceof InPathNode && stringEquals(name, ((InPathNode) child).getPathName())) {
 					node = child;
 					i++;
 					continue loop_node;
@@ -209,8 +196,7 @@ public abstract class Node {
 				if (marker.condition.test(node)) {
 					addTags.clear();
 					for (String tag : marker.tags.apply(node)) {
-						if (!node.hasTag(tag)) {
-							node.tags.add(tag);
+						if (node.addTag(tag)) {
 							changed = true;
 							addTags.add(tag);
 						}
@@ -238,9 +224,8 @@ public abstract class Node {
 					if (newChild != null) {
 						replaced = true;
 						changed = true;
-						for (String tag : child.tags)
-							if (!newChild.hasTag(tag))
-								newChild.tags.add(tag);
+						for (String tag : child.unmodifiableTags())
+							newChild.addTag(tag);
 						child.properties.forEach(
 								(k, v) -> newChild.properties.putIfAbsent(k, v));
 						child.parent = null;

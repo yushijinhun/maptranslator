@@ -6,7 +6,7 @@ public interface ListNode extends InPathNode {
 
 	@Override
 	default String getPathName() {
-		return "[" + index() + "]";
+		return ("[" + index() + "]").intern();
 	}
 
 }

@@ -1,5 +1,7 @@
 package org.to2mbn.maptranslator.impl.nbt.data;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,7 +19,7 @@ public class NBTDescriptorGzipFile extends NBTDescriptorFile {
 
 	@Override
 	public NBTCompound readNBT() {
-		try (InputStream in = Files.newInputStream(file)) {
+		try (InputStream in = new BufferedInputStream(Files.newInputStream(file))) {
 			return NBTIOUtils.readCompressed(in);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
@@ -26,7 +28,7 @@ public class NBTDescriptorGzipFile extends NBTDescriptorFile {
 
 	@Override
 	public void writeNBT(NBTCompound nbt) {
-		try (OutputStream out = Files.newOutputStream(file)) {
+		try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(file))) {
 			NBTIOUtils.writeCompressed(nbt, out);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
