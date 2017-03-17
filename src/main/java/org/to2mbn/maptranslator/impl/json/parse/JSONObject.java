@@ -34,7 +34,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -155,9 +154,6 @@ public class JSONObject implements Serializable {
 	 */
 	private final Map<String, Object> map;
 
-	Map<String, Character> _keyMeta = new HashMap<>();
-	Map<String, _ParseMetadata> _valMeta = new HashMap<>();
-
 	/**
 	 * It is sometimes more convenient and less ambiguous to have a
 	 * <code>NULL</code> object than to use Java's <code>null</code> value.
@@ -215,7 +211,6 @@ public class JSONObject implements Serializable {
 				default:
 					x.back();
 					key = x.nextValue().toString();
-					_keyMeta.put(key, x._quoter);
 			}
 
 			// The key is followed by ':'.
@@ -230,10 +225,6 @@ public class JSONObject implements Serializable {
 			// but gson does parse json with duplicate keys
 			// so do we
 			this.put(key, val);
-
-			if (val instanceof String) {
-				_valMeta.put(key, new _ParseMetadata(val, x._quoter));
-			}
 
 			// Pairs are separated by ','.
 
@@ -1265,7 +1256,10 @@ public class JSONObject implements Serializable {
 	}
 
 	public static Writer quote(String string, Writer w) throws IOException {
-		return _quote(string, w, '"');
+		Stack<Boolean> stack = tlUseGson.get();
+		if (stack != null && !stack.isEmpty())
+			return _quote_gson(string, w);
+		return _quote_default(string, w);
 	}
 
 	static ThreadLocal<Stack<Boolean>> tlUseGson = new ThreadLocal<>();
@@ -1284,41 +1278,32 @@ public class JSONObject implements Serializable {
 		}
 	}
 
-	static Writer _quote(String string, Writer w, char quoter) throws IOException {
-		Stack<Boolean> stack = tlUseGson.get();
-		if (stack != null && !stack.isEmpty())
-			return _quote_gson(string, w, quoter);
-		return _quote_default(string, w, quoter);
-	}
-
-	static Writer _quote_default(String string, Writer w, char quoter) throws IOException {
+	static Writer _quote_default(String string, Writer w) throws IOException {
 		if (string == null || string.length() == 0) {
-			if (quoter != 0) {
-				w.write(quoter);
-				w.write(quoter);
-			}
+			w.write("\"\"");
 			return w;
 		}
 
+		char b;
 		char c = 0;
 		String hhhh;
 		int i;
 		int len = string.length();
 
-		if (quoter != 0)
-			w.write(quoter);
+		w.write('"');
 		for (i = 0; i < len; i += 1) {
+			b = c;
 			c = string.charAt(i);
 			switch (c) {
-				case '\'':
-					if (quoter == '\'') {
-						w.write('\\');
-					}
-					w.write(c);
-					break;
 				case '\\':
 				case '"':
 					w.write('\\');
+					w.write(c);
+					break;
+				case '/':
+					if (b == '<') {
+						w.write('\\');
+					}
 					w.write(c);
 					break;
 				case '\b':
@@ -1337,7 +1322,8 @@ public class JSONObject implements Serializable {
 					w.write("\\r");
 					break;
 				default:
-					if (c <= '\u001f') {
+					if (c < ' ' || (c >= '\u0080' && c < '\u00a0')
+							|| (c >= '\u2000' && c < '\u2100')) {
 						w.write("\\u");
 						hhhh = Integer.toHexString(c);
 						w.write("0000", 0, 4 - hhhh.length());
@@ -1347,8 +1333,7 @@ public class JSONObject implements Serializable {
 					}
 			}
 		}
-		if (quoter != 0)
-			w.write(quoter);
+		w.write('"');
 		return w;
 	}
 
@@ -1374,25 +1359,17 @@ public class JSONObject implements Serializable {
 		HTML_SAFE_REPLACEMENT_CHARS['\''] = "\\u0027";
 	}
 	static String[] escape_table = HTML_SAFE_REPLACEMENT_CHARS;
-	static Writer _quote_gson(String string, Writer out, char quoter) throws IOException {
-		if (string == null || string.length() == 0) {
-			if (quoter != 0) {
-				out.write(quoter);
-				out.write(quoter);
-			}
-			return out;
-		}
 
-		if (quoter != 0)
-			out.write(quoter);
-
+	static Writer _quote_gson(String value, Writer out) throws IOException {
+		String[] replacements = HTML_SAFE_REPLACEMENT_CHARS;
+		out.write("\"");
 		int last = 0;
-		int length = string.length();
+		int length = value.length();
 		for (int i = 0; i < length; i++) {
-			char c = string.charAt(i);
+			char c = value.charAt(i);
 			String replacement;
 			if (c < 128) {
-				replacement = escape_table[c];
+				replacement = replacements[c];
 				if (replacement == null) {
 					continue;
 				}
@@ -1404,17 +1381,15 @@ public class JSONObject implements Serializable {
 				continue;
 			}
 			if (last < i) {
-				out.write(string, last, i - last);
+				out.write(value, last, i - last);
 			}
 			out.write(replacement);
 			last = i + 1;
 		}
 		if (last < length) {
-			out.write(string, last, length - last);
+			out.write(value, last, length - last);
 		}
-
-		if (quoter != 0)
-			out.write(quoter);
+		out.write("\"");
 		return out;
 	}
 
@@ -1756,15 +1731,6 @@ public class JSONObject implements Serializable {
 		return writer;
 	}
 
-	static Writer _writeValue(Writer writer, Object value, int indentFactor, int indent, _ParseMetadata _meta) throws JSONException, IOException {
-		if (_meta != null && !(value instanceof JSONString) && _meta.matches(value)) {
-			_quote(value.toString(), writer, _meta.quoter);
-			return writer;
-		} else {
-			return writeValue(writer, value, indentFactor, indent);
-		}
-	}
-
 	static final void indent(Writer writer, int indent) throws IOException {
 		for (int i = 0; i < indent; i += 1) {
 			writer.write(' ');
@@ -1795,17 +1761,12 @@ public class JSONObject implements Serializable {
 
 			if (length == 1) {
 				Object key = keys.next();
-				Character _q = _keyMeta.get(key);
-				if (_q == null) {
-					writer.write(quote(key.toString()));
-				} else {
-					_quote(key.toString(), writer, _q);
-				}
+				quote(key.toString(), writer);
 				writer.write(':');
 				if (indentFactor > 0) {
 					writer.write(' ');
 				}
-				_writeValue(writer, this.map.get(key), indentFactor, indent, _valMeta.get(key));
+				writeValue(writer, this.map.get(key), indentFactor, indent);
 			} else if (length != 0) {
 				final int newindent = indent + indentFactor;
 				while (keys.hasNext()) {
@@ -1817,17 +1778,12 @@ public class JSONObject implements Serializable {
 						writer.write('\n');
 					}
 					indent(writer, newindent);
-					Character _q = _keyMeta.get(key);
-					if (_q == null) {
-						writer.write(quote(key.toString()));
-					} else {
-						_quote(key.toString(), writer, _q);
-					}
+					quote(key.toString(), writer);
 					writer.write(':');
 					if (indentFactor > 0) {
 						writer.write(' ');
 					}
-					_writeValue(writer, this.map.get(key), indentFactor, newindent, _valMeta.get(key));
+					writeValue(writer, this.map.get(key), indentFactor, newindent);
 					commanate = true;
 				}
 				if (indentFactor > 0) {

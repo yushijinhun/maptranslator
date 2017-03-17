@@ -33,7 +33,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +90,6 @@ public class JSONArray implements Iterable<Object>, Serializable {
 	 */
 	private final List<Object> list;
 
-	Map<Integer, _ParseMetadata> _parseMetadata = new HashMap<>();
-
 	/**
 	 * Construct an empty JSONArray.
 	 */
@@ -120,9 +117,6 @@ public class JSONArray implements Iterable<Object>, Serializable {
 				} else {
 					x.back();
 					Object val = x.nextValue();
-					if (val instanceof String) {
-						_parseMetadata.put(list.size(), new _ParseMetadata(val, x._quoter));
-					}
 					this.list.add(val);
 				}
 				switch (x.nextClean()) {
@@ -1051,8 +1045,8 @@ public class JSONArray implements Iterable<Object>, Serializable {
 			writer.write('[');
 
 			if (length == 1) {
-				JSONObject._writeValue(writer, this.list.get(0),
-						indentFactor, indent, _parseMetadata.get(0));
+				JSONObject.writeValue(writer, this.list.get(0),
+						indentFactor, indent);
 			} else if (length != 0) {
 				final int newindent = indent + indentFactor;
 
@@ -1064,8 +1058,8 @@ public class JSONArray implements Iterable<Object>, Serializable {
 						writer.write('\n');
 					}
 					JSONObject.indent(writer, newindent);
-					JSONObject._writeValue(writer, this.list.get(i),
-							indentFactor, newindent, _parseMetadata.get(i));
+					JSONObject.writeValue(writer, this.list.get(i),
+							indentFactor, newindent);
 					commanate = true;
 				}
 				if (indentFactor > 0) {
