@@ -385,7 +385,6 @@ public class JsonNBTConverter {
 			} catch (NumberFormatException var6) {
 				this.jsonValue = this.jsonValue.replaceAll("\\\\\"", "\"");
 				NBTString tag = new NBTString(this.jsonValue);
-				tag._noQuote = true;
 				return tag;
 			}
 
@@ -403,14 +402,11 @@ public class JsonNBTConverter {
 					return new NBTIntArray(aint);
 				} catch (NumberFormatException var5) {
 					NBTString tag = new NBTString(this.jsonValue);
-					tag._noQuote = true;
 					return tag;
 				}
 			} else {
-				boolean noQuote = true;
 				if (this.jsonValue.startsWith("\"") && this.jsonValue.endsWith("\"")) {
 					this.jsonValue = this.jsonValue.substring(1, this.jsonValue.length() - 1);
-					noQuote = false;
 				}
 
 				this.jsonValue = this.jsonValue.replaceAll("\\\\\"", "\"");
@@ -426,7 +422,6 @@ public class JsonNBTConverter {
 				}
 
 				NBTString tag = new NBTString(stringbuilder.toString());
-				tag._noQuote = noQuote;
 				return tag;
 			}
 		}
