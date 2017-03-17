@@ -3,13 +3,13 @@ package org.to2mbn.maptranslator.impl.model;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -67,25 +67,40 @@ class MapHandlerImpl implements MapHandler {
 
 	@Override
 	public CompletableFuture<Map<String, List<String[]>>> extractStrings() {
+
+		class PartResult {
+
+			Map<String, List<String[]>> extracted;
+			String nodeName;
+
+			PartResult(Map<String, List<String[]>> extracted, String nodeName) {
+				this.extracted = extracted;
+				this.nodeName = nodeName;
+			}
+		}
+
 		return CompletableFuture.supplyAsync(() -> {
 			Predicate<String> excluder = createTextExcluder();
-			BiConsumer<Map<String, List<String[]>>, Map<String, List<String[]>>> merger = (a, b) -> {
-				b.forEach((k, v) -> {
-					List<String[]> list = a.get(k);
-					if (list == null) {
-						a.put(k, v);
-					} else {
-						list.addAll(v);
-					}
-				});
-			};
 			clearLastWarnings();
-			return desGroup.read(node -> {
+			Map<String, List<String[]>> result = new LinkedHashMap<>();
+			desGroup.read(node -> {
 				AbstractReplacer.redirectParsingExceptions(() -> resolveMap(node),
 						failure -> createResolveFailedWarning(failure).ifPresent(warn -> resolveFailures.put(warn.path, warn)));
 				computeStringMismatches(node);
-				return extractStrings(node, excluder);
-			}).collect(TreeMap<String, List<String[]>>::new, merger, merger);
+				return new PartResult(extractStrings(node, excluder), node.toString());
+			})
+					.sorted(Comparator.comparing(o -> o.nodeName))
+					.forEachOrdered(partResult -> {
+						partResult.extracted.forEach((k, v) -> {
+							List<String[]> list = result.get(k);
+							if (list == null) {
+								result.put(k, v);
+							} else {
+								list.addAll(v);
+							}
+						});
+					});
+			return result;
 		}, pool);
 	}
 
@@ -188,7 +203,7 @@ class MapHandlerImpl implements MapHandler {
 	}
 
 	private Map<String, List<String[]>> extractStrings(Node root, Predicate<String> excluder) {
-		Map<String, List<String[]>> result = new HashMap<>();
+		Map<String, List<String[]>> result = new LinkedHashMap<>();
 		root.travel(node -> {
 			if (node.hasTag(RulesConstants.translatable)) {
 				node.getText().ifPresent(text -> {
