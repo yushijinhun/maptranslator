@@ -166,7 +166,7 @@ public class JSONObject implements Serializable {
 	 * Construct an empty JSONObject.
 	 */
 	public JSONObject() {
-		this.map = new LinkedHashMap<String, Object>();
+		this.map = new LinkedHashMap<>();
 	}
 
 	/**
@@ -251,7 +251,7 @@ public class JSONObject implements Serializable {
 	 *            the JSONObject.
 	 */
 	public JSONObject(Map<?, ?> map) {
-		this.map = new TreeMap<String, Object>();
+		this.map = new TreeMap<>();
 		if (map != null) {
 			for (final Entry<?, ?> e : map.entrySet()) {
 				final Object value = e.getValue();
@@ -734,20 +734,7 @@ public class JSONObject implements Serializable {
 			throw new JSONException("Null pointer");
 		}
 		testValidity(number);
-
-		// Shave off trailing zeros and decimal point, if possible.
-
-		String string = number.toString();
-		if (string.indexOf('.') > 0 && string.indexOf('e') < 0
-				&& string.indexOf('E') < 0) {
-			while (string.endsWith("0")) {
-				string = string.substring(0, string.length() - 1);
-			}
-			if (string.endsWith(".")) {
-				string = string.substring(0, string.length() - 1);
-			}
-		}
-		return string;
+		return number.toString();
 	}
 
 	/**
@@ -1808,7 +1795,7 @@ public class JSONObject implements Serializable {
 	 * @return a java.util.Map containing the entrys of this object
 	 */
 	public Map<String, Object> toMap() {
-		Map<String, Object> results = new TreeMap<String, Object>();
+		Map<String, Object> results = new TreeMap<>();
 		for (Entry<String, Object> entry : this.map.entrySet()) {
 			Object value;
 			if (entry.getValue() == null || NULL.equals(entry.getValue())) {
