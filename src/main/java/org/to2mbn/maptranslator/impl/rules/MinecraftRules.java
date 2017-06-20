@@ -80,6 +80,12 @@ public class MinecraftRules implements RulesProvider {
 			tag("(predicate.damage_type)/direct_entity", "predicate.entity"),
 			tag("(predicate.damage_type)/source_entity", "predicate.entity"),
 
+			new TagMarker(NodeMatcher.of("(store.mcfunction)/*").and(
+					node -> node.getText()
+							.map(line -> !line.trim().startsWith("#"))
+							.orElse(false)),
+					"command"),
+
 			tag("(entity)/Riding", "entity"),
 			tag("(entity)/Passengers/*", "entity"),
 			extendTagNbt("entity", "id"),

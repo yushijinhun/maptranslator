@@ -5,15 +5,15 @@ import java.util.function.Supplier;
 
 public class TextArgumentNode extends Node implements ArgumentNode, TextNode {
 
-	public String text;
+	private Supplier<String> text;
 
 	public TextArgumentNode(String text) {
-		this.text = text;
+		this.text = () -> text;
 	}
 
 	@Override
 	public String toArgumentString() {
-		return text;
+		return text.get();
 	}
 
 	@Override
@@ -28,14 +28,13 @@ public class TextArgumentNode extends Node implements ArgumentNode, TextNode {
 
 	@Override
 	public Optional<String> getNodeText() {
-		return Optional.of(text);
+		return Optional.of(toArgumentString());
 	}
 
 	@Override
 	public Node replaceNodeText(Supplier<String> proxyTarget) {
-		ClauseNode clause = new ClauseNode();
-		clause.clause = proxyTarget;
-		return clause;
+		text = proxyTarget;
+		return this;
 	}
 
 }

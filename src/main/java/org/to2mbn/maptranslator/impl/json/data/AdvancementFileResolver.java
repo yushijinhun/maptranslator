@@ -1,9 +1,11 @@
 package org.to2mbn.maptranslator.impl.json.data;
 
-public class AdvancementFileResolver extends DataJsonFileResolver {
+import org.to2mbn.maptranslator.data.DataFileResolver;
+
+public class AdvancementFileResolver extends DataFileResolver {
 
 	public AdvancementFileResolver() {
-		super("advancements", "store.advancements");
+		super("advancements", ".json", (root, file) -> new JsonDescriptor(root, file, "store.advancements"));
 	}
 
 

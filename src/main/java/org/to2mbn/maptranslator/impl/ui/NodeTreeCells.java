@@ -18,8 +18,8 @@ import org.to2mbn.maptranslator.impl.nbt.parse.NBTLong;
 import org.to2mbn.maptranslator.impl.nbt.parse.NBTShort;
 import org.to2mbn.maptranslator.impl.nbt.parse.NBTString;
 import org.to2mbn.maptranslator.impl.nbt.tree.NBTNode;
+import org.to2mbn.maptranslator.impl.plain.tree.PlainFileNode;
 import org.to2mbn.maptranslator.rules.RulesConstants;
-import org.to2mbn.maptranslator.tree.ClauseNode;
 import org.to2mbn.maptranslator.tree.CommandArgumentNode;
 import org.to2mbn.maptranslator.tree.DataStoreNode;
 import org.to2mbn.maptranslator.tree.Node;
@@ -79,7 +79,7 @@ class NodeTreeCells {
 			}
 		} else if (value instanceof DataStoreNode) {
 			icon = img_file;
-		} else if (value instanceof ClauseNode || value instanceof TextArgumentNode) {
+		} else if (value instanceof TextArgumentNode || value instanceof PlainFileNode) {
 			icon = img_string;
 		} else if (value instanceof JsonNode) {
 			Object json = ((JsonNode) value).json;
