@@ -39,6 +39,8 @@ public class MinecraftRules implements RulesProvider {
 			tag("(store.player)/Inventory/*", "item"),
 			tag("(store.player)/EnderItems/*", "item"),
 			tag("(store.player)/RootVehicle/Entity", "entity"),
+			tag("(store.player)/ShoulderEntityLeft", "entity"),
+			tag("(store.player)/ShoulderEntityRight", "entity"),
 			tag("(store.chunk)/Level/Entities/*", "entity"),
 			tag("(store.chunk)/Level/TileEntities/*", "tileentity"),
 			tag("(store.structure)/entities/*/nbt", "entity"),
