@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 public class NBTByteArray extends NBT {
 
@@ -15,6 +16,14 @@ public class NBTByteArray extends NBT {
 
 	public NBTByteArray(byte[] data) {
 		this.data = data;
+	}
+
+	NBTByteArray(List<Byte> list) {
+		data = new byte[list.size()];
+		for (int i = 0; i < data.length; i++) {
+			Byte element = list.get(i);
+			data[i] = element == null ? 0 : element;
+		}
 	}
 
 	@Override
@@ -29,13 +38,13 @@ public class NBTByteArray extends NBT {
 		return super.equals(another) ? Arrays.equals(data, ((NBTByteArray) another).data) : false;
 	}
 
-	public byte[] getByteArray() {
+	public byte[] get() {
 		return data;
 	}
 
 	@Override
 	public byte getId() {
-		return (byte) 7;
+		return ID;
 	}
 
 	@Override
@@ -52,7 +61,14 @@ public class NBTByteArray extends NBT {
 
 	@Override
 	public String toString() {
-		return "[" + data.length + " bytes]";
+		StringBuilder sb = new StringBuilder("[B;");
+		for (int i = 0; i < data.length; ++i) {
+			if (i != 0) {
+				sb.append(',');
+			}
+			sb.append(data[i]).append('B');
+		}
+		return sb.append(']').toString();
 	}
 
 	@Override

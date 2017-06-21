@@ -53,29 +53,9 @@ public class NBTList extends NBT {
 		return tagList.get(idx);
 	}
 
-	public NBTCompound getCompound(int i) {
-		return (NBTCompound) tagList.get(i);
-	}
-
-	public double getDouble(int i) {
-		return ((NBTDouble) tagList.get(i)).getDouble();
-	}
-
-	public float getFloat(int i) {
-		return ((NBTFloat) tagList.get(i)).getFloat();
-	}
-
 	@Override
 	public byte getId() {
-		return (byte) 9;
-	}
-
-	public int[] getIntArray(int i) {
-		return ((NBTIntArray) tagList.get(i)).getIntArray();
-	}
-
-	public String getString(int i) {
-		return tagList.get(i).getString();
+		return ID;
 	}
 
 	public int getTagType() {
@@ -120,10 +100,12 @@ public class NBTList extends NBT {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("[");
-		if(!tagList.isEmpty()){
+		if (!tagList.isEmpty()) {
 			for (int i = 0; i < tagList.size(); i++) {
-				if (!_noIndex.contains(i)) {
-					sb.append(i).append(':');
+				if (NBTVersion.getCurrentConfig().getOutputVersion() == NBTVersion.MC_OLD) {
+					if (!_noIndex.contains(i)) {
+						sb.append(i).append(':');
+					}
 				}
 				sb.append(tagList.get(i)).append(',');
 			}

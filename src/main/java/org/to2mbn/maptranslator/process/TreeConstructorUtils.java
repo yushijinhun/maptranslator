@@ -12,11 +12,15 @@ public final class TreeConstructorUtils {
 	private static final Logger LOGGER = Logger.getLogger(TreeConstructorUtils.class.getCanonicalName());
 
 	public static <T> T checkedParse(Function<String, T> parser, String input) {
+		return checkedParse(parser, parser, input);
+	}
+
+	public static <T> T checkedParse(Function<String, T> parser, Function<String, T> parser2nd, String input) {
 		T parsed = parser.apply(input);
 		if (_TO_STRING_VERIFY) {
 			try {
 				String serialized = parsed.toString();
-				if (!parsed.equals(parser.apply(serialized))) {
+				if (!parsed.equals(parser2nd.apply(serialized))) {
 					throw new IllegalStateException("Object mismatch, serialized: " + serialized);
 				}
 			} catch (Exception e) {

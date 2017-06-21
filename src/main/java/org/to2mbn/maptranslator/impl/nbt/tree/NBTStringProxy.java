@@ -14,7 +14,7 @@ public class NBTStringProxy extends NBTString {
 
 	@Override
 	public NBT clone() {
-		return new NBTString(getString());
+		return new NBTString(get());
 	}
 
 	@Override
@@ -22,17 +22,17 @@ public class NBTStringProxy extends NBTString {
 		if (!super.equals(another)) {
 			return false;
 		}
-		return Objects.equals(getString(), ((NBTString) another).getString());
+		return Objects.equals(get(), ((NBTString) another).get());
 	}
 
 	@Override
-	public String getString() {
+	public String get() {
 		return handler.get();
 	}
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() ^ getString().hashCode();
+		return super.hashCode() ^ get().hashCode();
 	}
 
 	@Override
@@ -42,12 +42,12 @@ public class NBTStringProxy extends NBTString {
 
 	@Override
 	public String toString() {
-		return escapeString(getString());
+		return escapeString(get());
 	}
 
 	@Override
 	protected void write(DataOutput output) throws IOException {
-		output.writeUTF(getString());
+		output.writeUTF(get());
 	}
 
 }

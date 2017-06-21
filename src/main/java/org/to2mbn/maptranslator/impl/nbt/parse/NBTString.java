@@ -27,16 +27,15 @@ public class NBTString extends NBT {
 		if (!super.equals(another)) {
 			return false;
 		}
-		return Objects.equals(data, ((NBTString) another).getString());
+		return Objects.equals(data, ((NBTString) another).get());
 	}
 
 	@Override
 	public byte getId() {
-		return (byte) 8;
+		return ID;
 	}
 
-	@Override
-	public String getString() {
+	public String get() {
 		return data;
 	}
 

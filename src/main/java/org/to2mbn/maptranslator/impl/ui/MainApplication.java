@@ -8,14 +8,18 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.to2mbn.maptranslator.impl.model.MapHandler;
 import org.to2mbn.maptranslator.impl.model.ParsingWarning;
+import org.to2mbn.maptranslator.impl.nbt.parse.NBTVersion;
+import org.to2mbn.maptranslator.impl.nbt.parse.NBTVersionConfig;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.WindowEvent;
@@ -35,6 +39,7 @@ class MainApplication {
 
 	private void start() {
 		ProgressWindow.initWindow();
+
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle(translate("load_save.title"));
 		File selected = chooser.showDialog(null);
@@ -42,6 +47,16 @@ class MainApplication {
 			alert(AlertType.ERROR, "load_save.no_chosen");
 			return;
 		}
+
+		Dialog<NBTVersionConfig> nbtVersionChooser = new NBTVersionChooser();
+		Optional<NBTVersionConfig> config = nbtVersionChooser.showAndWait();
+		if (config.isPresent()) {
+			NBTVersion.defaultConfig = config.get();
+		} else {
+			alert(AlertType.ERROR, "nbt_version_chooser.no_chosen");
+			return;
+		}
+
 		progressWindow().show(false);
 		MapHandler.create(selected.toPath())
 				.thenAcceptAsync(createdHandler -> {

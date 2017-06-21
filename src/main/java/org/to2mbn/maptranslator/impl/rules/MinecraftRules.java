@@ -167,7 +167,14 @@ public class MinecraftRules implements RulesProvider {
 			tag("(tileentity)/Items/*", "item"),
 
 			tag("(item)/tag", "itemtag"),
-			new TagMarker(NodeMatcher.of("(item)/tag").and(node -> compoundMatches(nbt -> nbt.containsKey("id", NBTString.ID)).test(node.parent())), node -> toCompound(nbt -> "itemtag." + toUniqueName(nbt.getString("id"))).andThen(Collections::singleton).apply(node.parent())),
+			new TagMarker(NodeMatcher.of("(item)/tag")
+					.and(node -> compoundMatches(
+							nbt -> nbt.containsKey("id", NBTString.ID))
+									.test(node.parent())),
+					node -> toCompound(
+							nbt -> "itemtag." + toUniqueName(((NBTString) nbt.get("id")).get()))
+									.andThen(Collections::singleton)
+									.apply(node.parent())),
 			tag("(itemtag.minecraft:armor_stand)/EntityTag", "entity"),
 			tag("(itemtag.minecraft:spawn_egg)/EntityTag", "entity"),
 			tag("(itemtag)/BlockEntityTag", "tileentity", "tileentity.*"),
@@ -568,7 +575,7 @@ public class MinecraftRules implements RulesProvider {
 	private static TagMarker extendTagNbt(String tag, String key) {
 		return new TagMarker(NodeMatcher.of("(" + tag + ")")
 				.and(compoundMatches(nbt -> nbt.containsKey(key, NBTString.ID))),
-				toCompound(nbt -> tag + "." + toUniqueName(nbt.getString(key))).andThen(Collections::singleton));
+				toCompound(nbt -> tag + "." + toUniqueName(((NBTString) nbt.get(key)).get())).andThen(Collections::singleton));
 	}
 
 	private static TagMarker tag(String expression, String... tags) {

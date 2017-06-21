@@ -6,76 +6,59 @@ import java.io.IOException;
 
 public abstract class NBT {
 
-	public abstract static class NBTPrimitive extends NBT {
+	public abstract static class NBTPrimitive<T extends Number> extends NBT {
 
-		String _str;
-
-		public abstract byte getByte();
-
-		public abstract double getDouble();
-
-		public abstract float getFloat();
-
-		public abstract int getInt();
-
-		public abstract long getLong();
-
-		public abstract short getShort();
-
-		@Override
-		public String toString() {
-			if (_str != null) return _str;
-			return valueToString();
-		}
-
-		abstract protected String valueToString();
+		public abstract T get();
 
 	}
 
 	protected static NBT createNewByType(byte id) {
 		switch (id) {
-			case 0:
+			case NBTEnd.ID:
 				return new NBTEnd();
 
-			case 1:
+			case NBTByte.ID:
 				return new NBTByte();
 
-			case 2:
+			case NBTShort.ID:
 				return new NBTShort();
 
-			case 3:
+			case NBTInt.ID:
 				return new NBTInt();
 
-			case 4:
+			case NBTLong.ID:
 				return new NBTLong();
 
-			case 5:
+			case NBTFloat.ID:
 				return new NBTFloat();
 
-			case 6:
+			case NBTDouble.ID:
 				return new NBTDouble();
 
-			case 7:
+			case NBTByteArray.ID:
 				return new NBTByteArray();
 
-			case 8:
+			case NBTString.ID:
 				return new NBTString();
 
-			case 9:
+			case NBTList.ID:
 				return new NBTList();
 
-			case 10:
+			case NBTCompound.ID:
 				return new NBTCompound();
 
-			case 11:
+			case NBTIntArray.ID:
 				return new NBTIntArray();
+
+			case NBTLongArray.ID:
+				return new NBTLongArray();
 
 			default:
 				return null;
 		}
 	}
 
-	public static final String[] NBT_TYPES = new String[] { "END", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "BYTE[]", "STRING", "LIST", "COMPOUND", "INT[]" };
+	public static final String[] NBT_TYPES = new String[] { "END", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "BYTE[]", "STRING", "LIST", "COMPOUND", "INT[]", "LONG[]" };
 
 	@Override
 	public abstract NBT clone();
@@ -90,10 +73,6 @@ public abstract class NBT {
 	}
 
 	public abstract byte getId();
-
-	protected String getString() {
-		return toString();
-	}
 
 	@Override
 	public int hashCode() {

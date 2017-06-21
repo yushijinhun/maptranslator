@@ -15,7 +15,7 @@ public class NBTEnd extends NBT {
 
 	@Override
 	public byte getId() {
-		return (byte) 0;
+		return ID;
 	}
 
 	@Override

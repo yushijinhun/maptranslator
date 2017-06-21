@@ -5,6 +5,8 @@ import org.to2mbn.maptranslator.impl.nbt.parse.JsonNBTConverter;
 import org.to2mbn.maptranslator.impl.nbt.parse.NBT;
 import org.to2mbn.maptranslator.impl.nbt.parse.NBTCompound;
 import org.to2mbn.maptranslator.impl.nbt.parse.NBTList;
+import org.to2mbn.maptranslator.impl.nbt.parse.NBTVersion;
+import org.to2mbn.maptranslator.impl.nbt.parse.NBTVersionConfig;
 import org.to2mbn.maptranslator.impl.nbt.tree.NBTListNode;
 import org.to2mbn.maptranslator.impl.nbt.tree.NBTMapNode;
 import org.to2mbn.maptranslator.impl.nbt.tree.NBTNode;
@@ -15,7 +17,19 @@ public final class NBTTreeConstructor {
 	private NBTTreeConstructor() {}
 
 	public static NBTCompound parseNBT(String nbt) {
-		return checkedParse(JsonNBTConverter::getTagFromJson, nbt);
+		if (isCrossVersionParsing()) {
+			return checkedParse(JsonNBTConverter.instance()::parse,
+					input -> NBTVersion.setCurrentConfig(
+							new NBTVersionConfig(NBTVersion.defaultConfig.getOutputVersion(), NBTVersion.defaultConfig.getOutputVersion()),
+							() -> JsonNBTConverter.instance().parse(input)),
+					nbt);
+		} else {
+			return checkedParse(JsonNBTConverter.instance()::parse, nbt);
+		}
+	}
+
+	private static boolean isCrossVersionParsing() {
+		return NBTVersion.defaultConfig.getInputVersion() != NBTVersion.defaultConfig.getOutputVersion();
 	}
 
 	public static NBTRootNode constructNBT(String nbt) {

@@ -7,12 +7,14 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 public class NBTCompound extends NBT {
 
 	public static final byte ID = 10;
 
 	private static final int T_PRIMITIVE = 99;
+	private static final Pattern PATTERN_NOT_ESCAPE = Pattern.compile("[A-Za-z0-9._+-]+");
 
 	protected static String readKey(DataInput input) throws IOException {
 		return input.readUTF();
@@ -55,66 +57,14 @@ public class NBTCompound extends NBT {
 		return false;
 	}
 
-	public boolean getBoolean(String key) {
-		return getByte(key) != 0;
-	}
-
-	public byte getByte(String key) {
-		checkKeyExists(key, T_PRIMITIVE);
-		return ((NBT.NBTPrimitive) tagMap.get(key)).getByte();
-	}
-
-	public byte[] getByteArray(String key) {
-		checkKeyExists(key, 7);
-		return ((NBTByteArray) tagMap.get(key)).getByteArray();
-	}
-
-	public NBTCompound getCompound(String key) {
-		checkKeyExists(key, 10);
-		return (NBTCompound) tagMap.get(key);
-	}
-
-	public double getDouble(String key) {
-		checkKeyExists(key, T_PRIMITIVE);
-		return ((NBT.NBTPrimitive) tagMap.get(key)).getDouble();
-	}
-
-	public float getFloat(String key) {
-		checkKeyExists(key, T_PRIMITIVE);
-		return ((NBT.NBTPrimitive) tagMap.get(key)).getFloat();
-	}
-
-	public int[] getIntArray(String key) {
-		checkKeyExists(key, 11);
-		return ((NBTIntArray) tagMap.get(key)).getIntArray();
-	}
-
-	public int getInteger(String key) {
-		checkKeyExists(key, T_PRIMITIVE);
-		return ((NBT.NBTPrimitive) tagMap.get(key)).getInt();
-	}
-
-	public long getLong(String key) {
-		checkKeyExists(key, T_PRIMITIVE);
-		return ((NBT.NBTPrimitive) tagMap.get(key)).getLong();
-	}
-
-	public short getShort(String key) {
-		checkKeyExists(key, T_PRIMITIVE);
-		return ((NBT.NBTPrimitive) tagMap.get(key)).getShort();
-	}
-
-	public String getString(String key) {
-		checkKeyExists(key, 8);
-		return tagMap.get(key).getString();
-	}
-
 	public boolean containsKey(String key) {
 		return tagMap.containsKey(key);
 	}
 
 	public boolean containsKey(String key, int type) {
-		byte actualType = getTagType(key);
+		NBT tag = get(key);
+		if (tag == null) return false;
+		byte actualType = tag.getId();
 
 		if (actualType == type) {
 			return true;
@@ -125,30 +75,13 @@ public class NBTCompound extends NBT {
 		}
 	}
 
-	private void checkKeyExists(String key, int type) {
-		if (!containsKey(key, type)) throw new IllegalArgumentException("no such tag: " + key);
-	}
-
 	@Override
 	public byte getId() {
-		return (byte) 10;
+		return ID;
 	}
 
 	public NBT get(String key) {
 		return tagMap.get(key);
-	}
-
-	public NBTList getTagList(String key, int type) {
-		if (getTagType(key) != 9) {
-			return new NBTList();
-		}
-		NBTList var3 = (NBTList) tagMap.get(key);
-		return (var3.size() > 0) && (var3.getTagType() != type) ? new NBTList() : var3;
-	}
-
-	public byte getTagType(String key) {
-		NBT nbt = tagMap.get(key);
-		return nbt != null ? nbt.getId() : 0;
 	}
 
 	@Override
@@ -169,7 +102,7 @@ public class NBTCompound extends NBT {
 
 			if (var4.getId() == 10) {
 				if (this.containsKey(var3, 10)) {
-					NBTCompound var5 = getCompound(var3);
+					NBTCompound var5 = (NBTCompound) get(var3);
 					var5.merge((NBTCompound) var4);
 				} else {
 					put(var3, var4.clone());
@@ -192,48 +125,8 @@ public class NBTCompound extends NBT {
 		}
 	}
 
-	public void removeTag(String key) {
+	public void remove(String key) {
 		tagMap.remove(key);
-	}
-
-	public void putBoolean(String key, boolean value) {
-		putByte(key, (byte) (value ? 1 : 0));
-	}
-
-	public void putByte(String key, byte value) {
-		tagMap.put(key, new NBTByte(value));
-	}
-
-	public void putByteArray(String key, byte[] value) {
-		tagMap.put(key, new NBTByteArray(value));
-	}
-
-	public void putDouble(String key, double value) {
-		tagMap.put(key, new NBTDouble(value));
-	}
-
-	public void putFloat(String key, float value) {
-		tagMap.put(key, new NBTFloat(value));
-	}
-
-	public void putIntArray(String key, int[] value) {
-		tagMap.put(key, new NBTIntArray(value));
-	}
-
-	public void putInteger(String key, int value) {
-		tagMap.put(key, new NBTInt(value));
-	}
-
-	public void putLong(String key, long value) {
-		tagMap.put(key, new NBTLong(value));
-	}
-
-	public void putShort(String key, short value) {
-		tagMap.put(key, new NBTShort(value));
-	}
-
-	public void putString(String key, String value) {
-		tagMap.put(key, new NBTString(value));
 	}
 
 	public void put(String key, NBT value) {
@@ -248,7 +141,11 @@ public class NBTCompound extends NBT {
 	public String toString() {
 		StringBuilder sb = new StringBuilder("{");
 		if (!tagMap.isEmpty()) {
-			tagMap.forEach((k, v) -> sb.append(k).append(':').append(v).append(','));
+			tagMap.forEach(
+					(k, v) -> sb.append(PATTERN_NOT_ESCAPE.matcher(k).matches() ? k : NBTString.escapeString(k))
+							.append(':')
+							.append(v)
+							.append(','));
 			sb.deleteCharAt(sb.length() - 1);
 		}
 		sb.append('}');

@@ -4,7 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class NBTByte extends NBT.NBTPrimitive {
+public class NBTByte extends NBT.NBTPrimitive<Byte> {
 
 	public static final byte ID = 1;
 
@@ -31,38 +31,8 @@ public class NBTByte extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	public byte getByte() {
-		return data;
-	}
-
-	@Override
-	public double getDouble() {
-		return data;
-	}
-
-	@Override
-	public float getFloat() {
-		return data;
-	}
-
-	@Override
 	public byte getId() {
-		return (byte) 1;
-	}
-
-	@Override
-	public int getInt() {
-		return data;
-	}
-
-	@Override
-	public long getLong() {
-		return data;
-	}
-
-	@Override
-	public short getShort() {
-		return data;
+		return ID;
 	}
 
 	@Override
@@ -76,13 +46,18 @@ public class NBTByte extends NBT.NBTPrimitive {
 	}
 
 	@Override
-	public String valueToString() {
+	public String toString() {
 		return "" + data + "b";
 	}
 
 	@Override
 	protected void write(DataOutput output) throws IOException {
 		output.writeByte(data);
+	}
+
+	@Override
+	public Byte get() {
+		return data;
 	}
 
 }

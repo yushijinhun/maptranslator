@@ -21,7 +21,7 @@ public abstract class NBTNode extends Node implements TextNode {
 
 	public static String valueToString(NBT nbt) {
 		if (nbt instanceof NBTString) {
-			return ((NBTString) nbt).getString();
+			return ((NBTString) nbt).get();
 		} else {
 			return nbt.toString();
 		}
@@ -35,7 +35,7 @@ public abstract class NBTNode extends Node implements TextNode {
 	@Override
 	public Optional<String> getNodeText() {
 		if (nbt instanceof NBTString)
-			return Optional.ofNullable(((NBTString) nbt).getString());
+			return Optional.ofNullable(((NBTString) nbt).get());
 		return Optional.empty();
 	}
 
